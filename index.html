@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="MAKOM CAPITAL GROUP — Gestora integral de patrimonio inmobiliario en Panamá. Brokerage, gestión operativa, desarrollo y asesoría de inversión bajo una sola visión." />
+  <meta name="theme-color" content="#0A0A0A" />
+  <link rel="canonical" href="https://makomgrp.com/" />
+  <link rel="icon" type="image/svg+xml" href="MAKOM_Logo_Files_v4.0/04_Favicon/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="MAKOM_Logo_Files_v4.0/04_Favicon/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="MAKOM_Logo_Files_v4.0/04_Favicon/favicon-16.png" />
+  <link rel="apple-touch-icon" href="MAKOM_Logo_Files_v4.0/04_Favicon/apple-touch-icon.png" />
+  <title>MAKOM CAPITAL GROUP — Gestora Integral de Patrimonio Inmobiliario</title>
+  <meta property="og:title" content="MAKOM CAPITAL GROUP — Gestora Integral de Patrimonio Inmobiliario" />
+  <meta property="og:description" content="Donde cada espacio tiene propósito. Integramos brokerage, gestión operativa y desarrollo de activos." />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="es_PA" />
+  <meta property="og:url" content="https://makomgrp.com/" />
+  <meta property="og:image" content="https://makomgrp.com/assets/og/makom-capital-group-og.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="MAKOM CAPITAL GROUP — Gestora Integral de Patrimonio Inmobiliario" />
+  <meta name="twitter:description" content="Donde cada espacio tiene propósito. Integramos brokerage, gestión operativa y desarrollo de activos." />
+  <meta name="twitter:image" content="https://makomgrp.com/assets/og/makom-capital-group-og.jpg" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "RealEstateAgent",
+    "name": "MAKOM CAPITAL GROUP",
+    "description": "Gestora integral de patrimonio inmobiliario en Panamá.",
+    "url": "https://makomgrp.com",
+    "telephone": "+507 6353-4377",
+    "logo": "https://makomgrp.com/assets/logos/makom-capital-group-logo-positivo.svg",
+    "image": "https://makomgrp.com/assets/og/makom-capital-group-og.jpg",
+    "address": { "@type": "PostalAddress", "addressCountry": "PA", "addressLocality": "Ciudad de Panamá" },
+    "contactPoint": { "@type": "ContactPoint", "contactType": "customer service", "email": "gerencia@makomgrp.com" },
+    "founder": [{ "@type": "Person", "name": "José Samudio" }, { "@type": "Person", "name": "Loyra Flores" }]
+  }
+  </script>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Preload de la fotografía del Hero (elemento LCP) — mejora Core Web Vitals -->
+  <link rel="preload" as="image" href="assets/hero/panama-skyline-night.jpg" fetchpriority="high" />
+</head>
+<body>
+
+<header class="header" id="header" role="banner">
+  <div class="container header__inner">
+    <a href="/" class="header__logo" aria-label="MAKOM CAPITAL GROUP — Inicio">
+      <!-- Logo oficial negativo MAKOM CAPITAL GROUP: visible sobre Hero (fondo oscuro) -->
+      <img class="header__logo-svg header__logo-svg--neg" src="assets/logos/makom-capital-group-logo-negativo.svg" alt="" aria-hidden="true" />
+      <!-- Logo oficial positivo MAKOM CAPITAL GROUP: visible al hacer scroll (fondo claro) -->
+      <img class="header__logo-svg header__logo-svg--pos" src="assets/logos/makom-capital-group-logo-positivo.svg" alt="" aria-hidden="true" />
+    </a>
+    <nav class="header__nav" role="navigation" aria-label="Navegación principal">
+      <ul class="header__nav-list" role="list">
+        <li class="header__nav-item"><a href="#grupo" class="header__nav-link">El Grupo</a></li>
+        <li class="header__nav-item header__nav-item--has-mega">
+          <a href="#servicios" class="header__nav-link header__nav-trigger" aria-expanded="false" aria-haspopup="true" aria-controls="mega-menu">
+            Servicios
+            <svg class="header__nav-chevron" width="12" height="7" viewBox="0 0 12 7" fill="none" aria-hidden="true">
+              <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+          <div class="mega-menu" id="mega-menu" role="region" aria-label="Menú de servicios">
+            <div class="container">
+              <div class="mega-menu__grid">
+                <a href="#propiedades" class="mega-menu__item">
+                  <span class="mega-menu__item-name">MAKOM Properties</span>
+                  <span class="mega-menu__item-desc">Brokerage y asesoría de patrimonio</span>
+                </a>
+                <a href="#servicios" class="mega-menu__item">
+                  <span class="mega-menu__item-name">MAKOM Services</span>
+                  <span class="mega-menu__item-desc">Gestión y mantenimiento de propiedades</span>
+                </a>
+                <a href="#proyectos" class="mega-menu__item">
+                  <span class="mega-menu__item-name">MAKOM Development</span>
+                  <span class="mega-menu__item-desc">Transformación y desarrollo de espacios</span>
+                </a>
+                <a href="#contacto" class="mega-menu__item mega-menu__item--coming">
+                  <span class="mega-menu__item-name">MAKOM Capital</span>
+                  <span class="mega-menu__item-soon">Próximamente</span>
+                  <span class="mega-menu__item-desc">Asesoría estratégica de portafolio</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </li>
+        <li class="header__nav-item"><a href="#propiedades" class="header__nav-link">Propiedades</a></li>
+        <li class="header__nav-item"><a href="#proyectos" class="header__nav-link">Proyectos</a></li>
+        <li class="header__nav-item"><a href="#contacto" class="header__nav-link header__nav-link--cta">Contacto</a></li>
+      </ul>
+    </nav>
+    <button class="hamburger" id="hamburger" aria-label="Abrir menú de navegación" aria-expanded="false" aria-controls="mobile-menu">
+      <span class="hamburger__bar"></span>
+      <span class="hamburger__bar"></span>
+      <span class="hamburger__bar"></span>
+    </button>
+  </div>
+</header>
+
+<div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Menú de navegación" aria-hidden="true">
+  <nav class="mobile-menu__nav" aria-label="Navegación móvil">
+    <ul class="mobile-menu__list" role="list">
+      <li class="mobile-menu__item" style="--item-index: 0"><a href="#grupo" class="mobile-menu__link">El Grupo</a></li>
+      <li class="mobile-menu__item" style="--item-index: 1"><a href="#servicios" class="mobile-menu__link">Servicios</a></li>
+      <li class="mobile-menu__item" style="--item-index: 2"><a href="#propiedades" class="mobile-menu__link">Propiedades</a></li>
+      <li class="mobile-menu__item" style="--item-index: 3"><a href="#proyectos" class="mobile-menu__link">Proyectos</a></li>
+      <li class="mobile-menu__item" style="--item-index: 4"><a href="#contacto" class="mobile-menu__link">Contacto</a></li>
+    </ul>
+    <div class="mobile-menu__footer">
+      <p class="mobile-menu__tagline">Donde cada espacio tiene propósito.</p>
+    </div>
+  </nav>
+</div>
+<div class="mobile-menu__overlay" id="mobile-overlay" aria-hidden="true"></div>
+
+<main id="main" role="main">
+
+  <!-- HERO -->
+  <section class="hero" id="hero" aria-label="Portada MAKOM CAPITAL GROUP">
+    <div class="hero__visual" aria-hidden="true">
+      <img class="hero__visual-photo" id="hero-visual-photo" src="assets/hero/panama-skyline-night.jpg" alt="Skyline nocturno de Ciudad de Panamá, distrito financiero iluminado — MAKOM CAPITAL GROUP" loading="eager" fetchpriority="high" />
+      <div class="hero__visual-overlay"></div>
+      <div class="hero__visual-inner">
+        <span class="hero__visual-symbol">
+          <!-- Símbolo oficial El Centro MAKOM CAPITAL GROUP — versión negativa (sin fondo) -->
+          <img src="assets/logos/makom-capital-group-symbol-negativo.svg" alt="" aria-hidden="true" />
+        </span>
+      </div>
+    </div>
+    <div class="hero__content">
+      <hr class="hero__eyebrow-rule" aria-hidden="true" />
+      <p class="hero__tagline">Donde cada espacio tiene propósito.</p>
+      <h1 class="hero__headline">Su patrimonio inmobiliario,<br>gestionado con propósito.</h1>
+      <p class="hero__subheadline">Con más de 26 años de experiencia, MAKOM CAPITAL GROUP integra brokerage inmobiliario, gestión operativa y desarrollo de activos bajo una sola visión: acompañar el ciclo de vida completo de su propiedad.</p>
+      <div class="hero__actions">
+        <a href="#propiedades" class="btn btn--primary">VER PROPIEDADES</a>
+        <a href="#propiedades" class="link--arrow">Buscar propiedades</a>
+      </div>
+    </div>
+    <div class="hero__scroll-indicator" aria-hidden="true">
+      <span class="hero__scroll-line"></span>
+      <span class="hero__scroll-label">Scroll</span>
+    </div>
+  </section>
+
+  <!-- DECLARACIÓN -->
+  <section class="declaracion" id="grupo" aria-labelledby="declaracion-heading">
+    <div class="container declaracion__inner">
+      <div class="declaracion__col-left">
+        <span class="text-label">Nuestra Posición</span>
+        <h2 class="declaracion__heading" id="declaracion-heading" data-reveal>No somos lo que probablemente espera encontrar aquí.</h2>
+      </div>
+      <div class="declaracion__col-right">
+        <p class="declaracion__body" data-reveal data-reveal-delay="100">El mercado inmobiliario panameño tiene abundancia de agentes que facilitan transacciones y proveedores que ejecutan servicios. Lo que casi no existe es una empresa que comprenda que una propiedad no es una transacción: es un activo con ciclo de vida propio.</p>
+        <p class="declaracion__body" data-reveal data-reveal-delay="200">MAKOM CAPITAL GROUP nació de esa observación. Integramos brokerage inmobiliario y gestión operativa no porque sea una buena idea de negocios, sino porque es la única manera honesta de acompañar a un propietario, inversionista o empresa durante todo el tiempo que tendrá esa propiedad bajo su responsabilidad.</p>
+        <p class="declaracion__body" data-reveal data-reveal-delay="300">No cerramos el negocio y nos vamos. Permanecemos. Eso es lo que hace un guardián del patrimonio, no un agente. Y esa es la diferencia que define todo lo que hacemos.</p>
+        <blockquote class="declaracion__quote" data-reveal data-reveal-delay="400">Cada espacio tiene un propósito esperando ser descubierto. MAKOM lo encuentra, lo protege y lo desarrolla.</blockquote>
+      </div>
+    </div>
+  </section>
+
+  <!-- DETRÁS DE MAKOM -->
+  <section class="equipo" id="equipo" aria-labelledby="equipo-heading">
+    <div class="container equipo__inner">
+      <div class="equipo__header">
+        <div class="equipo__header-left">
+          <span class="text-label">Detrás de MAKOM</span>
+          <h2 class="equipo__heading" id="equipo-heading" data-reveal>Personas. Experiencias. Un mismo propósito.</h2>
+        </div>
+        <div class="equipo__header-right">
+          <p class="equipo__subheadline" data-reveal data-reveal-delay="100">MAKOM CAPITAL GROUP nace de la unión de experiencias complementarias en ingeniería, desarrollo inmobiliario, operaciones, estrategia comercial y tecnología — combinadas bajo un mismo propósito: acompañar a nuestros clientes en cada etapa de la vida de una propiedad.</p>
+        </div>
+      </div>
+
+      <div class="equipo__grid">
+        <article class="persona-card" data-reveal data-reveal-delay="0" aria-labelledby="persona-loyra-name">
+          <div class="persona-card__photo">
+            <img src="assets/team/loyra-flores.png" alt="Loyra Flores, Gerente Comercial y Broker Inmobiliario de MAKOM CAPITAL GROUP" class="persona-card__photo-img" loading="lazy" />
+          </div>
+          <div class="persona-card__body">
+            <span class="persona-card__number" aria-hidden="true">01</span>
+            <div class="persona-card__content">
+              <h3 class="persona-card__name" id="persona-loyra-name">Loyra Flores</h3>
+              <span class="persona-card__role">Gerente Comercial · Broker Inmobiliario</span>
+              <hr class="persona-card__rule" aria-hidden="true" />
+              <p class="persona-card__text">Conecta personas con oportunidades y construye relaciones comerciales de largo plazo, con una lectura clara del cliente y del negocio.</p>
+              <ul class="persona-card__areas" role="list">
+                <li>Estrategia comercial</li>
+                <li>Relaciones con clientes</li>
+                <li>Brokerage inmobiliario</li>
+                <li>Desarrollo de oportunidades</li>
+              </ul>
+            </div>
+          </div>
+        </article>
+
+        <article class="persona-card" data-reveal data-reveal-delay="100" aria-labelledby="persona-jose-name">
+          <div class="persona-card__photo">
+            <img src="assets/team/jose-samudio.png" alt="José Samudio, Ingeniero Civil de MAKOM CAPITAL GROUP" class="persona-card__photo-img" loading="lazy" />
+          </div>
+          <div class="persona-card__body">
+            <span class="persona-card__number" aria-hidden="true">02</span>
+            <div class="persona-card__content">
+              <h3 class="persona-card__name" id="persona-jose-name">José Samudio</h3>
+              <span class="persona-card__role">Ingeniero Civil · Desarrollo y Ejecución</span>
+              <hr class="persona-card__rule" aria-hidden="true" />
+              <p class="persona-card__text">Traduce la experiencia técnica en resultados concretos: ejecución de proyectos, supervisión en obra y control de calidad en cada etapa.</p>
+              <ul class="persona-card__areas" role="list">
+                <li>Construcción e ingeniería</li>
+                <li>Ejecución de proyectos</li>
+                <li>Supervisión técnica</li>
+                <li>Control de calidad</li>
+              </ul>
+            </div>
+          </div>
+        </article>
+
+        <article class="persona-card" data-reveal data-reveal-delay="200" aria-labelledby="persona-yurlio-name">
+          <div class="persona-card__photo">
+            <img src="assets/team/yurlio-duran.png" alt="Yurlio Duran, Estrategia Digital y Operaciones de MAKOM CAPITAL GROUP" class="persona-card__photo-img" loading="lazy" />
+          </div>
+          <div class="persona-card__body">
+            <span class="persona-card__number" aria-hidden="true">03</span>
+            <div class="persona-card__content">
+              <h3 class="persona-card__name" id="persona-yurlio-name">Yurlio Duran</h3>
+              <span class="persona-card__role">Estrategia Digital · Operaciones</span>
+              <hr class="persona-card__rule" aria-hidden="true" />
+              <p class="persona-card__text">Impulsa la presencia digital de MAKOM y conecta estrategia, tecnología y experiencia del cliente en cada punto de contacto.</p>
+              <ul class="persona-card__areas" role="list">
+                <li>Estrategia digital</li>
+                <li>Automatización de procesos</li>
+                <li>Marketing y posicionamiento</li>
+                <li>Experiencia del cliente</li>
+              </ul>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="equipo__closing">
+        <div class="equipo__closing-block" data-reveal data-reveal-delay="0">
+          <h3 class="equipo__closing-title">¿Por qué MAKOM?</h3>
+          <hr class="equipo__closing-rule" aria-hidden="true" />
+          <p class="equipo__closing-text">MAKOM significa "lugar". Representa la idea de que cada espacio tiene un propósito, una identidad y un valor propio — la misma convicción que da nombre a la empresa: donde cada espacio tiene propósito.</p>
+        </div>
+        <div class="equipo__closing-block" data-reveal data-reveal-delay="100">
+          <h3 class="equipo__closing-title">Por qué nació la empresa</h3>
+          <hr class="equipo__closing-rule" aria-hidden="true" />
+          <p class="equipo__closing-text">El mercado inmobiliario suele separar la transacción, la operación, el mantenimiento y el desarrollo. Una propiedad, en cambio, necesita una visión integral durante todo su ciclo de vida. No cerramos el negocio y nos vamos. Permanecemos.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIVISIONES -->
+  <section class="divisiones" id="divisiones" aria-labelledby="divisiones-heading">
+    <div class="container divisiones__inner">
+      <div class="divisiones__header">
+        <div class="divisiones__header-left">
+          <span class="text-label">Nuestras Divisiones</span>
+          <h2 class="divisiones__heading" id="divisiones-heading" data-reveal>Cuatro divisiones. Un solo propósito.</h2>
+        </div>
+        <div class="divisiones__header-right">
+          <p class="divisiones__subheadline" data-reveal>Cada división de MAKOM CAPITAL GROUP fue diseñada para un momento específico del ciclo de vida de su propiedad.</p>
+        </div>
+      </div>
+      <div class="divisiones__grid">
+        <article class="division-card" data-reveal data-reveal-delay="0" aria-labelledby="card-realty-name">
+          <div class="division-card__top-accent" aria-hidden="true"></div>
+          <div class="division-card__body">
+            <span class="division-card__name" id="card-realty-name">MAKOM Properties</span>
+            <span class="division-card__soon-tag">Próximamente</span>
+            <span class="division-card__descriptor">Brokerage y asesoría de patrimonio</span>
+            <p class="division-card__text">Compramos, vendemos y arrendamos propiedades. No como agentes: como asesores de largo plazo.</p>
+            <a href="#propiedades" class="link--arrow division-card__cta">Ver propiedades</a>
+          </div>
+        </article>
+        <article class="division-card" data-reveal data-reveal-delay="100" aria-labelledby="card-services-name">
+          <div class="division-card__top-accent" aria-hidden="true"></div>
+          <div class="division-card__body">
+            <span class="division-card__name" id="card-services-name">MAKOM Services</span>
+            <span class="division-card__soon-tag">Próximamente</span>
+            <span class="division-card__descriptor">Gestión y mantenimiento de propiedades</span>
+            <p class="division-card__text">Custodiamos el valor de su activo con mantenimiento preventivo, remodelaciones y gestión operativa.</p>
+            <a href="#contacto" class="link--arrow division-card__cta">Conocer el servicio</a>
+          </div>
+        </article>
+        <article class="division-card" data-reveal data-reveal-delay="200" aria-labelledby="card-dev-name">
+          <div class="division-card__top-accent" aria-hidden="true"></div>
+          <div class="division-card__body">
+            <span class="division-card__name" id="card-dev-name">MAKOM Development</span>
+            <span class="division-card__soon-tag">Próximamente</span>
+            <span class="division-card__descriptor">Transformación y desarrollo de espacios</span>
+            <p class="division-card__text">Convertimos terrenos, edificios y proyectos en espacios con propósito realizado.</p>
+            <a href="#proyectos" class="link--arrow division-card__cta">Ver proyectos</a>
+          </div>
+        </article>
+        <article class="division-card division-card--dark" data-reveal data-reveal-delay="300" aria-labelledby="card-capital-name">
+          <div class="division-card__body">
+            <span class="division-card__name" id="card-capital-name">MAKOM Capital</span>
+            <span class="division-card__soon-tag">Próximamente</span>
+            <p class="division-card__text">Asesoría estratégica de portafolio inmobiliario para inversionistas. En construcción.</p>
+            <a href="#contacto" class="link--arrow division-card__cta">Registrar interés</a>
+          </div>
+        </article>
+      </div>
+      <div class="divisiones__footer" data-reveal>
+        <a href="#servicios" class="link--arrow">Ver todos los servicios</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICIOS -->
+  <section class="servicios" id="servicios" aria-labelledby="servicios-heading">
+    <div class="container servicios__inner">
+      <div class="servicios__header">
+        <div class="servicios__header-left">
+          <span class="text-label">Servicios</span>
+          <h2 class="servicios__heading" id="servicios-heading" data-reveal>Seis frentes. Un mismo estándar de calidad.</h2>
+        </div>
+        <div class="servicios__header-right">
+          <p class="servicios__subheadline" data-reveal>Coordinamos mantenimiento, remodelación, gestión técnica y administración de propiedad horizontal bajo un mismo estándar — con una red especializada de técnicos y contratistas certificados.</p>
+        </div>
+      </div>
+
+      <div class="servicios__grid">
+        <article class="servicio-card" data-reveal data-reveal-delay="0" aria-labelledby="servicio-mantenimiento-name">
+          <span class="servicio-card__number" aria-hidden="true">01</span>
+          <h3 class="servicio-card__name" id="servicio-mantenimiento-name">Mantenimiento y Mejoras</h3>
+          <p class="servicio-card__text">Preservamos el valor de cada propiedad con intervención técnica en acabados, instalaciones y espacios interiores.</p>
+          <ul class="servicio-card__capacidades" role="list">
+            <li>Acabados, pintura y revestimientos</li>
+            <li>Instalaciones eléctricas e hidráulicas</li>
+            <li>Ebanistería y carpintería a medida</li>
+            <li>Mantenimiento preventivo continuo</li>
+          </ul>
+        </article>
+
+        <article class="servicio-card" data-reveal data-reveal-delay="100" aria-labelledby="servicio-remodelaciones-name">
+          <span class="servicio-card__number" aria-hidden="true">02</span>
+          <h3 class="servicio-card__name" id="servicio-remodelaciones-name">Remodelaciones Integrales</h3>
+          <p class="servicio-card__text">Transformamos espacios residenciales y comerciales de principio a fin, desde el diseño hasta la última terminación.</p>
+          <ul class="servicio-card__capacidades" role="list">
+            <li>Apartamentos y casas completas</li>
+            <li>Cocinas y closets a medida</li>
+            <li>Espacios exteriores y de esparcimiento</li>
+            <li>Acabados y divisiones interiores</li>
+          </ul>
+        </article>
+
+        <article class="servicio-card" data-reveal data-reveal-delay="200" aria-labelledby="servicio-edificios-name">
+          <span class="servicio-card__number" aria-hidden="true">03</span>
+          <h3 class="servicio-card__name" id="servicio-edificios-name">Servicios para Edificios</h3>
+          <p class="servicio-card__text">Cuidamos la fachada y las áreas comunes como un activo que debe conservar su valor en el tiempo.</p>
+          <ul class="servicio-card__capacidades" role="list">
+            <li>Pintura e impermeabilización de fachadas</li>
+            <li>Tratamiento y limpieza en altura</li>
+            <li>Mantenimiento de áreas comunes</li>
+            <li>Servicio post-construcción</li>
+          </ul>
+        </article>
+
+        <article class="servicio-card" data-reveal data-reveal-delay="0" aria-labelledby="servicio-tecnica-name">
+          <span class="servicio-card__number" aria-hidden="true">04</span>
+          <h3 class="servicio-card__name" id="servicio-tecnica-name">Planos, Permisos y Gestión Técnica</h3>
+          <p class="servicio-card__text">Contamos con capacidad técnica propia para acompañar cada trámite ante las autoridades correspondientes.</p>
+          <ul class="servicio-card__capacidades" role="list">
+            <li>Planos arquitectónicos y estructurales</li>
+            <li>Diseño de instalaciones</li>
+            <li>Trámites y permisos de construcción</li>
+            <li>Aprobaciones municipales</li>
+          </ul>
+        </article>
+
+        <article class="servicio-card" data-reveal data-reveal-delay="100" aria-labelledby="servicio-ph-name">
+          <span class="servicio-card__number" aria-hidden="true">05</span>
+          <h3 class="servicio-card__name" id="servicio-ph-name">Administración de PH</h3>
+          <p class="servicio-card__text">Gestionamos la propiedad horizontal con el mismo rigor con el que administramos nuestros propios activos.</p>
+          <ul class="servicio-card__capacidades" role="list">
+            <li>Gestión de áreas comunes</li>
+            <li>Mantenimiento preventivo coordinado</li>
+            <li>Control presupuestario y reportes</li>
+            <li>Atención a copropietarios</li>
+          </ul>
+        </article>
+
+        <article class="servicio-card" data-reveal data-reveal-delay="200" aria-labelledby="servicio-inspeccion-name">
+          <span class="servicio-card__number" aria-hidden="true">06</span>
+          <h3 class="servicio-card__name" id="servicio-inspeccion-name">Inspección de Entrega de Apartamentos</h3>
+          <p class="servicio-card__text">Antes de firmar, verificamos cada detalle técnico para proteger la inversión de nuestros clientes.</p>
+          <ul class="servicio-card__capacidades" role="list">
+            <li>Revisión estructural</li>
+            <li>Instalaciones hidráulicas y eléctricas</li>
+            <li>Puertas, ventanas y acabados</li>
+            <li>Informe técnico con recomendaciones</li>
+          </ul>
+          <a href="#contacto" class="link--arrow servicio-card__cta">Solicitar inspección</a>
+        </article>
+      </div>
+
+      <div class="servicios__closing" data-reveal>
+        <p class="servicios__closing-text">¿Necesita una solución específica para su propiedad?</p>
+        <a href="#contacto" class="btn btn--outline">SOLICITAR ASESORÍA</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIFERENCIADORES -->
+  <section class="diferenciadores" id="diferenciadores" aria-labelledby="dif-heading">
+    <div class="container diferenciadores__inner">
+      <span class="text-label text-label--light">Por qué MAKOM</span>
+      <h2 class="diferenciadores__heading" id="dif-heading" data-reveal>Lo que hace diferente a un guardián del patrimonio.</h2>
+      <div class="diferenciadores__grid">
+        <div class="diferenciador-block" data-reveal data-reveal-delay="0">
+          <h3 class="diferenciador-block__title">Integración de origen, no de fusión</h3>
+          <hr class="diferenciador-block__rule" aria-hidden="true" />
+          <p class="diferenciador-block__text">MAKOM no es el resultado de unir un broker con un proveedor de mantenimiento. Nació integrado: sus fundadores traen la doble experiencia desde el primer día. El asesor que negocia su propiedad entiende lo que cuesta mantenerla. Y el equipo que la mantiene entiende su valor comercial.</p>
+        </div>
+        <div class="diferenciador-block" data-reveal data-reveal-delay="100">
+          <h3 class="diferenciador-block__title">El contrato no es el fin</h3>
+          <hr class="diferenciador-block__rule" aria-hidden="true" />
+          <p class="diferenciador-block__text">En la mayoría de las transacciones inmobiliarias, la firma del contrato es el último punto de contacto con el agente. En MAKOM, es el primero. La relación con nuestros clientes se construye en el tiempo que pasa después del cierre — no en el que pasa antes.</p>
+        </div>
+        <div class="diferenciador-block" data-reveal data-reveal-delay="200">
+          <h3 class="diferenciador-block__title">Conocimiento local, estándares internacionales</h3>
+          <hr class="diferenciador-block__rule" aria-hidden="true" />
+          <p class="diferenciador-block__text">Entendemos el mercado panameño con la profundidad que solo da la práctica de años en el territorio. Al mismo tiempo, construimos la empresa bajo los estándares de gestión de los grupos inmobiliarios internacionales de referencia.</p>
+        </div>
+        <div class="diferenciador-block" data-reveal data-reveal-delay="300">
+          <h3 class="diferenciador-block__title">Una empresa para todo el ciclo de vida</h3>
+          <hr class="diferenciador-block__rule" aria-hidden="true" />
+          <p class="diferenciador-block__text">No tiene que coordinar a cinco proveedores distintos para gestionar una propiedad. MAKOM cubre desde la búsqueda inicial hasta el mantenimiento de largo plazo. Un solo interlocutor. Un solo estándar. Sin fisuras entre etapas.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROPIEDADES -->
+  <section class="propiedades" id="propiedades" aria-labelledby="prop-heading">
+    <div class="container propiedades__inner">
+      <div class="propiedades__header">
+        <span class="text-label">Propiedades Disponibles</span>
+        <h2 class="propiedades__heading" id="prop-heading" data-reveal>Propiedades seleccionadas. No un catálogo — una curaduría.</h2>
+        <p class="propiedades__subheadline" data-reveal>Cada propiedad en MAKOM fue evaluada antes de ser publicada.</p>
+      </div>
+      <div class="prop-filters" role="tablist" aria-label="Filtrar propiedades">
+        <button class="filter-tab filter-tab--active" role="tab" aria-selected="true" data-filter="all">Todos</button>
+        <button class="filter-tab" role="tab" aria-selected="false" data-filter="venta">Venta</button>
+        <button class="filter-tab" role="tab" aria-selected="false" data-filter="alquiler">Alquiler</button>
+        <button class="filter-tab" role="tab" aria-selected="false" data-filter="comercial">Comercial</button>
+        <button class="filter-tab" role="tab" aria-selected="false" data-filter="residencial">Residencial</button>
+      </div>
+      <div class="propiedades__grid" role="list" aria-live="polite" aria-label="Listado de propiedades">
+        <article class="property-card" data-type="venta residencial" role="listitem" aria-labelledby="prop1-name" data-reveal data-reveal-delay="0">
+          <div class="property-card__image" style="background-color:#2a2a2a" aria-hidden="true">
+            <div class="property-card__badges">
+              <span class="property-card__type">Venta</span>
+              <span class="property-card__category">Residencial</span>
+            </div>
+          </div>
+          <div class="property-card__body">
+            <h3 class="property-card__name" id="prop1-name">Apartamento en Costa del Este</h3>
+            <span class="division-card__soon-tag">Próximamente</span>
+            <p class="property-card__location">Costa del Este, Ciudad de Panamá</p>
+            <p class="property-card__specs">3 hab · 2 baños · 125 m²</p>
+            <a href="#contacto" class="link--arrow property-card__cta">Disponible próximamente</a>
+          </div>
+        </article>
+        <article class="property-card" data-type="alquiler comercial" role="listitem" aria-labelledby="prop2-name" data-reveal data-reveal-delay="100">
+          <div class="property-card__image" style="background-color:#1e1e1e" aria-hidden="true">
+            <div class="property-card__badges">
+              <span class="property-card__type">Alquiler</span>
+              <span class="property-card__category">Comercial</span>
+            </div>
+          </div>
+          <div class="property-card__body">
+            <h3 class="property-card__name" id="prop2-name">Oficina Premium en Marbella</h3>
+            <span class="division-card__soon-tag">Próximamente</span>
+            <p class="property-card__location">Marbella, Ciudad de Panamá</p>
+            <p class="property-card__specs">120 m²</p>
+            <a href="#contacto" class="link--arrow property-card__cta">Disponible próximamente</a>
+          </div>
+        </article>
+        <article class="property-card" data-type="venta residencial" role="listitem" aria-labelledby="prop3-name" data-reveal data-reveal-delay="200">
+          <div class="property-card__image" style="background-color:#252525" aria-hidden="true">
+            <div class="property-card__badges">
+              <span class="property-card__type">Venta</span>
+              <span class="property-card__category">Residencial</span>
+            </div>
+          </div>
+          <div class="property-card__body">
+            <h3 class="property-card__name" id="prop3-name">Penthouse en San Francisco</h3>
+            <span class="division-card__soon-tag">Próximamente</span>
+            <p class="property-card__location">San Francisco, Ciudad de Panamá</p>
+            <p class="property-card__specs">4 hab · 3 baños · 220 m²</p>
+            <a href="#contacto" class="link--arrow property-card__cta">Disponible próximamente</a>
+          </div>
+        </article>
+      </div>
+      <div class="propiedades__footer" data-reveal>
+        <a href="#propiedades" class="btn btn--outline">VER TODAS LAS PROPIEDADES</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROYECTOS -->
+  <section class="proyectos" id="proyectos" aria-labelledby="proy-heading">
+    <div class="container proyectos__inner">
+      <div class="proyectos__header">
+        <span class="text-label">Proyectos</span>
+        <h2 class="proyectos__heading" id="proy-heading" data-reveal>Lo que somos capaces de hacer lo demuestra lo que ya hicimos.</h2>
+      </div>
+      <div class="proyectos__grid">
+        <article class="proyecto-card proyecto-card--large" aria-labelledby="proy1-name" data-reveal data-reveal-delay="0">
+          <div class="proyecto-card__image" style="background-color:#1a1a1a" aria-hidden="true">
+            <div class="proyecto-card__image-inner"></div>
+          </div>
+          <div class="proyecto-card__body">
+            <h3 class="proyecto-card__name" id="proy1-name">Remodelación Integral · San Francisco</h3>
+            <span class="division-card__soon-tag">Próximamente</span>
+            <p class="proyecto-card__desc">Transformación completa de apartamento de 180m² con selección de materiales nobles, actualización de sistemas e intervención arquitectónica.</p>
+            <a href="#contacto" class="link--arrow proyecto-card__cta">Disponible próximamente</a>
+          </div>
+        </article>
+        <div class="proyectos__small-grid">
+          <article class="proyecto-card proyecto-card--small" aria-labelledby="proy2-name" data-reveal data-reveal-delay="100">
+            <div class="proyecto-card__image" style="background-color:#222222" aria-hidden="true">
+              <div class="proyecto-card__image-inner"></div>
+            </div>
+            <div class="proyecto-card__body">
+              <h3 class="proyecto-card__name" id="proy2-name">Gestión de Portafolio · Obarrio</h3>
+              <span class="division-card__soon-tag">Próximamente</span>
+              <p class="proyecto-card__desc">Administración integral de 12 unidades comerciales con optimización de contratos y rentabilidad.</p>
+              <a href="#contacto" class="link--arrow proyecto-card__cta">Disponible próximamente</a>
+            </div>
+          </article>
+          <article class="proyecto-card proyecto-card--small" aria-labelledby="proy3-name" data-reveal data-reveal-delay="200">
+            <div class="proyecto-card__image" style="background-color:#1e1e1e" aria-hidden="true">
+              <div class="proyecto-card__image-inner"></div>
+            </div>
+            <div class="proyecto-card__body">
+              <h3 class="proyecto-card__name" id="proy3-name">Desarrollo Residencial · Costa del Este</h3>
+              <span class="division-card__soon-tag">Próximamente</span>
+              <p class="proyecto-card__desc">Transformación de espacio industrial en 6 unidades residenciales de alto estándar.</p>
+              <a href="#contacto" class="link--arrow proyecto-card__cta">Disponible próximamente</a>
+            </div>
+          </article>
+        </div>
+      </div>
+      <div class="proyectos__footer" data-reveal>
+        <a href="#proyectos" class="link--arrow">Ver todos los proyectos</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- PERSPECTIVAS -->
+  <section class="perspectivas" id="perspectivas" aria-labelledby="persp-heading">
+    <div class="container perspectivas__inner">
+      <div class="perspectivas__col-left">
+        <span class="text-label">Perspectivas</span>
+        <h2 class="perspectivas__heading" id="persp-heading" data-reveal>Pensamos antes de actuar. Aquí compartimos lo que pensamos.</h2>
+        <a href="#perspectivas" class="link--arrow perspectivas__all-link" data-reveal>Ver todas las perspectivas</a>
+      </div>
+      <div class="perspectivas__col-right">
+        <article class="article-card" aria-labelledby="art1-title" data-reveal data-reveal-delay="0">
+          <div class="article-card__meta">
+            <span class="article-card__category">Mercado</span>
+          </div>
+          <h3 class="article-card__title" id="art1-title">Análisis del mercado inmobiliario en Panamá</h3>
+          <span class="division-card__soon-tag">Próximamente</span>
+          <p class="article-card__extract">Un espacio dedicado a analizar el comportamiento del mercado inmobiliario panameño y los factores que influyen en el valor de los activos a lo largo del tiempo.</p>
+          <a href="#perspectivas" class="link--arrow article-card__cta">Disponible próximamente</a>
+        </article>
+        <hr class="perspectivas__divider" aria-hidden="true" />
+        <article class="article-card" aria-labelledby="art2-title" data-reveal data-reveal-delay="100">
+          <div class="article-card__meta">
+            <span class="article-card__category">Inversión</span>
+          </div>
+          <h3 class="article-card__title" id="art2-title">Guías para inversionistas</h3>
+          <span class="division-card__soon-tag">Próximamente</span>
+          <p class="article-card__extract">Contenido orientado a quienes evalúan una inversión inmobiliaria: criterios, variables y marcos de análisis para tomar decisiones informadas.</p>
+          <a href="#perspectivas" class="link--arrow article-card__cta">Disponible próximamente</a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACTO -->
+  <section class="contacto" id="contacto" aria-labelledby="contact-heading">
+    <div class="contacto__bg-symbol" aria-hidden="true">
+      <!-- Símbolo oficial El Centro MAKOM CAPITAL GROUP — versión negativa (sin fondo) -->
+      <img src="assets/logos/makom-capital-group-symbol-negativo.svg" alt="" aria-hidden="true" />
+    </div>
+    <div class="container contacto__inner">
+      <div class="contacto__col-left">
+        <span class="text-label text-label--light">Comenzar</span>
+        <h2 class="contacto__heading" id="contact-heading" data-reveal>Una conversación es el primer paso.</h2>
+        <p class="contacto__desc" data-reveal>Sin compromiso. Sin presión. Con toda la atención que su caso merece.</p>
+        <hr class="contacto__rule" aria-hidden="true" />
+        <p class="contacto__direct-label">O contactar directamente:</p>
+        <ul class="contacto__links" role="list">
+          <li>
+            <a href="https://wa.me/50763534377" class="contact-link" aria-label="WhatsApp: +507 6353-4377">
+              <svg class="contact-link__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" fill="currentColor"/>
+              </svg>
+              <span>+507 6353-4377</span>
+            </a>
+          </li>
+          <li>
+            <a href="mailto:gerencia@makomgrp.com" class="contact-link" aria-label="Email: gerencia@makomgrp.com">
+              <svg class="contact-link__icon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" fill="currentColor"/>
+              </svg>
+              <span>gerencia@makomgrp.com</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+      <div class="contacto__col-right">
+        <form class="contact-form" id="contact-form" novalidate aria-label="Formulario de contacto">
+          <div class="contact-form__success" id="form-success" aria-live="polite" aria-hidden="true">
+            <p class="contact-form__success-title">Un paso más para enviarlo.</p>
+            <p class="contact-form__success-text">Se abrió su cliente de correo con el mensaje precargado — solo confirme el envío. Si no se abrió automáticamente, escríbanos a gerencia@makomgrp.com o por WhatsApp al +507 6353-4377. Gracias por su interés en MAKOM CAPITAL GROUP.</p>
+          </div>
+          <div class="contact-form__fields" id="form-fields">
+            <div class="form-field">
+              <label class="form-field__label" for="field-nombre">Nombre completo</label>
+              <input class="form-field__input" type="text" id="field-nombre" name="nombre" autocomplete="name" required aria-required="true" aria-describedby="field-nombre-error" />
+              <span class="form-field__error" id="field-nombre-error" role="alert" aria-live="polite"></span>
+            </div>
+            <div class="form-field">
+              <label class="form-field__label" for="field-email">Correo electrónico</label>
+              <input class="form-field__input" type="email" id="field-email" name="email" autocomplete="email" required aria-required="true" aria-describedby="field-email-error" />
+              <span class="form-field__error" id="field-email-error" role="alert" aria-live="polite"></span>
+            </div>
+            <div class="form-field">
+              <label class="form-field__label" for="field-telefono">Teléfono / WhatsApp</label>
+              <input class="form-field__input" type="tel" id="field-telefono" name="telefono" autocomplete="tel" aria-describedby="field-telefono-error" />
+              <span class="form-field__error" id="field-telefono-error" role="alert" aria-live="polite"></span>
+            </div>
+            <div class="form-field">
+              <label class="form-field__label" for="field-servicio">¿Qué necesita?</label>
+              <select class="form-field__input form-field__select" id="field-servicio" name="servicio" required aria-required="true" aria-describedby="field-servicio-error">
+                <option value="" disabled selected>Seleccionar...</option>
+                <option value="comprar">Comprar una propiedad</option>
+                <option value="vender">Vender o alquilar mi propiedad</option>
+                <option value="mantenimiento">Mantenimiento o gestión operativa</option>
+                <option value="desarrollar">Desarrollar o remodelar un espacio</option>
+                <option value="inversion">Asesoría de inversión</option>
+                <option value="otra">Otra consulta</option>
+              </select>
+              <span class="form-field__error" id="field-servicio-error" role="alert" aria-live="polite"></span>
+            </div>
+            <button class="btn btn--submit" type="submit" id="form-submit">
+              <span class="btn__label">INICIAR CONVERSACIÓN</span>
+              <span class="btn__loading" aria-hidden="true">Enviando...</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer" role="contentinfo">
+  <div class="container footer__inner">
+    <div class="footer__brand">
+      <a href="/" class="footer__logo" aria-label="MAKOM CAPITAL GROUP — Inicio">
+        <!-- Logo oficial negativo MAKOM CAPITAL GROUP (sin fondo) — sobre fondo oscuro del footer -->
+        <img class="footer__logo-svg" src="assets/logos/makom-capital-group-logo-negativo.svg" alt="" aria-hidden="true" />
+      </a>
+      <p class="footer__tagline">Donde cada espacio tiene propósito.</p>
+    </div>
+    <nav class="footer__nav" aria-label="Navegación del pie de página">
+      <div class="footer__nav-col">
+        <h3 class="footer__nav-heading">MAKOM CAPITAL GROUP</h3>
+        <ul class="footer__nav-list" role="list">
+          <li><a href="#grupo" class="footer__nav-link">El Grupo</a></li>
+          <li><a href="#grupo" class="footer__nav-link">Historia</a></li>
+          <li><a href="#grupo" class="footer__nav-link">Filosofía</a></li>
+          <li><a href="#grupo" class="footer__nav-link">Valores</a></li>
+          <li><a href="#grupo" class="footer__nav-link">Arquitectura de empresa</a></li>
+        </ul>
+      </div>
+      <div class="footer__nav-col">
+        <h3 class="footer__nav-heading">Servicios</h3>
+        <ul class="footer__nav-list" role="list">
+          <li><a href="#propiedades" class="footer__nav-link">MAKOM Properties</a></li>
+          <li><a href="#servicios" class="footer__nav-link">MAKOM Services</a></li>
+          <li><a href="#proyectos" class="footer__nav-link">MAKOM Development</a></li>
+          <li><a href="#contacto" class="footer__nav-link">MAKOM Capital</a></li>
+        </ul>
+      </div>
+      <div class="footer__nav-col">
+        <h3 class="footer__nav-heading">Explorar</h3>
+        <ul class="footer__nav-list" role="list">
+          <li><a href="#propiedades" class="footer__nav-link">Propiedades</a></li>
+          <li><a href="#proyectos" class="footer__nav-link">Proyectos</a></li>
+          <li><a href="#perspectivas" class="footer__nav-link">Perspectivas</a></li>
+          <li><a href="#contacto" class="footer__nav-link">Contacto</a></li>
+        </ul>
+      </div>
+    </nav>
+  </div>
+  <div class="footer__bottom">
+    <div class="container footer__bottom-inner">
+      <p class="footer__copy">© 2026 MAKOM CAPITAL GROUP. Todos los derechos reservados.</p>
+      <div class="footer__legal">
+        <a href="aviso-legal.html" class="footer__legal-link">Aviso Legal</a>
+        <a href="privacidad.html" class="footer__legal-link">Privacidad</a>
+      </div>
+      <div class="footer__social" aria-label="Redes sociales">
+        <a href="https://wa.me/50763534377" class="footer__social-link" aria-label="WhatsApp de MAKOM CAPITAL GROUP">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" fill="currentColor"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- BOTÓN FLOTANTE DE CONTACTO -->
+<div class="floating-contact" id="floating-contact">
+  <button type="button" class="floating-contact__button" id="floating-contact-toggle" aria-expanded="false" aria-haspopup="true" aria-controls="floating-contact-panel" aria-label="Iniciar conversación con MAKOM CAPITAL GROUP">
+    <span class="floating-contact__label floating-contact__label--full" aria-hidden="true">Iniciar conversación</span>
+    <span class="floating-contact__label floating-contact__label--short" aria-hidden="true">Contactar</span>
+  </button>
+  <div class="floating-contact__panel" id="floating-contact-panel" role="region" aria-label="Opciones de contacto" aria-hidden="true">
+    <p class="floating-contact__prompt">¿Cómo desea contactarnos?</p>
+    <a href="https://wa.me/50763534377" class="floating-contact__option" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+    <a href="mailto:gerencia@makomgrp.com" class="floating-contact__option">Correo</a>
+    <a href="#contacto" class="floating-contact__option" id="floating-contact-form-link">Formulario</a>
+  </div>
+</div>
+
+<script src="script.js" defer></script>
+</body>
+</html>
