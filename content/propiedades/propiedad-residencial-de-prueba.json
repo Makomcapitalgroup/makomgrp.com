@@ -10,8 +10,8 @@
   "tipo": "apartamento",
   "categoriaGeneral": "residencial",
 
-  "mostrarEnHome": false,
-  "ordenHome": null,
+  "mostrarEnHome": true,
+  "ordenHome": 1,
 
   "precio": {
     "monto": 285000,

@@ -3066,3 +3066,20 @@ body.hero--loaded .hero__subheadline {
   font-weight: var(--font-weight-light);
   color: var(--color-negro-70);
 }
+
+/* 30. PROPIEDADES DESTACADAS — HOME
+   ============================================================= */
+
+/* Estado sobrio de #propiedades-grid: es el HTML de partida (visible
+   si JavaScript está desactivado o el feed aún no cargó) y también
+   el resultado final si /data/propiedades-destacadas.json no tiene
+   ninguna propiedad que mostrar. script.js lo reemplaza con tarjetas
+   reales cuando hay destacadas disponibles — ver sección 15. */
+.propiedades__vacio-texto {
+  grid-column: 1 / -1;
+  padding-block: 48px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: var(--font-weight-light);
+  color: var(--color-negro-70);
+}

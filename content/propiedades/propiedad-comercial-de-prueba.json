@@ -10,8 +10,8 @@
   "tipo": "local-comercial",
   "categoriaGeneral": "comercial",
 
-  "mostrarEnHome": false,
-  "ordenHome": null,
+  "mostrarEnHome": true,
+  "ordenHome": 2,
 
   "precio": {
     "monto": 1800,

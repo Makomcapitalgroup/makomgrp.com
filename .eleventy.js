@@ -126,6 +126,50 @@ module.exports = function (eleventyConfig) {
     };
   });
 
+  // Milestone 5: selecciona hasta 3 propiedades destacadas para el
+  // Home (disponible/reservada + mostrarEnHome=true), ordenadas por
+  // ordenHome ascendente (las que no lo tienen quedan al final,
+  // ordenadas entre sí por fechaPublicacion descendente — fechaCreacion
+  // como respaldo). Devuelve únicamente los campos públicos que
+  // consume la tarjeta del Home — nunca datos internos/administrativos.
+  eleventyConfig.addFilter("propiedadesDestacadas", (lista) => {
+    const fechaOrden = (p) =>
+      (p.metadatos && (p.metadatos.fechaPublicacion || p.metadatos.fechaCreacion)) || "";
+    const destacadas = (lista || []).filter(
+      (p) => (p.estado === "disponible" || p.estado === "reservada") && p.mostrarEnHome === true
+    );
+    destacadas.sort((a, b) => {
+      const aOrden = typeof a.ordenHome === "number" ? a.ordenHome : null;
+      const bOrden = typeof b.ordenHome === "number" ? b.ordenHome : null;
+      if (aOrden !== null && bOrden !== null && aOrden !== bOrden) return aOrden - bOrden;
+      if (aOrden !== null && bOrden === null) return -1;
+      if (aOrden === null && bOrden !== null) return 1;
+      return fechaOrden(b).localeCompare(fechaOrden(a));
+    });
+    return destacadas.slice(0, 3).map((p) => {
+      const galeria = (p.fotografias && p.fotografias.galeria) || [];
+      const portada = galeria.find((f) => f.portada) || galeria[0] || null;
+      const d = p.detallesCuantitativos || {};
+      return {
+        referenciaMakom: p.referenciaMakom,
+        slug: p.slug,
+        titulo: p.titulo,
+        estado: p.estado,
+        operacion: p.operacion,
+        categoriaGeneral: p.categoriaGeneral,
+        ubicacionPublica: p.ubicacionPublica,
+        precio: p.precio,
+        detalles: {
+          habitaciones: d.habitaciones != null ? d.habitaciones : null,
+          banos: d.banos != null ? d.banos : null,
+          estacionamientos: d.estacionamientos != null ? d.estacionamientos : null,
+          metrajeInterno: d.metrajeInterno != null ? d.metrajeInterno : null,
+        },
+        portada: portada ? { archivo: portada.archivo, alt: portada.alt || p.titulo } : null,
+      };
+    });
+  });
+
   return {
     // Sin formatos de plantilla activos todavía: no hay .njk/.md en el
     // proyecto en este milestone, por lo que ningún .html existente es

@@ -10,8 +10,8 @@
   "tipo": "casa",
   "categoriaGeneral": "residencial",
 
-  "mostrarEnHome": false,
-  "ordenHome": null,
+  "mostrarEnHome": true,
+  "ordenHome": 3,
 
   "precio": {
     "monto": 450000,
