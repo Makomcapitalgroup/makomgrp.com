@@ -3272,3 +3272,29 @@ body.hero--loaded .hero__subheadline {
     height: 240px;
   }
 }
+
+/* 33. BREADCRUMB — FICHA INDIVIDUAL (Milestone 9)
+   ============================================================= */
+
+.ficha-propiedad__breadcrumb {
+  display: block;
+  margin-bottom: 20px;
+  font-size: 13px;
+  font-weight: var(--font-weight-light);
+  color: var(--color-negro);
+  opacity: 0.55;
+}
+
+.ficha-propiedad__breadcrumb a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.ficha-propiedad__breadcrumb a:hover {
+  color: var(--color-terracota);
+  opacity: 1;
+}
+
+.ficha-propiedad__breadcrumb [aria-current="page"] {
+  color: var(--color-negro);
+}

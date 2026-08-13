@@ -1,8 +1,29 @@
 const fs = require("fs");
 const path = require("path");
+const { execSync } = require("child_process");
 const yaml = require("js-yaml");
 const { eleventyImageTransformPlugin } = require("@11ty/eleventy-img");
 const Image = require("@11ty/eleventy-img").default;
+
+// Milestone 9: fecha real de última modificación de un archivo, tomada
+// del historial de git (fecha del último commit que lo tocó) — nunca
+// la fecha del build. Google trata <lastmod> del sitemap como señal de
+// confianza solo si es consistentemente real; una fecha fabricada en
+// cada build (ej. "hoy") sería peor que no incluir <lastmod>. Devuelve
+// null si el archivo no tiene historial de git todavía (ej. contenido
+// nuevo sin commitear) — la plantilla debe omitir <lastmod> en ese caso,
+// nunca inventar un valor de respaldo.
+function fechaModificacionGit(rutaRelativaDesdeRaiz) {
+  try {
+    const salida = execSync(`git log -1 --format=%cI -- "${rutaRelativaDesdeRaiz}"`, {
+      cwd: __dirname,
+      encoding: "utf8",
+    }).trim();
+    return salida || null;
+  } catch {
+    return null;
+  }
+}
 
 // Compara las opciones de los campos "detalles" y "amenidades" en
 // admin/config.yml contra las listas canónicas de
@@ -49,13 +70,15 @@ module.exports = function (eleventyConfig) {
   // Milestone 1: andamiaje delimitado. Eleventy solo copia el sitio actual
   // tal cual (passthrough), sin procesarlo como plantilla. Nada se
   // transforma, reestructura ni recibe front matter todavía.
+  // Milestone 9: "sitemap.xml" deja de copiarse tal cual — pasa a
+  // generarse dinámicamente en cada build (ver content/sitemap.njk),
+  // por lo que ya no aparece en esta lista de passthrough.
   eleventyConfig.addPassthroughCopy("index.html");
   eleventyConfig.addPassthroughCopy("aviso-legal.html");
   eleventyConfig.addPassthroughCopy("privacidad.html");
   eleventyConfig.addPassthroughCopy("styles.css");
   eleventyConfig.addPassthroughCopy("script.js");
   eleventyConfig.addPassthroughCopy("robots.txt");
-  eleventyConfig.addPassthroughCopy("sitemap.xml");
   eleventyConfig.addPassthroughCopy("CNAME");
   eleventyConfig.addPassthroughCopy("assets");
   eleventyConfig.addPassthroughCopy("MAKOM_Logo_Files_v4.0");
@@ -118,17 +141,32 @@ module.exports = function (eleventyConfig) {
   // "{{slug}}"` a nivel de colección. Derivarlo del nombre de archivo
   // elimina esa fuente de datos inconsistente en vez de depender de un
   // campo que podría no coincidir con la URL real generada.
-  eleventyConfig.addCollection("propiedades", () => {
+  // Milestone 9: se vuelve asíncrona para poder precalcular, una sola
+  // vez por propiedad, la variante optimizada de la imagen social
+  // (Open Graph) — igual que ya se hace para el feed de destacadas del
+  // Home. También adjunta "_archivoRelativo" (ruta del JSON fuente,
+  // relativa a la raíz del repo) para poder consultar su fecha real de
+  // modificación en git al construir sitemap.xml. Ambos campos llevan
+  // un guion bajo inicial para señalar que son de uso interno de build
+  // — nunca se vuelcan tal cual a un feed público (los feeds públicos
+  // siempre construyen su propio objeto explícito, campo por campo).
+  eleventyConfig.addCollection("propiedades", async () => {
     const dir = path.join(__dirname, "content", "propiedades");
     if (!fs.existsSync(dir)) return [];
-    return fs
-      .readdirSync(dir)
-      .filter((archivo) => archivo.endsWith(".json"))
-      .map((archivo) => {
+    const archivos = fs.readdirSync(dir).filter((archivo) => archivo.endsWith(".json"));
+    return Promise.all(
+      archivos.map(async (archivo) => {
         const datos = JSON.parse(fs.readFileSync(path.join(dir, archivo), "utf8"));
         datos.slug = path.basename(archivo, ".json");
+        datos._archivoRelativo = path.join("content", "propiedades", archivo);
+        const galeria = (datos.fotografias && datos.fotografias.galeria) || [];
+        const portada = galeria.find((f) => f.portada) || galeria[0] || null;
+        const origenImagenSocial = (datos.seo && datos.seo.imagenSocial) || (portada && portada.archivo) || null;
+        const variante = await generarVarianteOptimizada(origenImagenSocial, { formatos: ["jpeg"], anchos: [1200] });
+        datos._imagenOgUrl = variante ? variante.archivo : null;
         return datos;
-      });
+      })
+    );
   });
 
   // Milestone 6: valida, en cada build, que las listas de "detalles" y
@@ -244,6 +282,122 @@ module.exports = function (eleventyConfig) {
     };
   });
 
+  // Milestone 9: regla definitiva de indexabilidad de una propiedad.
+  // Solo "disponible" y sin seo.noIndex forzado. "Reservada" queda
+  // deliberadamente FUERA de esta regla (cambio respecto al Milestone 3,
+  // que sí la incluía): es un estado transitorio — la propiedad puede
+  // volver a "disponible" o pasar a "vendida"/"alquilada" en cualquier
+  // momento — indexar temporalmente algo que pronto deja de poder
+  // transaccionarse introduce ruido de posicionamiento sin beneficio
+  // real. La página sigue siendo generada y accesible (nunca se borra
+  // ni se redirige), solo no se ofrece a los buscadores mientras dure
+  // ese estado. "Vendida"/"alquilada"/"borrador"/"archivada" tampoco
+  // son indexables por la misma regla (no son "disponible").
+  eleventyConfig.addFilter("esPropiedadIndexable", (propiedad) => {
+    return propiedad.estado === "disponible" && !(propiedad.seo && propiedad.seo.noIndex);
+  });
+
+  // Milestone 9 (ajuste de cierre): valor completo de <meta name="robots">
+  // por propiedad. No es un simple index/noindex binario — "reservada",
+  // "vendida" y "alquilada" siguen siendo páginas públicas válidas con
+  // navegación interna útil (CTA, enlaces al catálogo, etc.), así que se
+  // les permite "follow" aunque no sean indexables. "Disponible" con
+  // seo.noIndex forzado y "borrador"/"archivada" sí bloquean "follow" —
+  // son estados sin intención de exposición pública real.
+  eleventyConfig.addFilter("robotsMetaDe", (propiedad) => {
+    const esIndexable = propiedad.estado === "disponible" && !(propiedad.seo && propiedad.seo.noIndex);
+    if (esIndexable) return "index, follow";
+    const permiteFollow = ["reservada", "vendida", "alquilada"].includes(propiedad.estado);
+    return permiteFollow ? "noindex, follow" : "noindex, nofollow";
+  });
+
+  // Milestone 9: propiedades indexables reales, para sitemap.xml.
+  eleventyConfig.addFilter("propiedadesIndexables", (lista) => {
+    return (lista || []).filter((p) => p.estado === "disponible" && !(p.seo && p.seo.noIndex));
+  });
+
+  // Milestone 9: el catálogo (/propiedades/) se vuelve indexable de
+  // forma automática en cuanto exista AL MENOS UNA propiedad indexable
+  // real — Loyra/Yurlio nunca necesitan alternar esto a mano. Mientras
+  // el inventario público sea exclusivamente contenido de prueba (todo
+  // con seo.noIndex:true) o no exista ninguna propiedad "disponible"
+  // publicable, el catálogo permanece noindex.
+  eleventyConfig.addFilter("catalogoEsIndexable", (lista) => {
+    return (lista || []).some((p) => p.estado === "disponible" && !(p.seo && p.seo.noIndex));
+  });
+
+  // Milestone 9: fecha real de última modificación de un archivo
+  // (ruta relativa a la raíz del repo), para <lastmod> del sitemap.
+  // Devuelve null si no hay historial de git — la plantilla omite
+  // <lastmod> en ese caso en vez de fabricar una fecha.
+  eleventyConfig.addFilter("lastmodDeArchivo", (rutaRelativa) => {
+    if (!rutaRelativa) return null;
+    return fechaModificacionGit(rutaRelativa);
+  });
+
+  // Milestone 9: JSON-LD schema.org para la ficha de propiedad —
+  // RealEstateListing con una Offer anidada. Se investigó si existe un
+  // "rich result" dedicado de Google para listados inmobiliarios: no lo
+  // hay (2026); RealEstateListing/RealEstateAgent son tipos válidos de
+  // schema.org que buscadores y sistemas de IA sí pueden leer para
+  // entender el contenido, pero no producen ninguna presentación
+  // especial garantizada en el SERP. Se agrega de todos modos por ser
+  // información real, correcta y sin costo de mantenimiento — nunca
+  // para perseguir un resultado enriquecido inexistente.
+  // "businessFunction" distingue explícitamente venta de alquiler para
+  // no representar un alquiler como una venta. La dirección solo usa
+  // ubicacionPublica (nunca direccionInterna) y, si hay mapa activo,
+  // "geo" usa EXACTAMENTE las mismas coordenadas ya redondeadas/públicas
+  // que ve el mapa Leaflet — nunca coordenadas más precisas.
+  eleventyConfig.addFilter("jsonLdPropiedad", (propiedad, mapaPublico, urlCanonica, imagenAbsoluta) => {
+    const esAlquiler = propiedad.operacion === "alquiler";
+    const ld = {
+      "@context": "https://schema.org",
+      "@type": "RealEstateListing",
+      name: propiedad.titulo,
+      url: urlCanonica,
+      description: (propiedad.seo && propiedad.seo.descripcion) || propiedad.descripcion || undefined,
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: propiedad.ubicacionPublica,
+        addressCountry: "PA",
+      },
+    };
+    if (imagenAbsoluta) ld.image = imagenAbsoluta;
+    if (mapaPublico) {
+      ld.geo = {
+        "@type": "GeoCoordinates",
+        latitude: mapaPublico.lat,
+        longitude: mapaPublico.lng,
+      };
+    }
+    if (propiedad.precio && typeof propiedad.precio.monto === "number") {
+      ld.offers = {
+        "@type": "Offer",
+        price: propiedad.precio.monto,
+        priceCurrency: propiedad.precio.moneda || "USD",
+        businessFunction: esAlquiler
+          ? "http://purl.org/goodrelations/v1#LeaseOut"
+          : "http://purl.org/goodrelations/v1#Sell",
+        availability: "https://schema.org/InStock",
+      };
+    }
+    return ld;
+  });
+
+  // Milestone 9: BreadcrumbList JSON-LD acompañando al breadcrumb visual
+  // "Propiedades / [Título]" de la ficha.
+  eleventyConfig.addFilter("jsonLdBreadcrumb", (propiedad, urlCanonica) => {
+    return {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Propiedades", item: "https://makomgrp.com/propiedades/" },
+        { "@type": "ListItem", position: 2, name: propiedad.titulo, item: urlCanonica },
+      ],
+    };
+  });
+
   // Milestone 4: propiedades visibles en el catálogo público —
   // solo "disponible" y "reservada" — ordenadas por fechaPublicacion
   // descendente (fechaCreacion como respaldo si aún no tiene fecha
@@ -281,25 +435,26 @@ module.exports = function (eleventyConfig) {
     };
   });
 
-  // Milestone 7: genera una única variante optimizada (WebP, 800px) de
-  // una fotografía original, para usarse en /data/propiedades-destacadas.json.
-  // Es necesaria porque ese feed lo consume script.js en el navegador —
-  // nunca pasa por el "Image HTML Transform" (que solo post-procesa el
-  // HTML que Eleventy ya generó), así que sin este paso el Home cargaría
-  // la fotografía ORIGINAL sin optimizar. Una sola variante (no un
-  // srcset completo) alcanza para una tarjeta pequeña y mantiene el
-  // feed simple.
-  async function optimizarPortadaParaFeed(portada) {
-    if (!portada || !portada.archivo) return null;
-    const rutaOriginal = path.join(__dirname, portada.archivo.replace(/^\//, ""));
+  // Milestone 7 (ampliado en Milestone 9): genera una única variante
+  // optimizada de una imagen original, para los casos en que la imagen
+  // NO pasa por el "Image HTML Transform" (que solo post-procesa <img>
+  // dentro del HTML que Eleventy ya generó). Dos consumidores comparten
+  // esta misma función: el feed /data/propiedades-destacadas.json que
+  // lee script.js (WebP 800px, Milestone 7) y la imagen Open Graph de
+  // cada ficha (JPEG 1200px, Milestone 9 — og:image no es un <img>, es
+  // el valor de un <meta content="...">, así que el transform tampoco
+  // lo alcanzaría aunque estuviera en una página generada).
+  async function generarVarianteOptimizada(rutaPublica, { formatos, anchos }) {
+    if (!rutaPublica) return null;
+    const rutaOriginal = path.join(__dirname, rutaPublica.replace(/^\//, ""));
     if (!fs.existsSync(rutaOriginal)) return null;
     const stats = await Image(rutaOriginal, {
-      formats: ["webp"],
-      widths: [800],
+      formats: formatos,
+      widths: anchos,
       outputDir: "_site/assets/propiedades/_optimizadas/",
       urlPath: "/assets/propiedades/_optimizadas/",
     });
-    const variante = stats.webp[0];
+    const variante = stats[formatos[0]][0];
     return { archivo: variante.url, ancho: variante.width, alto: variante.height };
   }
 
@@ -333,7 +488,10 @@ module.exports = function (eleventyConfig) {
         const alt = portadaOriginal
           ? portadaOriginal.alt || [p.titulo, p.ubicacionPublica].filter(Boolean).join(", ")
           : null;
-        const portadaOptimizada = await optimizarPortadaParaFeed(portadaOriginal);
+        const portadaOptimizada = await generarVarianteOptimizada(portadaOriginal && portadaOriginal.archivo, {
+          formatos: ["webp"],
+          anchos: [800],
+        });
         return {
           referenciaMakom: p.referenciaMakom,
           slug: p.slug,

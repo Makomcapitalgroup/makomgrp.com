@@ -1,0 +1,28 @@
+---
+permalink: "/sitemap.xml"
+eleventyExcludeFromCollections: true
+---
+{%- set indexables = collections.propiedades | propiedadesIndexables -%}
+{%- set catalogoIndexable = collections.propiedades | catalogoEsIndexable -%}
+{%- set lastmodHome = "index.html" | lastmodDeArchivo -%}
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://makomgrp.com/</loc>
+    {% if lastmodHome %}<lastmod>{{ lastmodHome }}</lastmod>{% endif %}
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  {%- if catalogoIndexable %}
+  <url>
+    <loc>https://makomgrp.com/propiedades/</loc>
+  </url>
+  {%- endif %}
+  {%- for p in indexables %}
+  {%- set lastmodProp = p._archivoRelativo | lastmodDeArchivo %}
+  <url>
+    <loc>https://makomgrp.com/propiedades/{{ p.slug }}/</loc>
+    {% if lastmodProp %}<lastmod>{{ lastmodProp }}</lastmod>{% endif %}
+  </url>
+  {%- endfor %}
+</urlset>

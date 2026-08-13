@@ -1,10 +1,47 @@
 {% set operacionEtiqueta = propiedad.operacion | etiqueta(propiedadesConfig.operaciones) %}
 {% set urlCanonica = "https://makomgrp.com/propiedades/" + propiedad.slug + "/" %}
-{% set esIndexable = (propiedad.estado == "disponible" or propiedad.estado == "reservada") and not propiedad.seo.noIndex %}
-{% set tituloSeo = propiedad.seo.titulo or (propiedad.titulo + " — " + operacionEtiqueta + " en " + propiedad.ubicacionPublica + " | MAKOM CAPITAL GROUP") %}
+{#
+  Milestone 9: "esIndexable" ya NO incluye "reservada" (sí lo hacía
+  desde el Milestone 3). Es un estado transitorio — indexar algo que
+  pronto vuelve a "disponible" o pasa a "vendida"/"alquilada" añade
+  ruido de posicionamiento sin beneficio real. La página se sigue
+  generando y sirviendo igual, solo cambia la señal a los buscadores.
+
+  Ajuste de cierre de M9: el <meta name="robots"> completo (que incluye
+  "follow"/"nofollow", no solo "index"/"noindex") se calcula con el
+  filtro "robotsMetaDe" — "reservada"/"vendida"/"alquilada" son páginas
+  públicas válidas con navegación interna útil, así que permiten
+  "follow" aunque no sean indexables. "esIndexable" sigue existiendo
+  tal cual para las decisiones binarias (JSON-LD) — coincide exactamente
+  con cuándo robotsMetaDe devuelve "index, follow".
+#}
+{% set esIndexable = propiedad | esPropiedadIndexable %}
+{% set robotsMeta = propiedad | robotsMetaDe %}
+{% set tituloBase = propiedad.seo.titulo or (propiedad.titulo + " — " + operacionEtiqueta + " en " + propiedad.ubicacionPublica + " | MAKOM CAPITAL GROUP") %}
+{#
+  El truncado a 60 caracteres (límite práctico de un <title> en SERPs)
+  solo se aplica al título AUTOGENERADO. Si Loyra/Yurlio escriben un
+  "Título SEO" a mano en el bloque opcional, se respeta tal cual —
+  es una decisión editorial explícita, no algo que debamos recortar.
+#}
+{% set tituloSeo = tituloBase if propiedad.seo.titulo else (tituloBase | resumenSeo(60)) %}
 {% set descripcionSeo = propiedad.seo.descripcion or (propiedad.descripcion | resumenSeo(155)) %}
 {% set portada = propiedad.fotografias.galeria | portadaDe %}
 {% set mapaPublico = propiedad.mapa | mapaPublico %}
+{#
+  Milestone 9: prioridad de imagen Open Graph — imagen social (si se
+  subió en el bloque "SEO avanzado") > portada de la galería > imagen
+  OG corporativa existente como último respaldo, para que ninguna
+  ficha quede sin og:image aunque no tenga fotos todavía. Ambas
+  variantes (imagenSocial y portada) ya llegan optimizadas desde
+  .eleventy.js (propiedad._imagenOgUrl, JPEG 1200px) — og:image no es
+  un <img>, así que el "Image HTML Transform" nunca lo alcanzaría.
+  Para JSON-LD se usa una variable SEPARADA sin el respaldo corporativo:
+  el logo/banner institucional no es una fotografía de esta propiedad,
+  así que el structured data omite "image" en vez de afirmar algo falso.
+#}
+{% set imagenPropiedadAbsoluta = ("https://makomgrp.com" + propiedad._imagenOgUrl) if propiedad._imagenOgUrl else null %}
+{% set imagenOgUrl = imagenPropiedadAbsoluta or "https://makomgrp.com/assets/og/makom-capital-group-og.jpg" %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -12,7 +49,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="{{ descripcionSeo }}" />
   <meta name="theme-color" content="#0A0A0A" />
-  <meta name="robots" content="{{ 'index, follow' if esIndexable else 'noindex, nofollow' }}" />
+  <meta name="robots" content="{{ robotsMeta }}" />
   <link rel="canonical" href="{{ urlCanonica }}" />
   <link rel="icon" type="image/svg+xml" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon.svg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon-32.png" />
@@ -24,13 +61,17 @@
   <meta property="og:type" content="website" />
   <meta property="og:locale" content="es_PA" />
   <meta property="og:url" content="{{ urlCanonica }}" />
-  {% if portada %}<meta property="og:image" content="https://makomgrp.com{{ portada.archivo }}" />{% endif %}
+  <meta property="og:image" content="{{ imagenOgUrl }}" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="{{ tituloSeo }}" />
   <meta name="twitter:description" content="{{ descripcionSeo }}" />
-  {% if portada %}<meta name="twitter:image" content="https://makomgrp.com{{ portada.archivo }}" />{% endif %}
+  <meta name="twitter:image" content="{{ imagenOgUrl }}" />
   <link rel="stylesheet" href="/styles.css" />
   {% if mapaPublico %}<link rel="stylesheet" href="/assets/vendor/leaflet/leaflet.css" />{% endif %}
+  {% if esIndexable %}
+  <script type="application/ld+json">{{ propiedad | jsonLdPropiedad(mapaPublico, urlCanonica, imagenPropiedadAbsoluta) | dump | safe }}</script>
+  <script type="application/ld+json">{{ propiedad | jsonLdBreadcrumb(urlCanonica) | dump | safe }}</script>
+  {% endif %}
 </head>
 <body class="pagina-interior">
 
@@ -39,6 +80,12 @@
 <main id="main" role="main">
   <section class="ficha-propiedad" aria-labelledby="ficha-titulo">
     <div class="container ficha-propiedad__inner">
+
+      <nav class="ficha-propiedad__breadcrumb" aria-label="Ruta de navegación">
+        <a href="/propiedades/">Propiedades</a>
+        <span aria-hidden="true"> / </span>
+        <span aria-current="page">{{ propiedad.titulo }}</span>
+      </nav>
 
       <div class="ficha-propiedad__encabezado" data-reveal>
         <div class="ficha-propiedad__badges">

@@ -4,6 +4,7 @@ eleventyExcludeFromCollections: true
 ---
 {% set publicas = collections.propiedades | propiedadesPublicas %}
 {% set filtrosDisp = publicas | filtrosDisponibles %}
+{% set catalogoIndexable = collections.propiedades | catalogoEsIndexable %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -11,10 +12,12 @@ eleventyExcludeFromCollections: true
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="MAKOM CAPITAL GROUP — Gestora integral de patrimonio inmobiliario en Panamá. Cada propiedad fue evaluada antes de ser publicada." />
   <meta name="theme-color" content="#0A0A0A" />
-  <!-- Temporalmente noindex: mientras el inventario público sea
-       exclusivamente contenido de prueba/desarrollo (Milestone 4).
-       Se retira cuando existan propiedades reales publicadas. -->
-  <meta name="robots" content="noindex, nofollow" />
+  <!-- Milestone 9: indexabilidad automática — indexable en cuanto
+       exista al menos una propiedad real "disponible" publicada (sin
+       seo.noIndex forzado); noindex mientras el inventario público sea
+       exclusivamente contenido de prueba/desarrollo. Nadie necesita
+       alternar esto a mano. -->
+  <meta name="robots" content="{{ 'index, follow' if catalogoIndexable else 'noindex, nofollow' }}" />
   <link rel="canonical" href="https://makomgrp.com/propiedades/" />
   <link rel="icon" type="image/svg+xml" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon.svg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon-32.png" />
