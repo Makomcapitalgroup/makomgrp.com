@@ -1,0 +1,154 @@
+name: Build y Deploy (Eleventy → GitHub Pages)
+
+# Milestone 11 — Etapa 2: se agrega el job "deploy", pero queda
+# preparado sin activarse todavía. Dos protecciones independientes lo
+# mantienen inerte mientras no se autorice lo contrario:
+#
+# 1) La condición explícita del job "deploy" (ver más abajo) impide que
+#    se ejecute salvo en un push directo a "main".
+# 2) Aunque esa condición se cumpliera, GitHub Pages de este repositorio
+#    sigue configurado como "Deploy from a branch" (Settings → Pages) —
+#    actions/deploy-pages solo funciona si la fuente de Pages está en
+#    "GitHub Actions". Mientras eso no se cambie explícitamente (fuera
+#    de este archivo, en la configuración del repositorio), el job no
+#    tiene ningún efecto aunque llegara a ejecutarse.
+#
+# Ninguna de las dos protecciones depende de la otra — cualquiera de
+# las dos, por sí sola, ya es suficiente.
+
+on:
+  push:
+    branches:
+      - main
+      - "feature/**"
+  pull_request:
+  workflow_dispatch:
+
+# Permiso por defecto para todo el workflow: solo lectura del
+# repositorio. El job "deploy" declara sus propios permisos, más
+# amplios pero estrictamente los que necesita — un job nunca hereda
+# permisos que no declaró explícitamente si define su propio bloque.
+permissions:
+  contents: read
+
+# Evita despliegues simultáneos a Pages (patrón oficial de GitHub:
+# mismo grupo "pages", sin cancelar despliegues en curso). Aplicado a
+# todo el workflow, como en la plantilla oficial de GitHub Pages.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Eleventy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Instalar dependencias (reproducible, desde package-lock.json)
+        run: npm ci
+
+      - name: Construir el sitio con Eleventy
+        run: npm run build
+
+      - name: Validar archivos públicos esperados en _site/
+        run: |
+          set -e
+          test -f _site/index.html
+          test -f _site/aviso-legal.html
+          test -f _site/privacidad.html
+          test -f _site/CNAME
+          test -f _site/robots.txt
+          test -f _site/sitemap.xml
+          test -f _site/admin/index.html
+          test -f _site/admin/config.yml
+          test -f _site/admin/buscar-ubicacion.html
+          test -f _site/propiedades/index.html
+          echo "Archivos esperados presentes en _site/."
+
+      - name: Verificar que ninguna fuente interna se filtre a _site/
+        run: |
+          set -e
+          UNEXPECTED=$(find _site -type f \( \
+            -name "*.njk" -o \
+            -name "package.json" -o \
+            -name "package-lock.json" -o \
+            -name ".eleventy.js" -o \
+            -path "*/node_modules/*" -o \
+            -path "*/.git/*" \
+          \))
+          if [ -n "$UNEXPECTED" ]; then
+            echo "ERROR: se encontraron archivos fuente inesperados dentro de _site/:"
+            echo "$UNEXPECTED"
+            exit 1
+          fi
+          echo "Sin fuentes internas expuestas en _site/."
+
+      # No consumimos sus outputs (base_path/origin) porque el sitio se
+      # publica en la raíz de un dominio propio (makomgrp.com vía
+      # CNAME), no en una subruta tipo usuario.github.io/repo — no hay
+      # "baseurl" que inyectar en el build. Se incluye igualmente
+      # porque es el paso que las plantillas oficiales de GitHub Pages
+      # siempre ejecutan antes de subir el artifact, y valida del lado
+      # de la API que Pages está en condiciones de recibir un artifact.
+      - name: Configurar GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v6
+
+      # El artifact contiene EXCLUSIVAMENTE el contenido de _site/ — no
+      # el repositorio. upload-pages-artifact empaqueta únicamente la
+      # ruta indicada en "path"; todo lo demás (código fuente, node_modules,
+      # .eleventy.js, content/*.json, etc.) nunca llega a formar parte
+      # de este artifact, sin importar qué exista en el runner.
+      - name: Subir artifact de Pages (solo _site/)
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: "_site"
+
+  deploy:
+    name: Deploy a GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+
+    # ============================================================
+    # PROTECCIÓN OBLIGATORIA — única condición que decide si este job
+    # se ejecuta. Ambas cláusulas deben cumplirse (AND implícito de
+    # GitHub Actions al encadenar condiciones con &&):
+    #
+    #   github.ref == 'refs/heads/main'   → descarta cualquier rama que
+    #                                        no sea exactamente "main"
+    #                                        (feature/properties-cms,
+    #                                        cualquier feature/**, etc.)
+    #   github.event_name == 'push'       → descarta pull_request y
+    #                                        workflow_dispatch, incluso
+    #                                        en el caso (que no ocurre
+    #                                        en la práctica, pero se
+    #                                        deja explícito para que la
+    #                                        condición sea auditable
+    #                                        por sí sola, sin depender
+    #                                        de cómo GitHub calcula
+    #                                        "ref" en cada tipo de
+    #                                        evento) de que coincidiera
+    #                                        el valor de "ref".
+    # ============================================================
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Desplegar a GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

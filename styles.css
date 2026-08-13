@@ -2732,3 +2732,569 @@ body.hero--loaded .hero__subheadline {
     width: min(240px, calc(100vw - 32px));
   }
 }
+
+/* 28. PÁGINA INDIVIDUAL DE PROPIEDAD
+   ============================================================= */
+
+/* Esta página no tiene un Hero oscuro detrás del header (a diferencia
+   del Home), por lo que el header permanece siempre en su variante
+   "con fondo claro" — nunca en el estado transparente inicial. */
+.pagina-interior .header {
+  background-color: var(--color-blanco);
+  box-shadow: var(--shadow-header);
+}
+
+.pagina-interior .header__logo-svg--neg {
+  display: none;
+}
+
+.pagina-interior .header__logo-svg--pos {
+  display: block;
+}
+
+.pagina-interior .header__nav-link {
+  color: var(--color-negro);
+}
+
+.pagina-interior .header__nav-link--cta {
+  border-color: var(--color-arena-40);
+}
+
+.pagina-interior .hamburger__bar {
+  background-color: var(--color-negro);
+}
+
+.ficha-propiedad {
+  padding-top: calc(var(--header-height) + 48px);
+  padding-bottom: 100px;
+  background-color: var(--color-blanco);
+}
+
+.ficha-propiedad__encabezado {
+  margin-bottom: 32px;
+}
+
+.ficha-propiedad__badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ficha-propiedad__estado-tag {
+  font-size: 10px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  color: var(--color-blanco);
+  background-color: var(--color-terracota);
+}
+
+.ficha-propiedad__titulo {
+  font-size: 32px;
+  font-weight: var(--font-weight-regular);
+  line-height: 1.15;
+  margin-bottom: 12px;
+}
+
+.ficha-propiedad__precio {
+  font-size: 22px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-terracota);
+  margin-bottom: 8px;
+}
+
+.ficha-propiedad__ubicacion {
+  font-size: 15px;
+  font-weight: var(--font-weight-light);
+  color: var(--color-negro-70);
+}
+
+/* Galería */
+.ficha-propiedad__galeria {
+  margin-bottom: 48px;
+}
+
+.ficha-propiedad__galeria-vacia {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16/7;
+  border: 1px solid var(--color-arena-40);
+  background-color: var(--color-arena-15);
+}
+
+.ficha-propiedad__galeria-vacia-texto {
+  font-size: 13px;
+  font-weight: var(--font-weight-light);
+  letter-spacing: 0.04em;
+  color: var(--color-negro-60);
+  text-transform: uppercase;
+}
+
+/* Cuerpo: columna principal + columna lateral (CTA) */
+.ficha-propiedad__cuerpo {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 48px;
+}
+
+@media (min-width: 1024px) {
+  .ficha-propiedad__cuerpo {
+    grid-template-columns: 2fr 1fr;
+    align-items: start;
+  }
+}
+
+.ficha-propiedad__seccion {
+  padding-block: 32px;
+  border-top: 1px solid var(--color-arena-20);
+}
+
+.ficha-propiedad__principal .ficha-propiedad__seccion:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.ficha-propiedad__seccion-titulo {
+  font-size: 12px;
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-terracota);
+  margin-bottom: 20px;
+}
+
+.ficha-propiedad__descripcion p {
+  font-size: 16px;
+  font-weight: var(--font-weight-light);
+  line-height: 1.7;
+  color: var(--color-negro-90);
+  margin-bottom: 16px;
+}
+
+.ficha-propiedad__descripcion p:last-child {
+  margin-bottom: 0;
+}
+
+.ficha-propiedad__descripcion .ficha-propiedad__lista {
+  padding-left: 20px;
+  margin-bottom: 16px;
+}
+
+.ficha-propiedad__descripcion .ficha-propiedad__lista li {
+  font-size: 16px;
+  font-weight: var(--font-weight-light);
+  line-height: 1.7;
+  list-style: disc;
+}
+
+.ficha-propiedad__checklist {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px 24px;
+  list-style: none;
+}
+
+.ficha-propiedad__checklist li {
+  font-size: 14px;
+  font-weight: var(--font-weight-light);
+  color: var(--color-negro-90);
+  padding-left: 18px;
+  position: relative;
+}
+
+.ficha-propiedad__checklist li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 6px;
+  height: 6px;
+  background-color: var(--color-terracota);
+}
+
+.ficha-propiedad__specs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 20px;
+  list-style: none;
+}
+
+.ficha-propiedad__specs li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ficha-propiedad__specs li span {
+  font-size: 12px;
+  font-weight: var(--font-weight-light);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-negro-60);
+}
+
+.ficha-propiedad__specs li strong {
+  font-size: 18px;
+  font-weight: var(--font-weight-medium);
+}
+
+.ficha-propiedad__ubicacion-texto {
+  font-size: 15px;
+  font-weight: var(--font-weight-light);
+  color: var(--color-negro-90);
+}
+
+/* CTA lateral */
+.ficha-propiedad__lateral {
+  position: sticky;
+  top: calc(var(--header-height) + 32px);
+}
+
+.ficha-propiedad__cta {
+  padding: 32px 24px;
+  border: 1px solid var(--color-arena-20);
+  background-color: var(--color-blanco);
+  box-shadow: var(--shadow-card);
+}
+
+.ficha-propiedad__cta-precio {
+  font-size: 22px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-terracota);
+  margin-bottom: 20px;
+}
+
+.ficha-propiedad__cta-btn {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.ficha-propiedad__cta-btn:last-of-type {
+  margin-bottom: 20px;
+}
+
+.ficha-propiedad__referencia {
+  font-size: 12px;
+  font-weight: var(--font-weight-light);
+  letter-spacing: 0.04em;
+  color: var(--color-negro-60);
+  text-align: center;
+}
+
+@media (max-width: 1023.98px) {
+  .ficha-propiedad__lateral {
+    position: static;
+  }
+}
+
+@media (max-width: 767px) {
+  .ficha-propiedad__titulo {
+    font-size: 26px;
+  }
+
+  .ficha-propiedad {
+    padding-top: calc(var(--header-height) + 32px);
+  }
+}
+
+/* 29. CATÁLOGO DE PROPIEDADES
+   ============================================================= */
+
+/* Esta página reutiliza la sección .propiedades del Home tal cual,
+   pero aquí es la primera sección de la página (sin Hero oscuro
+   delante), por lo que necesita compensar la altura del header fijo. */
+.pagina-interior .propiedades {
+  padding-top: calc(var(--header-height) + 48px);
+}
+
+@media (max-width: 767px) {
+  .pagina-interior .propiedades {
+    padding-top: calc(var(--header-height) + 32px);
+  }
+}
+
+/* Estado vacío de la imagen de portada en una tarjeta del catálogo
+   (mismo criterio sobrio del Milestone 3: nunca una foto inventada). */
+.property-card__image-vacia {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-arena-15);
+}
+
+.property-card__image-vacia-texto {
+  font-size: 11px;
+  font-weight: var(--font-weight-light);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-negro-60);
+}
+
+.property-card__ref {
+  font-size: 11px;
+  font-weight: var(--font-weight-light);
+  letter-spacing: 0.04em;
+  color: var(--color-negro-60);
+}
+
+/* Estado vacío del catálogo completo (0 propiedades públicas) */
+.catalogo-vacio {
+  padding-block: 48px;
+  border-top: 1px solid var(--color-arena-20);
+  text-align: center;
+}
+
+.catalogo-vacio__texto {
+  font-size: 16px;
+  font-weight: var(--font-weight-light);
+  color: var(--color-negro-70);
+}
+
+/* 30. PROPIEDADES DESTACADAS — HOME
+   ============================================================= */
+
+/* Estado sobrio de #propiedades-grid: es el HTML de partida (visible
+   si JavaScript está desactivado o el feed aún no cargó) y también
+   el resultado final si /data/propiedades-destacadas.json no tiene
+   ninguna propiedad que mostrar. script.js lo reemplaza con tarjetas
+   reales cuando hay destacadas disponibles — ver sección 15. */
+.propiedades__vacio-texto {
+  grid-column: 1 / -1;
+  padding-block: 48px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: var(--font-weight-light);
+  color: var(--color-negro-70);
+}
+
+/* 31. GALERÍA DE FOTOGRAFÍAS — FICHA INDIVIDUAL + LIGHTBOX
+   ============================================================= */
+
+/* Portada dominante + tira de miniaturas. Sin bordes redondeados
+   (--radius: 0 ya es la convención del sitio); las imágenes las genera
+   @11ty/eleventy-img — este bloque solo define el recorte/proporción. */
+.galeria-ficha__principal {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: zoom-in;
+}
+
+.galeria-ficha__principal img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--dur-slow) var(--ease);
+}
+
+.galeria-ficha__principal:hover img {
+  transform: scale(1.02);
+}
+
+.galeria-ficha__miniaturas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.galeria-ficha__miniatura {
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: none;
+  border: 1px solid transparent;
+  padding: 0;
+  cursor: zoom-in;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+.galeria-ficha__miniatura:hover,
+.galeria-ficha__miniatura:focus-visible {
+  border-color: var(--color-terracota);
+}
+
+.galeria-ficha__miniatura img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Lightbox: overlay de pantalla completa, generado por script.js
+   (sección 16) solo cuando existe una galería con fotos. */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(10, 10, 10, 0.92);
+}
+
+.lightbox[hidden] {
+  display: none;
+}
+
+.lightbox__figura {
+  position: relative;
+  width: min(1100px, 92vw);
+  max-height: 86vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox__imagen {
+  max-width: 100%;
+  max-height: 86vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.lightbox__cerrar,
+.lightbox__anterior,
+.lightbox__siguiente {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-negro-90);
+  color: var(--color-blanco);
+  border: none;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+.lightbox__cerrar:hover,
+.lightbox__anterior:hover,
+.lightbox__siguiente:hover {
+  background-color: var(--color-terracota);
+}
+
+.lightbox__cerrar {
+  top: -48px;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+}
+
+@media (min-width: 768px) {
+  .lightbox__cerrar {
+    top: 0;
+    right: -56px;
+  }
+}
+
+.lightbox__anterior,
+.lightbox__siguiente {
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+}
+
+.lightbox__anterior {
+  left: -8px;
+}
+
+.lightbox__siguiente {
+  right: -8px;
+}
+
+@media (min-width: 768px) {
+  .lightbox__anterior {
+    left: -64px;
+  }
+  .lightbox__siguiente {
+    right: -64px;
+  }
+}
+
+.lightbox__contador {
+  position: absolute;
+  bottom: -32px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--color-blanco-70);
+}
+
+@media (max-width: 767px) {
+  .galeria-ficha__miniaturas {
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  }
+}
+
+/* 32. MAPA DE UBICACIÓN — FICHA INDIVIDUAL
+   ============================================================= */
+
+/* Sin bordes redondeados (convención del sitio); Leaflet inyecta su
+   propio contenido dentro de este contenedor vía script.js. */
+.ficha-propiedad__mapa {
+  width: 100%;
+  height: 320px;
+  margin-top: 16px;
+  border: 1px solid var(--color-arena-40);
+}
+
+.ficha-propiedad__mapa-nota {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: var(--font-weight-light);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-negro-60);
+}
+
+/* Leaflet no conoce los tokens de MAKOM — solo se ajusta lo esencial
+   para que el control de atribución y el popup, si se usan, no
+   choquen visualmente con el resto del sitio. */
+.leaflet-control-attribution {
+  font-size: 10px;
+}
+
+@media (max-width: 767px) {
+  .ficha-propiedad__mapa {
+    height: 240px;
+  }
+}
+
+/* 33. BREADCRUMB — FICHA INDIVIDUAL (Milestone 9)
+   ============================================================= */
+
+.ficha-propiedad__breadcrumb {
+  display: block;
+  margin-bottom: 20px;
+  font-size: 13px;
+  font-weight: var(--font-weight-light);
+  color: var(--color-negro);
+  opacity: 0.55;
+}
+
+.ficha-propiedad__breadcrumb a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.ficha-propiedad__breadcrumb a:hover {
+  color: var(--color-terracota);
+  opacity: 1;
+}
+
+.ficha-propiedad__breadcrumb [aria-current="page"] {
+  color: var(--color-negro);
+}

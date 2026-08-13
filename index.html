@@ -63,7 +63,7 @@
           <div class="mega-menu" id="mega-menu" role="region" aria-label="Menú de servicios">
             <div class="container">
               <div class="mega-menu__grid">
-                <a href="#propiedades" class="mega-menu__item">
+                <a href="/propiedades/" class="mega-menu__item">
                   <span class="mega-menu__item-name">MAKOM Properties</span>
                   <span class="mega-menu__item-desc">Brokerage y asesoría de patrimonio</span>
                 </a>
@@ -84,7 +84,7 @@
             </div>
           </div>
         </li>
-        <li class="header__nav-item"><a href="#propiedades" class="header__nav-link">Propiedades</a></li>
+        <li class="header__nav-item"><a href="/propiedades/" class="header__nav-link">Propiedades</a></li>
         <li class="header__nav-item"><a href="#proyectos" class="header__nav-link">Proyectos</a></li>
         <li class="header__nav-item"><a href="#contacto" class="header__nav-link header__nav-link--cta">Contacto</a></li>
       </ul>
@@ -102,7 +102,7 @@
     <ul class="mobile-menu__list" role="list">
       <li class="mobile-menu__item" style="--item-index: 0"><a href="#grupo" class="mobile-menu__link">El Grupo</a></li>
       <li class="mobile-menu__item" style="--item-index: 1"><a href="#servicios" class="mobile-menu__link">Servicios</a></li>
-      <li class="mobile-menu__item" style="--item-index: 2"><a href="#propiedades" class="mobile-menu__link">Propiedades</a></li>
+      <li class="mobile-menu__item" style="--item-index: 2"><a href="/propiedades/" class="mobile-menu__link">Propiedades</a></li>
       <li class="mobile-menu__item" style="--item-index: 3"><a href="#proyectos" class="mobile-menu__link">Proyectos</a></li>
       <li class="mobile-menu__item" style="--item-index: 4"><a href="#contacto" class="mobile-menu__link">Contacto</a></li>
     </ul>
@@ -443,62 +443,11 @@
         <h2 class="propiedades__heading" id="prop-heading" data-reveal>Propiedades seleccionadas. No un catálogo — una curaduría.</h2>
         <p class="propiedades__subheadline" data-reveal>Cada propiedad en MAKOM fue evaluada antes de ser publicada.</p>
       </div>
-      <div class="prop-filters" role="tablist" aria-label="Filtrar propiedades">
-        <button class="filter-tab filter-tab--active" role="tab" aria-selected="true" data-filter="all">Todos</button>
-        <button class="filter-tab" role="tab" aria-selected="false" data-filter="venta">Venta</button>
-        <button class="filter-tab" role="tab" aria-selected="false" data-filter="alquiler">Alquiler</button>
-        <button class="filter-tab" role="tab" aria-selected="false" data-filter="comercial">Comercial</button>
-        <button class="filter-tab" role="tab" aria-selected="false" data-filter="residencial">Residencial</button>
-      </div>
-      <div class="propiedades__grid" role="list" aria-live="polite" aria-label="Listado de propiedades">
-        <article class="property-card" data-type="venta residencial" role="listitem" aria-labelledby="prop1-name" data-reveal data-reveal-delay="0">
-          <div class="property-card__image" style="background-color:#2a2a2a" aria-hidden="true">
-            <div class="property-card__badges">
-              <span class="property-card__type">Venta</span>
-              <span class="property-card__category">Residencial</span>
-            </div>
-          </div>
-          <div class="property-card__body">
-            <h3 class="property-card__name" id="prop1-name">Apartamento en Costa del Este</h3>
-            <span class="division-card__soon-tag">Próximamente</span>
-            <p class="property-card__location">Costa del Este, Ciudad de Panamá</p>
-            <p class="property-card__specs">3 hab · 2 baños · 125 m²</p>
-            <a href="#contacto" class="link--arrow property-card__cta">Disponible próximamente</a>
-          </div>
-        </article>
-        <article class="property-card" data-type="alquiler comercial" role="listitem" aria-labelledby="prop2-name" data-reveal data-reveal-delay="100">
-          <div class="property-card__image" style="background-color:#1e1e1e" aria-hidden="true">
-            <div class="property-card__badges">
-              <span class="property-card__type">Alquiler</span>
-              <span class="property-card__category">Comercial</span>
-            </div>
-          </div>
-          <div class="property-card__body">
-            <h3 class="property-card__name" id="prop2-name">Oficina Premium en Marbella</h3>
-            <span class="division-card__soon-tag">Próximamente</span>
-            <p class="property-card__location">Marbella, Ciudad de Panamá</p>
-            <p class="property-card__specs">120 m²</p>
-            <a href="#contacto" class="link--arrow property-card__cta">Disponible próximamente</a>
-          </div>
-        </article>
-        <article class="property-card" data-type="venta residencial" role="listitem" aria-labelledby="prop3-name" data-reveal data-reveal-delay="200">
-          <div class="property-card__image" style="background-color:#252525" aria-hidden="true">
-            <div class="property-card__badges">
-              <span class="property-card__type">Venta</span>
-              <span class="property-card__category">Residencial</span>
-            </div>
-          </div>
-          <div class="property-card__body">
-            <h3 class="property-card__name" id="prop3-name">Penthouse en San Francisco</h3>
-            <span class="division-card__soon-tag">Próximamente</span>
-            <p class="property-card__location">San Francisco, Ciudad de Panamá</p>
-            <p class="property-card__specs">4 hab · 3 baños · 220 m²</p>
-            <a href="#contacto" class="link--arrow property-card__cta">Disponible próximamente</a>
-          </div>
-        </article>
+      <div class="propiedades__grid" id="propiedades-grid" role="list" aria-live="polite" aria-label="Listado de propiedades">
+        <p class="propiedades__vacio-texto">Estamos preparando nuestra selección de propiedades destacadas.</p>
       </div>
       <div class="propiedades__footer" data-reveal>
-        <a href="#propiedades" class="btn btn--outline">VER TODAS LAS PROPIEDADES</a>
+        <a href="/propiedades/" class="btn btn--outline">VER TODAS LAS PROPIEDADES</a>
       </div>
     </div>
   </section>
@@ -687,7 +636,7 @@
       <div class="footer__nav-col">
         <h3 class="footer__nav-heading">Servicios</h3>
         <ul class="footer__nav-list" role="list">
-          <li><a href="#propiedades" class="footer__nav-link">MAKOM Properties</a></li>
+          <li><a href="/propiedades/" class="footer__nav-link">MAKOM Properties</a></li>
           <li><a href="#servicios" class="footer__nav-link">MAKOM Services</a></li>
           <li><a href="#proyectos" class="footer__nav-link">MAKOM Development</a></li>
           <li><a href="#contacto" class="footer__nav-link">MAKOM Capital</a></li>
@@ -696,7 +645,7 @@
       <div class="footer__nav-col">
         <h3 class="footer__nav-heading">Explorar</h3>
         <ul class="footer__nav-list" role="list">
-          <li><a href="#propiedades" class="footer__nav-link">Propiedades</a></li>
+          <li><a href="/propiedades/" class="footer__nav-link">Propiedades</a></li>
           <li><a href="#proyectos" class="footer__nav-link">Proyectos</a></li>
           <li><a href="#perspectivas" class="footer__nav-link">Perspectivas</a></li>
           <li><a href="#contacto" class="footer__nav-link">Contacto</a></li>

@@ -584,4 +584,271 @@ document.addEventListener('DOMContentLoaded', function () {
     updateHeroParallax(); // estado inicial
   }
 
+  /* ============================================================
+     15. PROPIEDADES DESTACADAS — HOME
+     Sustituye el estado sobrio de #propiedades-grid (ya presente en
+     el HTML, visible sin JS o mientras el feed carga) por hasta 3
+     tarjetas reales cuando /data/propiedades-destacadas.json está
+     disponible. Si la petición falla o no hay ninguna destacada, el
+     estado sobrio permanece — no se muestra ningún error técnico.
+     El Home es una vitrina editorial (máximo 3 propiedades), no un
+     catálogo — no lleva filtros; esos viven exclusivamente en
+     /propiedades/ (ver content/propiedades-catalogo.njk).
+  ============================================================ */
+  var propiedadesGrid = document.getElementById('propiedades-grid');
+
+  if (propiedadesGrid) {
+    fetch('/data/propiedades-destacadas.json')
+      .then(function (res) {
+        if (!res.ok) throw new Error('Feed de propiedades destacadas no disponible');
+        return res.json();
+      })
+      .then(function (destacadas) {
+        if (!Array.isArray(destacadas) || destacadas.length === 0) return;
+        renderPropiedadesDestacadas(destacadas);
+      })
+      .catch(function () {
+        // Silencioso a propósito: el estado sobrio ya presente en el
+        // HTML (sección 30 de styles.css) sigue siendo válido.
+      });
+  }
+
+  function etiquetaOperacionHome(operacion) {
+    return operacion === 'alquiler' ? 'Alquiler' : 'Venta';
+  }
+
+  function capitalizarHome(texto) {
+    return texto ? texto.charAt(0).toUpperCase() + texto.slice(1) : '';
+  }
+
+  function precioFormatoHome(precio, operacion) {
+    if (!precio || typeof precio.monto !== 'number') return '';
+    var monto = precio.monto.toLocaleString('en-US');
+    if (operacion === 'alquiler') {
+      var sufijos = { mensual: 'mes', quincenal: 'quincena', otra: 'período' };
+      return '$' + monto + ' / ' + (sufijos[precio.periodicidad] || 'período');
+    }
+    return '$' + monto;
+  }
+
+  function specsTextoHome(d) {
+    if (!d) return '';
+    var partes = [];
+    if (d.habitaciones != null) partes.push(d.habitaciones + ' hab');
+    if (d.banos != null) partes.push(d.banos + ' baños');
+    if (d.estacionamientos != null) partes.push(d.estacionamientos + ' est.');
+    if (d.metrajeInterno != null) partes.push(d.metrajeInterno + ' m²');
+    return partes.join(' · ');
+  }
+
+  function escaparHtmlHome(texto) {
+    var div = document.createElement('div');
+    div.textContent = texto == null ? '' : String(texto);
+    return div.innerHTML;
+  }
+
+  function tarjetaDestacadaHtml(p) {
+    var specs = specsTextoHome(p.detalles);
+    var imagenHtml = p.portada
+      ? '<img src="' + escaparHtmlHome(p.portada.archivo) + '" alt="' + escaparHtmlHome(p.portada.alt || p.titulo) + '" loading="lazy" />'
+      : '<div class="property-card__image-vacia"><span class="property-card__image-vacia-texto">Foto próximamente</span></div>';
+    var reservadaHtml = p.estado === 'reservada'
+      ? '<span class="ficha-propiedad__estado-tag">Reservada</span>'
+      : '';
+
+    return (
+      '<article class="property-card" role="listitem">' +
+        '<div class="property-card__image">' +
+          imagenHtml +
+          '<div class="property-card__badges">' +
+            '<span class="property-card__type">' + etiquetaOperacionHome(p.operacion) + '</span>' +
+            '<span class="property-card__category">' + capitalizarHome(p.categoriaGeneral) + '</span>' +
+            reservadaHtml +
+          '</div>' +
+        '</div>' +
+        '<div class="property-card__body">' +
+          '<h3 class="property-card__name">' + escaparHtmlHome(p.titulo) + '</h3>' +
+          '<p class="property-card__location">' + escaparHtmlHome(p.ubicacionPublica) + '</p>' +
+          '<p class="property-card__price">' + precioFormatoHome(p.precio, p.operacion) + '</p>' +
+          (specs ? '<p class="property-card__specs">' + escaparHtmlHome(specs) + '</p>' : '') +
+          '<a href="/propiedades/' + encodeURIComponent(p.slug) + '/" class="link--arrow property-card__cta">Ver propiedad</a>' +
+        '</div>' +
+      '</article>'
+    );
+  }
+
+  function renderPropiedadesDestacadas(destacadas) {
+    propiedadesGrid.innerHTML = destacadas.map(tarjetaDestacadaHtml).join('');
+  }
+
+  /* ============================================================
+     16. GALERÍA DE FOTOGRAFÍAS — LIGHTBOX (FICHA DE PROPIEDAD)
+     Vanilla JS, sin librerías. Lee las imágenes ya presentes en el
+     DOM (portada + miniaturas, ya optimizadas por eleventy-img) — no
+     depende de un bloque de datos aparte. Se activa solo si existe
+     [data-galeria] en la página.
+  ============================================================ */
+  var galeriaFicha = document.querySelector('[data-galeria]');
+
+  if (galeriaFicha) {
+    var botonesGaleria = Array.from(galeriaFicha.querySelectorAll('[data-galeria-abrir]'));
+
+    function mejorSrcDe(img) {
+      var srcset = img.getAttribute('srcset');
+      if (!srcset) return img.currentSrc || img.getAttribute('src');
+      var candidatos = srcset.split(',').map(function (c) {
+        var partes = c.trim().split(/\s+/);
+        return { url: partes[0], ancho: parseInt(partes[1], 10) || 0 };
+      });
+      candidatos.sort(function (a, b) { return b.ancho - a.ancho; });
+      return candidatos[0].url;
+    }
+
+    var fotosLightbox = botonesGaleria.map(function (boton) {
+      var img = boton.querySelector('img');
+      return { src: mejorSrcDe(img), alt: img.getAttribute('alt') || '' };
+    });
+
+    var indiceActual = 0;
+    var disparadorActual = null;
+    var lightbox = null;
+
+    function crearLightbox() {
+      var el = document.createElement('div');
+      el.className = 'lightbox';
+      el.setAttribute('role', 'dialog');
+      el.setAttribute('aria-modal', 'true');
+      el.setAttribute('aria-label', 'Galería de fotografías');
+      el.hidden = true;
+      el.innerHTML =
+        '<div class="lightbox__figura">' +
+          '<button type="button" class="lightbox__cerrar" aria-label="Cerrar galería">&times;</button>' +
+          '<button type="button" class="lightbox__anterior" aria-label="Fotografía anterior">&larr;</button>' +
+          '<img class="lightbox__imagen" src="" alt="" />' +
+          '<button type="button" class="lightbox__siguiente" aria-label="Fotografía siguiente">&rarr;</button>' +
+          '<span class="lightbox__contador"></span>' +
+        '</div>';
+      document.body.appendChild(el);
+      return el;
+    }
+
+    function actualizarLightbox() {
+      var foto = fotosLightbox[indiceActual];
+      var imgEl = lightbox.querySelector('.lightbox__imagen');
+      imgEl.src = foto.src;
+      imgEl.alt = foto.alt;
+      lightbox.querySelector('.lightbox__contador').textContent =
+        (indiceActual + 1) + ' / ' + fotosLightbox.length;
+      var mostrarNav = fotosLightbox.length > 1;
+      lightbox.querySelector('.lightbox__anterior').style.display = mostrarNav ? '' : 'none';
+      lightbox.querySelector('.lightbox__siguiente').style.display = mostrarNav ? '' : 'none';
+    }
+
+    function abrirLightbox(indice, disparador) {
+      if (!lightbox) lightbox = crearLightbox();
+      indiceActual = indice;
+      disparadorActual = disparador;
+      actualizarLightbox();
+      lightbox.hidden = false;
+      lightbox.querySelector('.lightbox__cerrar').focus();
+      document.addEventListener('keydown', onTeclaLightbox);
+    }
+
+    function cerrarLightbox() {
+      if (!lightbox) return;
+      lightbox.hidden = true;
+      document.removeEventListener('keydown', onTeclaLightbox);
+      if (disparadorActual) disparadorActual.focus();
+    }
+
+    function siguienteFoto() {
+      indiceActual = (indiceActual + 1) % fotosLightbox.length;
+      actualizarLightbox();
+    }
+
+    function anteriorFoto() {
+      indiceActual = (indiceActual - 1 + fotosLightbox.length) % fotosLightbox.length;
+      actualizarLightbox();
+    }
+
+    function onTeclaLightbox(e) {
+      if (e.key === 'Escape') cerrarLightbox();
+      else if (e.key === 'ArrowRight') siguienteFoto();
+      else if (e.key === 'ArrowLeft') anteriorFoto();
+      else if (e.key === 'Tab') {
+        // Foco simple contenido dentro del lightbox (4 controles).
+        var focosables = lightbox.querySelectorAll('button');
+        var primero = focosables[0];
+        var ultimo = focosables[focosables.length - 1];
+        if (e.shiftKey && document.activeElement === primero) {
+          e.preventDefault();
+          ultimo.focus();
+        } else if (!e.shiftKey && document.activeElement === ultimo) {
+          e.preventDefault();
+          primero.focus();
+        }
+      }
+    }
+
+    botonesGaleria.forEach(function (boton, indice) {
+      boton.addEventListener('click', function () {
+        abrirLightbox(indice, boton);
+      });
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!lightbox || lightbox.hidden) return;
+      if (e.target.closest('.lightbox__cerrar')) cerrarLightbox();
+      else if (e.target.closest('.lightbox__siguiente')) siguienteFoto();
+      else if (e.target.closest('.lightbox__anterior')) anteriorFoto();
+      else if (e.target === lightbox) cerrarLightbox();
+    });
+  }
+
+  /* ============================================================
+     17. MAPA DE UBICACIÓN (FICHA DE PROPIEDAD)
+     Solo existe #mapa-propiedad en el HTML cuando mapa.activo=true en
+     el JSON de esa propiedad (ver _includes/propiedad.njk) — si está
+     desactivado, este bloque no encuentra nada y no hace nada. Leaflet
+     (leaflet.js) solo se carga en esa misma condición. Cualquier fallo
+     (Leaflet no definido, tiles bloqueados, red caída) se captura para
+     que el resto de la ficha siga siendo completamente funcional — el
+     texto de ubicacionPublica ya está en el HTML de forma
+     independiente del mapa.
+  ============================================================ */
+  var contenedorMapa = document.getElementById('mapa-propiedad');
+
+  if (contenedorMapa && typeof L !== 'undefined') {
+    try {
+      var lat = parseFloat(contenedorMapa.getAttribute('data-lat'));
+      var lng = parseFloat(contenedorMapa.getAttribute('data-lng'));
+      var zoom = parseInt(contenedorMapa.getAttribute('data-zoom'), 10) || 15;
+
+      if (!isNaN(lat) && !isNaN(lng)) {
+        L.Icon.Default.imagePath = '/assets/vendor/leaflet/images/';
+
+        var mapaLeaflet = L.map(contenedorMapa, {
+          scrollWheelZoom: false,
+        }).setView([lat, lng], zoom);
+
+        // Permite hacer zoom con la rueda solo tras un clic explícito,
+        // para no atrapar el scroll de la página en móvil/desktop.
+        mapaLeaflet.on('click', function () {
+          mapaLeaflet.scrollWheelZoom.enable();
+        });
+
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
+        }).addTo(mapaLeaflet);
+
+        L.marker([lat, lng]).addTo(mapaLeaflet);
+      }
+    } catch (err) {
+      // Silencioso a propósito: un fallo del mapa (tiles bloqueados,
+      // Leaflet no disponible, etc.) nunca debe afectar el resto de
+      // la página — la ubicación pública en texto ya cumple ese rol.
+    }
+  }
+
 });
