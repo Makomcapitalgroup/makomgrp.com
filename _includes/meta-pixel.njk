@@ -1,6 +1,8 @@
 {# Meta Pixel: solo init. PageView lo dispara script.js con el mismo
    event_id que Conversions API para deduplicar navegador + servidor.
-   https://developers.facebook.com/documentation/ads-commerce/conversions-api #}
+   https://developers.facebook.com/documentation/ads-commerce/conversions-api
+   El bloque va en raw: el IIFE de Meta usa llaves que Nunjucks interpretaría. #}
+{% raw %}
 <script>
   !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
   n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
@@ -11,3 +13,4 @@
 </script>
 <noscript><img height="1" width="1" style="display:none" alt=""
   src="https://www.facebook.com/tr?id=1041292008527919&ev=PageView&noscript=1" /></noscript>
+{% endraw %}
