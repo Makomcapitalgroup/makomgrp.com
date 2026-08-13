@@ -7,10 +7,21 @@
 # el código fuente oficial de Decap CMS. Esto permite probar el panel
 # localmente sin OAuth, sin necesitar un segundo archivo de configuración
 # ni tocar nada para cuando se conecte el OAuth real (Milestone 10).
+#
+# Milestone 10: base_url/auth_endpoint son propiedades de "backend"
+# (deben anidarse ahí — confirmado contra la documentación actual de
+# Decap, decapcms.org/docs/backends-overview/: "these are properties of
+# the backend field, and should be nested under that field"). Apuntan
+# al Cloudflare Worker que hace de proxy OAuth (Milestone 10, Etapa 2/3A)
+# — ya probado end-to-end manualmente contra GitHub. Ninguno de los dos
+# valores es secreto: son la URL pública del Worker y una ruta fija:
+# el Client Secret nunca vive aquí, solo en el propio Worker.
 backend:
   name: github
   repo: Makomcapitalgroup/makomgrp.com
   branch: main
+  base_url: https://makom-cms-auth.gerencia-a34.workers.dev
+  auth_endpoint: auth
 
 local_backend: true
 
