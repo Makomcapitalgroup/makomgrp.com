@@ -906,14 +906,15 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function makomTrack(eventName, userData, customData) {
-    var id = metaEventId();
+    var pixelAlreadyTracked = eventName === 'PageView' && window.__makomPageViewId;
+    var id = pixelAlreadyTracked ? window.__makomPageViewId : metaEventId();
     var payloadUser = userData ? Object.assign({}, userData) : {};
     var fbp = metaCookie('_fbp');
     var fbc = metaCookie('_fbc');
     if (fbp) payloadUser.fbp = fbp;
     if (fbc) payloadUser.fbc = fbc;
 
-    if (typeof window.fbq === 'function') {
+    if (typeof window.fbq === 'function' && !pixelAlreadyTracked) {
       window.fbq('track', eventName, customData || {}, { eventID: id });
     }
 
