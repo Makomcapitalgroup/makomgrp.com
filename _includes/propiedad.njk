@@ -4,6 +4,7 @@
 {% set tituloSeo = propiedad.seo.titulo or (propiedad.titulo + " — " + operacionEtiqueta + " en " + propiedad.ubicacionPublica + " | MAKOM CAPITAL GROUP") %}
 {% set descripcionSeo = propiedad.seo.descripcion or (propiedad.descripcion | resumenSeo(155)) %}
 {% set portada = propiedad.fotografias.galeria | portadaDe %}
+{% set mapaPublico = propiedad.mapa | mapaPublico %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -29,6 +30,7 @@
   <meta name="twitter:description" content="{{ descripcionSeo }}" />
   {% if portada %}<meta name="twitter:image" content="https://makomgrp.com{{ portada.archivo }}" />{% endif %}
   <link rel="stylesheet" href="/styles.css" />
+  {% if mapaPublico %}<link rel="stylesheet" href="/assets/vendor/leaflet/leaflet.css" />{% endif %}
 </head>
 <body class="pagina-interior">
 
@@ -138,8 +140,19 @@
           <div class="ficha-propiedad__seccion" data-reveal>
             <h2 class="ficha-propiedad__seccion-titulo">Ubicación</h2>
             <p class="ficha-propiedad__ubicacion-texto">{{ propiedad.ubicacionPublica }}</p>
-            {% if propiedad.mapa.activo %}
-              <!-- Mapa interactivo (Leaflet/OSM): se integra en un milestone posterior. -->
+            {% if mapaPublico %}
+              <div
+                class="ficha-propiedad__mapa"
+                id="mapa-propiedad"
+                data-lat="{{ mapaPublico.lat }}"
+                data-lng="{{ mapaPublico.lng }}"
+                data-zoom="{{ mapaPublico.zoom }}"
+                role="img"
+                aria-label="Mapa de ubicación {{ 'aproximada' if mapaPublico.aproximada else '' }} — {{ propiedad.ubicacionPublica }}"
+              ></div>
+              {% if mapaPublico.aproximada %}
+                <p class="ficha-propiedad__mapa-nota">Ubicación aproximada</p>
+              {% endif %}
             {% endif %}
           </div>
 
@@ -164,6 +177,8 @@
 </main>
 
 {% include "footer.njk" %}
+
+{% if mapaPublico %}<script src="/assets/vendor/leaflet/leaflet.js"></script>{% endif %}
 
 </body>
 </html>

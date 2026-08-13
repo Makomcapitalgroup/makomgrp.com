@@ -65,6 +65,18 @@ module.exports = function (eleventyConfig) {
   // referencia desde ninguna página pública.
   eleventyConfig.addPassthroughCopy("admin");
 
+  // Milestone 8: Leaflet servido localmente (npm), no desde un CDN —
+  // preferencia técnica explícita para minimizar dominios externos de
+  // JS/CSS. Los tiles de OpenStreetMap siguen siendo necesariamente
+  // externos (no se pueden auto-alojar en este alcance). Solo se carga
+  // en páginas de ficha individual con mapa.activo=true — ver
+  // _includes/propiedad.njk.
+  eleventyConfig.addPassthroughCopy({
+    "node_modules/leaflet/dist/leaflet.js": "assets/vendor/leaflet/leaflet.js",
+    "node_modules/leaflet/dist/leaflet.css": "assets/vendor/leaflet/leaflet.css",
+    "node_modules/leaflet/dist/images": "assets/vendor/leaflet/images",
+  });
+
   // Milestone 7: optimización automática de fotografías de propiedades.
   // "Image HTML Transform" (recomendado por la documentación oficial de
   // @11ty/eleventy-img) post-procesa cualquier <img> presente en el HTML
@@ -208,6 +220,28 @@ module.exports = function (eleventyConfig) {
     const principal = galeria.find((f) => f.portada) || galeria[0];
     const miniaturas = galeria.filter((f) => f !== principal);
     return { principal, miniaturas, todas: [principal, ...miniaturas] };
+  });
+
+  // Milestone 8: resuelve las coordenadas públicas de un mapa activo.
+  // Devuelve null si el mapa no debe mostrarse o si faltan datos — la
+  // plantilla nunca debe recibir un objeto a medias que la obligue a
+  // adivinar. Con precision:"aproximada" (default recomendado), las
+  // coordenadas se redondean a 3 decimales — un desplazamiento
+  // DETERMINISTA (mismo resultado siempre, no aleatorio) de hasta
+  // ~110m en latitud, suficiente para no revelar el edificio exacto
+  // sin dejar de ubicar el sector correctamente. Con "exacta", se usan
+  // tal cual — una elección consciente, nunca el default.
+  eleventyConfig.addFilter("mapaPublico", (mapa) => {
+    if (!mapa || mapa.activo !== true) return null;
+    if (typeof mapa.latitud !== "number" || typeof mapa.longitud !== "number") return null;
+    const esExacta = mapa.precision === "exacta";
+    const redondear = (n) => Math.round(n * 1000) / 1000;
+    return {
+      lat: esExacta ? mapa.latitud : redondear(mapa.latitud),
+      lng: esExacta ? mapa.longitud : redondear(mapa.longitud),
+      zoom: typeof mapa.nivelZoom === "number" ? mapa.nivelZoom : 15,
+      aproximada: !esExacta,
+    };
   });
 
   // Milestone 4: propiedades visibles en el catálogo público —

@@ -276,9 +276,20 @@ collections:
               - { label: "Usar como portada", name: "portada", widget: "boolean", default: false }
 
       # ---------------------------------------------------------
-      # 7. MAPA (ubicación aproximada — interfaz se conecta en un
-      #    milestone posterior; por ahora solo el interruptor y las
-      #    coordenadas quedan preparados en el modelo)
+      # 7. MAPA
+      #
+      # Milestone 8 — investigado antes de construir: el widget nativo
+      # "map" de Decap CMS guarda un string GeoJSON (no compatible con
+      # nuestros campos latitud/longitud ya aprobados) y NO incluye
+      # buscador de direcciones — solo un mapa en blanco para hacer
+      # clic. Construir un widget custom con Nominatim embebido en el
+      # propio formulario de Decap habría exigido registrar un
+      # componente React dentro del CMS — la clase de "interfaz frágil"
+      # que se pidió evitar. En su lugar: campos numéricos simples +
+      # una herramienta auxiliar (admin/buscar-ubicacion.html, fuera
+      # del formulario) donde Loyra/Yurlio buscan la dirección una vez
+      # y copian el resultado — sin escribir ni calcular coordenadas
+      # de memoria.
       # ---------------------------------------------------------
       - label: "Mapa"
         name: "mapa"
@@ -286,10 +297,37 @@ collections:
         collapsed: true
         required: false
         fields:
-          - { label: "Activo", name: "activo", widget: "boolean", default: false }
-          - { label: "Latitud", name: "latitud", widget: "number", value_type: "float", required: false }
-          - { label: "Longitud", name: "longitud", widget: "number", value_type: "float", required: false }
-          - { label: "Nivel de zoom", name: "nivelZoom", widget: "number", value_type: "int", required: false }
+          - label: "Mostrar mapa"
+            name: "activo"
+            widget: "boolean"
+            default: false
+            hint: "Desactivado por defecto. Actívelo solo si MAKOM decide mostrar la ubicación aproximada de esta propiedad."
+          - label: "Precisión"
+            name: "precision"
+            widget: "select"
+            default: "aproximada"
+            options:
+              - { label: "Aproximada (recomendado)", value: "aproximada" }
+              - { label: "Exacta", value: "exacta" }
+            hint: "Aproximada difumina el punto para no revelar la ubicación exacta. Use Exacta solo como una decisión consciente."
+          - label: "Latitud"
+            name: "latitud"
+            widget: "number"
+            value_type: "float"
+            required: false
+            hint: "Abra /admin/buscar-ubicacion.html en otra pestaña, busque la dirección aproximada y copie aquí el número que le muestre."
+          - label: "Longitud"
+            name: "longitud"
+            widget: "number"
+            value_type: "float"
+            required: false
+          - label: "Nivel de zoom"
+            name: "nivelZoom"
+            widget: "number"
+            value_type: "int"
+            default: 15
+            required: false
+            hint: "Opcional. 15 es un buen acercamiento de sector/barrio."
 
       # ---------------------------------------------------------
       # 8. PUBLICACIÓN

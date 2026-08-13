@@ -805,4 +805,50 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  /* ============================================================
+     17. MAPA DE UBICACIÓN (FICHA DE PROPIEDAD)
+     Solo existe #mapa-propiedad en el HTML cuando mapa.activo=true en
+     el JSON de esa propiedad (ver _includes/propiedad.njk) — si está
+     desactivado, este bloque no encuentra nada y no hace nada. Leaflet
+     (leaflet.js) solo se carga en esa misma condición. Cualquier fallo
+     (Leaflet no definido, tiles bloqueados, red caída) se captura para
+     que el resto de la ficha siga siendo completamente funcional — el
+     texto de ubicacionPublica ya está en el HTML de forma
+     independiente del mapa.
+  ============================================================ */
+  var contenedorMapa = document.getElementById('mapa-propiedad');
+
+  if (contenedorMapa && typeof L !== 'undefined') {
+    try {
+      var lat = parseFloat(contenedorMapa.getAttribute('data-lat'));
+      var lng = parseFloat(contenedorMapa.getAttribute('data-lng'));
+      var zoom = parseInt(contenedorMapa.getAttribute('data-zoom'), 10) || 15;
+
+      if (!isNaN(lat) && !isNaN(lng)) {
+        L.Icon.Default.imagePath = '/assets/vendor/leaflet/images/';
+
+        var mapaLeaflet = L.map(contenedorMapa, {
+          scrollWheelZoom: false,
+        }).setView([lat, lng], zoom);
+
+        // Permite hacer zoom con la rueda solo tras un clic explícito,
+        // para no atrapar el scroll de la página en móvil/desktop.
+        mapaLeaflet.on('click', function () {
+          mapaLeaflet.scrollWheelZoom.enable();
+        });
+
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
+        }).addTo(mapaLeaflet);
+
+        L.marker([lat, lng]).addTo(mapaLeaflet);
+      }
+    } catch (err) {
+      // Silencioso a propósito: un fallo del mapa (tiles bloqueados,
+      // Leaflet no disponible, etc.) nunca debe afectar el resto de
+      // la página — la ubicación pública en texto ya cumple ese rol.
+    }
+  }
+
 });

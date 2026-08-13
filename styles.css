@@ -3238,3 +3238,37 @@ body.hero--loaded .hero__subheadline {
     grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
   }
 }
+
+/* 32. MAPA DE UBICACIÓN — FICHA INDIVIDUAL
+   ============================================================= */
+
+/* Sin bordes redondeados (convención del sitio); Leaflet inyecta su
+   propio contenido dentro de este contenedor vía script.js. */
+.ficha-propiedad__mapa {
+  width: 100%;
+  height: 320px;
+  margin-top: 16px;
+  border: 1px solid var(--color-arena-40);
+}
+
+.ficha-propiedad__mapa-nota {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: var(--font-weight-light);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-negro-60);
+}
+
+/* Leaflet no conoce los tokens de MAKOM — solo se ajusta lo esencial
+   para que el control de atribución y el popup, si se usan, no
+   choquen visualmente con el resto del sitio. */
+.leaflet-control-attribution {
+  font-size: 10px;
+}
+
+@media (max-width: 767px) {
+  .ficha-propiedad__mapa {
+    height: 240px;
+  }
+}

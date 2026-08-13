@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Buscar ubicación — MAKOM CAPITAL GROUP</title>
+  <link rel="stylesheet" href="/assets/vendor/leaflet/leaflet.css" />
+  <style>
+    /* Herramienta interna mínima — no forma parte de la identidad
+       visual pública del sitio, solo ayuda a Loyra/Yurlio a encontrar
+       coordenadas sin escribirlas de memoria. */
+    body {
+      font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background-color: #F5F2EE;
+      color: #0A0A0A;
+    }
+    h1 {
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+    p.ayuda {
+      font-size: 14px;
+      color: #444;
+      max-width: 640px;
+      margin-bottom: 20px;
+    }
+    .buscador {
+      display: flex;
+      gap: 8px;
+      max-width: 640px;
+      margin-bottom: 16px;
+    }
+    .buscador input {
+      flex: 1;
+      padding: 10px 12px;
+      font-size: 14px;
+      border: 1px solid #C9B99A;
+    }
+    .buscador button {
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #F5F2EE;
+      background-color: #B5472A;
+      border: none;
+      cursor: pointer;
+    }
+    .buscador button:hover {
+      background-color: #9E3D24;
+    }
+    #mapa {
+      width: 100%;
+      max-width: 900px;
+      height: 420px;
+      border: 1px solid #C9B99A;
+    }
+    .resultado {
+      max-width: 640px;
+      margin-top: 16px;
+      padding: 12px 16px;
+      background-color: #fff;
+      border: 1px solid #C9B99A;
+      font-size: 14px;
+    }
+    .resultado strong {
+      display: inline-block;
+      width: 90px;
+    }
+    .resultado input {
+      font-family: monospace;
+      font-size: 14px;
+      border: none;
+      background: none;
+      width: 200px;
+    }
+    .estado {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 12px;
+      min-height: 18px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Buscar ubicación</h1>
+  <p class="ayuda">
+    Escriba una dirección o sector aproximado y pulse "Buscar". Ajuste el pin
+    arrastrándolo si hace falta. Copie la Latitud y Longitud resultantes en
+    el campo "Mapa" de la propiedad en <code>/admin/</code>. Esta página es
+    solo una herramienta interna — nunca se publica ni se enlaza desde el
+    sitio público.
+  </p>
+
+  <form class="buscador" id="form-buscar">
+    <input type="text" id="campo-busqueda" placeholder="Ej.: Punta Pacífica, Ciudad de Panamá" />
+    <button type="submit">Buscar</button>
+  </form>
+  <p class="estado" id="estado-busqueda"></p>
+
+  <div id="mapa"></div>
+
+  <div class="resultado">
+    <p><strong>Latitud:</strong> <input type="text" id="resultado-lat" readonly /></p>
+    <p><strong>Longitud:</strong> <input type="text" id="resultado-lng" readonly /></p>
+  </div>
+
+  <script src="/assets/vendor/leaflet/leaflet.js"></script>
+  <script>
+    L.Icon.Default.imagePath = '/assets/vendor/leaflet/images/';
+
+    // Panamá, Ciudad de Panamá — centro inicial neutral, no una
+    // propiedad específica.
+    var mapa = L.map('mapa').setView([8.9824, -79.5199], 12);
+
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(mapa);
+
+    var marcador = null;
+
+    function mostrarResultado(lat, lng) {
+      document.getElementById('resultado-lat').value = lat.toFixed(6);
+      document.getElementById('resultado-lng').value = lng.toFixed(6);
+    }
+
+    function colocarPin(lat, lng, centrar) {
+      if (marcador) {
+        marcador.setLatLng([lat, lng]);
+      } else {
+        marcador = L.marker([lat, lng], { draggable: true }).addTo(mapa);
+        marcador.on('dragend', function () {
+          var pos = marcador.getLatLng();
+          mostrarResultado(pos.lat, pos.lng);
+        });
+      }
+      if (centrar) mapa.setView([lat, lng], 16);
+      mostrarResultado(lat, lng);
+    }
+
+    // Búsqueda explícita por envío de formulario (nunca por tecla) —
+    // respeta la Usage Policy de Nominatim (máx. 1 solicitud/segundo,
+    // sin autocompletar, con User-Agent identificable vía Referer).
+    document.getElementById('form-buscar').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var consulta = document.getElementById('campo-busqueda').value.trim();
+      var estado = document.getElementById('estado-busqueda');
+      if (!consulta) return;
+
+      estado.textContent = 'Buscando…';
+
+      var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(consulta);
+
+      fetch(url)
+        .then(function (res) {
+          if (!res.ok) throw new Error('Nominatim no disponible');
+          return res.json();
+        })
+        .then(function (resultados) {
+          if (!resultados || resultados.length === 0) {
+            estado.textContent = 'Sin resultados. Intente con un sector o punto de referencia más conocido.';
+            return;
+          }
+          var r = resultados[0];
+          estado.textContent = 'Resultado: ' + r.display_name;
+          colocarPin(parseFloat(r.lat), parseFloat(r.lon), true);
+        })
+        .catch(function () {
+          estado.textContent = 'No se pudo buscar en este momento. Intente de nuevo en unos segundos.';
+        });
+    });
+
+    // Clic directo en el mapa también ajusta el pin, para casos donde
+    // la búsqueda por texto no ubique el punto exacto deseado.
+    mapa.on('click', function (e) {
+      colocarPin(e.latlng.lat, e.latlng.lng, false);
+    });
+  </script>
+</body>
+</html>
