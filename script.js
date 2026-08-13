@@ -414,6 +414,19 @@ document.addEventListener('DOMContentLoaded', function () {
         '?subject=' + encodeURIComponent(asunto) +
         '&body=' + encodeURIComponent(cuerpo);
 
+      if (typeof window.makomTrack === 'function') {
+        var partesNombre = nombre.split(/\s+/);
+        window.makomTrack('Lead', {
+          em: emailRemitente,
+          ph: telefono,
+          fn: partesNombre[0] || '',
+          ln: partesNombre.slice(1).join(' ')
+        }, {
+          content_name: servicio,
+          content_category: 'contact_form'
+        });
+      }
+
       setTimeout(function () {
         window.location.href = mailtoUrl;
         mostrarExito();
@@ -850,5 +863,76 @@ document.addEventListener('DOMContentLoaded', function () {
       // la página — la ubicación pública en texto ya cumple ese rol.
     }
   }
+
+  /* ============================================================
+     18. META PIXEL + CONVERSIONS API
+     Pixel (navegador) y CAPI (Worker) comparten event_id para
+     que Meta deduplique. El token nunca vive en el cliente.
+     https://developers.facebook.com/documentation/ads-commerce/conversions-api
+  ============================================================ */
+  var META_CAPI_ENDPOINT = 'https://makom-capi.gerencia-a34.workers.dev/';
+
+  function metaEventId() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'makom-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+  }
+
+  function metaCookie(name) {
+    var match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]+)'));
+    return match ? decodeURIComponent(match[1]) : '';
+  }
+
+  function makomTrack(eventName, userData, customData) {
+    var id = metaEventId();
+    var payloadUser = userData ? Object.assign({}, userData) : {};
+    var fbp = metaCookie('_fbp');
+    var fbc = metaCookie('_fbc');
+    if (fbp) payloadUser.fbp = fbp;
+    if (fbc) payloadUser.fbc = fbc;
+
+    if (typeof window.fbq === 'function') {
+      window.fbq('track', eventName, customData || {}, { eventID: id });
+    }
+
+    try {
+      fetch(META_CAPI_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_name: eventName,
+          event_id: id,
+          event_source_url: window.location.href,
+          user_data: payloadUser,
+          custom_data: customData || undefined
+        }),
+        keepalive: true,
+        mode: 'cors'
+      }).catch(function () {});
+    } catch (err) {}
+
+    return id;
+  }
+
+  window.makomTrack = makomTrack;
+
+  makomTrack('PageView');
+
+  var metaView = document.body && document.body.getAttribute('data-meta-event');
+  if (metaView === 'ViewContent') {
+    makomTrack('ViewContent', null, {
+      content_ids: document.body.getAttribute('data-meta-content-id') || '',
+      content_name: document.body.getAttribute('data-meta-content-name') || '',
+      content_type: document.body.getAttribute('data-meta-content-type') || 'product'
+    });
+  }
+
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest && e.target.closest('a[href*="wa.me"]');
+    if (!link) return;
+    makomTrack('Contact', null, {
+      content_name: 'WhatsApp',
+      content_category: 'whatsapp'
+    });
+  });
 
 });

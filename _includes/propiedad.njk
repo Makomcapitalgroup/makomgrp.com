@@ -72,8 +72,9 @@
   <script type="application/ld+json">{{ propiedad | jsonLdPropiedad(mapaPublico, urlCanonica, imagenPropiedadAbsoluta) | dump | safe }}</script>
   <script type="application/ld+json">{{ propiedad | jsonLdBreadcrumb(urlCanonica) | dump | safe }}</script>
   {% endif %}
+  {% include "meta-pixel.njk" %}
 </head>
-<body class="pagina-interior">
+<body class="pagina-interior" data-meta-event="ViewContent" data-meta-content-id="{{ propiedad.referenciaMakom or propiedad.slug }}" data-meta-content-name="{{ propiedad.titulo }}" data-meta-content-type="product">
 
 {% include "header.njk" %}
 
