@@ -584,4 +584,101 @@ document.addEventListener('DOMContentLoaded', function () {
     updateHeroParallax(); // estado inicial
   }
 
+  /* ============================================================
+     15. PROPIEDADES DESTACADAS — HOME
+     Sustituye el estado sobrio de #propiedades-grid (ya presente en
+     el HTML, visible sin JS o mientras el feed carga) por hasta 3
+     tarjetas reales cuando /data/propiedades-destacadas.json está
+     disponible. Si la petición falla o no hay ninguna destacada, el
+     estado sobrio permanece — no se muestra ningún error técnico.
+     El Home es una vitrina editorial (máximo 3 propiedades), no un
+     catálogo — no lleva filtros; esos viven exclusivamente en
+     /propiedades/ (ver content/propiedades-catalogo.njk).
+  ============================================================ */
+  var propiedadesGrid = document.getElementById('propiedades-grid');
+
+  if (propiedadesGrid) {
+    fetch('/data/propiedades-destacadas.json')
+      .then(function (res) {
+        if (!res.ok) throw new Error('Feed de propiedades destacadas no disponible');
+        return res.json();
+      })
+      .then(function (destacadas) {
+        if (!Array.isArray(destacadas) || destacadas.length === 0) return;
+        renderPropiedadesDestacadas(destacadas);
+      })
+      .catch(function () {
+        // Silencioso a propósito: el estado sobrio ya presente en el
+        // HTML (sección 30 de styles.css) sigue siendo válido.
+      });
+  }
+
+  function etiquetaOperacionHome(operacion) {
+    return operacion === 'alquiler' ? 'Alquiler' : 'Venta';
+  }
+
+  function capitalizarHome(texto) {
+    return texto ? texto.charAt(0).toUpperCase() + texto.slice(1) : '';
+  }
+
+  function precioFormatoHome(precio, operacion) {
+    if (!precio || typeof precio.monto !== 'number') return '';
+    var monto = precio.monto.toLocaleString('en-US');
+    if (operacion === 'alquiler') {
+      var sufijos = { mensual: 'mes', quincenal: 'quincena', otra: 'período' };
+      return '$' + monto + ' / ' + (sufijos[precio.periodicidad] || 'período');
+    }
+    return '$' + monto;
+  }
+
+  function specsTextoHome(d) {
+    if (!d) return '';
+    var partes = [];
+    if (d.habitaciones != null) partes.push(d.habitaciones + ' hab');
+    if (d.banos != null) partes.push(d.banos + ' baños');
+    if (d.estacionamientos != null) partes.push(d.estacionamientos + ' est.');
+    if (d.metrajeInterno != null) partes.push(d.metrajeInterno + ' m²');
+    return partes.join(' · ');
+  }
+
+  function escaparHtmlHome(texto) {
+    var div = document.createElement('div');
+    div.textContent = texto == null ? '' : String(texto);
+    return div.innerHTML;
+  }
+
+  function tarjetaDestacadaHtml(p) {
+    var specs = specsTextoHome(p.detalles);
+    var imagenHtml = p.portada
+      ? '<img src="' + escaparHtmlHome(p.portada.archivo) + '" alt="' + escaparHtmlHome(p.portada.alt || p.titulo) + '" loading="lazy" />'
+      : '<div class="property-card__image-vacia"><span class="property-card__image-vacia-texto">Foto próximamente</span></div>';
+    var reservadaHtml = p.estado === 'reservada'
+      ? '<span class="ficha-propiedad__estado-tag">Reservada</span>'
+      : '';
+
+    return (
+      '<article class="property-card" role="listitem">' +
+        '<div class="property-card__image">' +
+          imagenHtml +
+          '<div class="property-card__badges">' +
+            '<span class="property-card__type">' + etiquetaOperacionHome(p.operacion) + '</span>' +
+            '<span class="property-card__category">' + capitalizarHome(p.categoriaGeneral) + '</span>' +
+            reservadaHtml +
+          '</div>' +
+        '</div>' +
+        '<div class="property-card__body">' +
+          '<h3 class="property-card__name">' + escaparHtmlHome(p.titulo) + '</h3>' +
+          '<p class="property-card__location">' + escaparHtmlHome(p.ubicacionPublica) + '</p>' +
+          '<p class="property-card__price">' + precioFormatoHome(p.precio, p.operacion) + '</p>' +
+          (specs ? '<p class="property-card__specs">' + escaparHtmlHome(specs) + '</p>' : '') +
+          '<a href="/propiedades/' + encodeURIComponent(p.slug) + '/" class="link--arrow property-card__cta">Ver propiedad</a>' +
+        '</div>' +
+      '</article>'
+    );
+  }
+
+  function renderPropiedadesDestacadas(destacadas) {
+    propiedadesGrid.innerHTML = destacadas.map(tarjetaDestacadaHtml).join('');
+  }
+
 });
