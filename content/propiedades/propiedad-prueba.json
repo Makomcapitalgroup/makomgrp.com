@@ -1,0 +1,70 @@
+{
+  "_notaInterna": "CONTENIDO DE PRUEBA — Milestone 2 (modelo de datos de Propiedades). No es una propiedad real de MAKOM CAPITAL GROUP. No debe publicarse, mostrarse en Home ni usarse como referencia comercial.",
+
+  "id": "mkw-pro-test-0001",
+  "referenciaMakom": "MKW-PRO-TEST-0001",
+  "slug": "propiedad-prueba",
+  "titulo": "PROPIEDAD DE PRUEBA — NO PUBLICAR",
+  "estado": "borrador",
+  "operacion": "alquiler",
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+
+  "mostrarEnHome": false,
+  "ordenHome": null,
+
+  "precio": {
+    "monto": 1500,
+    "moneda": "USD",
+    "periodicidad": "mensual"
+  },
+
+  "ubicacionInterna": {
+    "provincia": "Provincia de prueba",
+    "distrito": "Distrito de prueba",
+    "corregimiento": "Corregimiento de prueba",
+    "sector": "Sector de prueba",
+    "edificioPH": null,
+    "direccionInterna": "Dato de prueba — no representa una dirección real"
+  },
+  "ubicacionPublica": "Ubicación de prueba — no publicar",
+
+  "mapa": {
+    "activo": false,
+    "latitud": null,
+    "longitud": null,
+    "nivelZoom": null
+  },
+
+  "descripcion": "Este es un texto de prueba en formato Markdown simple para validar el campo de descripción.\n\nPuede incluir varios párrafos y, si se necesita, listas como:\n\n- Punto de ejemplo uno\n- Punto de ejemplo dos\n\nNo describe una propiedad real.",
+
+  "detallesCuantitativos": {
+    "habitaciones": 2,
+    "banos": 1.5,
+    "estacionamientos": 1,
+    "metrajeInterno": 80,
+    "metrajeTotal": 85,
+    "anoConstruccion": null,
+    "piso": "3"
+  },
+
+  "detalles": ["balcon", "amoblado"],
+  "amenidades": ["piscina", "seguridad-24-7"],
+
+  "fotografias": {
+    "galeria": []
+  },
+
+  "seo": {
+    "titulo": null,
+    "descripcion": null,
+    "imagenSocial": null,
+    "noIndex": false
+  },
+
+  "metadatos": {
+    "fechaCreacion": "2026-08-12T00:00:00-05:00",
+    "fechaPublicacion": null,
+    "fechaActualizacion": "2026-08-12T00:00:00-05:00"
+  }
+}
