@@ -1,0 +1,144 @@
+{% set operacionEtiqueta = propiedad.operacion | etiqueta(propiedadesConfig.operaciones) %}
+{% set urlCanonica = "https://makomgrp.com/propiedades/" + propiedad.slug + "/" %}
+{% set esIndexable = (propiedad.estado == "disponible" or propiedad.estado == "reservada") and not propiedad.seo.noIndex %}
+{% set tituloSeo = propiedad.seo.titulo or (propiedad.titulo + " — " + operacionEtiqueta + " en " + propiedad.ubicacionPublica + " | MAKOM CAPITAL GROUP") %}
+{% set descripcionSeo = propiedad.seo.descripcion or (propiedad.descripcion | resumenSeo(155)) %}
+{% set portada = propiedad.fotografias.galeria | portadaDe %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="{{ descripcionSeo }}" />
+  <meta name="theme-color" content="#0A0A0A" />
+  <meta name="robots" content="{{ 'index, follow' if esIndexable else 'noindex, nofollow' }}" />
+  <link rel="canonical" href="{{ urlCanonica }}" />
+  <link rel="icon" type="image/svg+xml" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon-16.png" />
+  <link rel="apple-touch-icon" href="/MAKOM_Logo_Files_v4.0/04_Favicon/apple-touch-icon.png" />
+  <title>{{ tituloSeo }}</title>
+  <meta property="og:title" content="{{ tituloSeo }}" />
+  <meta property="og:description" content="{{ descripcionSeo }}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="es_PA" />
+  <meta property="og:url" content="{{ urlCanonica }}" />
+  {% if portada %}<meta property="og:image" content="https://makomgrp.com{{ portada.archivo }}" />{% endif %}
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="{{ tituloSeo }}" />
+  <meta name="twitter:description" content="{{ descripcionSeo }}" />
+  {% if portada %}<meta name="twitter:image" content="https://makomgrp.com{{ portada.archivo }}" />{% endif %}
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="pagina-propiedad">
+
+{% include "header.njk" %}
+
+<main id="main" role="main">
+  <section class="ficha-propiedad" aria-labelledby="ficha-titulo">
+    <div class="container ficha-propiedad__inner">
+
+      <div class="ficha-propiedad__encabezado" data-reveal>
+        <div class="ficha-propiedad__badges">
+          <span class="property-card__type">{{ operacionEtiqueta }}</span>
+          <span class="property-card__category">{{ propiedad.categoriaGeneral | capitalize }}</span>
+          {% if propiedad.estado == "reservada" %}
+            <span class="ficha-propiedad__estado-tag">Reservada</span>
+          {% endif %}
+        </div>
+        <h1 class="ficha-propiedad__titulo" id="ficha-titulo">{{ propiedad.titulo }}</h1>
+        <p class="ficha-propiedad__precio">{{ propiedad.precio | precioFormato(propiedad.operacion) }}</p>
+        <p class="ficha-propiedad__ubicacion">{{ propiedad.ubicacionPublica }}</p>
+      </div>
+
+      <div class="ficha-propiedad__galeria" data-reveal>
+        {% if propiedad.fotografias.galeria and propiedad.fotografias.galeria.length > 0 %}
+          <div class="ficha-propiedad__galeria-grid">
+            {% for foto in propiedad.fotografias.galeria %}
+              <img src="{{ foto.archivo }}" alt="{{ foto.alt or propiedad.titulo }}" class="ficha-propiedad__foto" loading="lazy" />
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="ficha-propiedad__galeria-vacia">
+            <span class="ficha-propiedad__galeria-vacia-texto">Fotografías disponibles próximamente</span>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="ficha-propiedad__cuerpo">
+        <div class="ficha-propiedad__principal">
+
+          {% if propiedad.descripcion %}
+          <div class="ficha-propiedad__seccion" data-reveal>
+            <h2 class="ficha-propiedad__seccion-titulo">Descripción</h2>
+            <div class="ficha-propiedad__descripcion">{{ propiedad.descripcion | descripcionHtml | safe }}</div>
+          </div>
+          {% endif %}
+
+          <div class="ficha-propiedad__seccion" data-reveal>
+            <h2 class="ficha-propiedad__seccion-titulo">Detalles</h2>
+            <ul class="ficha-propiedad__specs">
+              {% if propiedad.detallesCuantitativos.habitaciones != null %}<li><span>Habitaciones</span><strong>{{ propiedad.detallesCuantitativos.habitaciones }}</strong></li>{% endif %}
+              {% if propiedad.detallesCuantitativos.banos != null %}<li><span>Baños</span><strong>{{ propiedad.detallesCuantitativos.banos }}</strong></li>{% endif %}
+              {% if propiedad.detallesCuantitativos.estacionamientos != null %}<li><span>Estacionamientos</span><strong>{{ propiedad.detallesCuantitativos.estacionamientos }}</strong></li>{% endif %}
+              {% if propiedad.detallesCuantitativos.metrajeInterno != null %}<li><span>Metraje interno</span><strong>{{ propiedad.detallesCuantitativos.metrajeInterno }} m²</strong></li>{% endif %}
+              {% if propiedad.detallesCuantitativos.metrajeTotal != null %}<li><span>Metraje total</span><strong>{{ propiedad.detallesCuantitativos.metrajeTotal }} m²</strong></li>{% endif %}
+              {% if propiedad.detallesCuantitativos.anoConstruccion != null %}<li><span>Año de construcción</span><strong>{{ propiedad.detallesCuantitativos.anoConstruccion }}</strong></li>{% endif %}
+              {% if propiedad.detallesCuantitativos.piso != null %}<li><span>Piso</span><strong>{{ propiedad.detallesCuantitativos.piso }}</strong></li>{% endif %}
+            </ul>
+          </div>
+
+          {% if propiedad.detalles and propiedad.detalles.length > 0 %}
+          <div class="ficha-propiedad__seccion" data-reveal>
+            <h2 class="ficha-propiedad__seccion-titulo">Detalles de la propiedad</h2>
+            <ul class="ficha-propiedad__checklist">
+              {% for valor in propiedad.detalles %}
+                <li>{{ valor | etiqueta(propiedadesConfig.detalles) }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+
+          {% if propiedad.amenidades and propiedad.amenidades.length > 0 %}
+          <div class="ficha-propiedad__seccion" data-reveal>
+            <h2 class="ficha-propiedad__seccion-titulo">Características / Amenidades</h2>
+            <ul class="ficha-propiedad__checklist">
+              {% for valor in propiedad.amenidades %}
+                <li>{{ valor | etiqueta(propiedadesConfig.amenidades) }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+
+          <div class="ficha-propiedad__seccion" data-reveal>
+            <h2 class="ficha-propiedad__seccion-titulo">Ubicación</h2>
+            <p class="ficha-propiedad__ubicacion-texto">{{ propiedad.ubicacionPublica }}</p>
+            {% if propiedad.mapa.activo %}
+              <!-- Mapa interactivo (Leaflet/OSM): se integra en un milestone posterior. -->
+            {% endif %}
+          </div>
+
+        </div>
+
+        <aside class="ficha-propiedad__lateral">
+          <div class="ficha-propiedad__cta" data-reveal>
+            <p class="ficha-propiedad__cta-precio">{{ propiedad.precio | precioFormato(propiedad.operacion) }}</p>
+            <a
+              class="btn btn--primary ficha-propiedad__cta-btn"
+              href="https://wa.me/50763534377?text={{ ('Hola, estoy interesado/a en la propiedad ' + propiedad.referenciaMakom + ' — ' + propiedad.titulo) | urlencode }}"
+              target="_blank" rel="noopener noreferrer"
+            >WhatsApp</a>
+            <a class="btn btn--outline ficha-propiedad__cta-btn" href="/#contacto">Solicitar información</a>
+            <p class="ficha-propiedad__referencia">Ref. {{ propiedad.referenciaMakom }}</p>
+          </div>
+        </aside>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+{% include "footer.njk" %}
+
+</body>
+</html>

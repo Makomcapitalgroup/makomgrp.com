@@ -2732,3 +2732,282 @@ body.hero--loaded .hero__subheadline {
     width: min(240px, calc(100vw - 32px));
   }
 }
+
+/* 28. PÁGINA INDIVIDUAL DE PROPIEDAD
+   ============================================================= */
+
+/* Esta página no tiene un Hero oscuro detrás del header (a diferencia
+   del Home), por lo que el header permanece siempre en su variante
+   "con fondo claro" — nunca en el estado transparente inicial. */
+.pagina-propiedad .header {
+  background-color: var(--color-blanco);
+  box-shadow: var(--shadow-header);
+}
+
+.pagina-propiedad .header__logo-svg--neg {
+  display: none;
+}
+
+.pagina-propiedad .header__logo-svg--pos {
+  display: block;
+}
+
+.pagina-propiedad .header__nav-link {
+  color: var(--color-negro);
+}
+
+.pagina-propiedad .header__nav-link--cta {
+  border-color: var(--color-arena-40);
+}
+
+.pagina-propiedad .hamburger__bar {
+  background-color: var(--color-negro);
+}
+
+.ficha-propiedad {
+  padding-top: calc(var(--header-height) + 48px);
+  padding-bottom: 100px;
+  background-color: var(--color-blanco);
+}
+
+.ficha-propiedad__encabezado {
+  margin-bottom: 32px;
+}
+
+.ficha-propiedad__badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ficha-propiedad__estado-tag {
+  font-size: 10px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  color: var(--color-blanco);
+  background-color: var(--color-terracota);
+}
+
+.ficha-propiedad__titulo {
+  font-size: 32px;
+  font-weight: var(--font-weight-regular);
+  line-height: 1.15;
+  margin-bottom: 12px;
+}
+
+.ficha-propiedad__precio {
+  font-size: 22px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-terracota);
+  margin-bottom: 8px;
+}
+
+.ficha-propiedad__ubicacion {
+  font-size: 15px;
+  font-weight: var(--font-weight-light);
+  color: var(--color-negro-70);
+}
+
+/* Galería */
+.ficha-propiedad__galeria {
+  margin-bottom: 48px;
+}
+
+.ficha-propiedad__galeria-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.ficha-propiedad__foto {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+}
+
+.ficha-propiedad__galeria-vacia {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16/7;
+  border: 1px solid var(--color-arena-40);
+  background-color: var(--color-arena-15);
+}
+
+.ficha-propiedad__galeria-vacia-texto {
+  font-size: 13px;
+  font-weight: var(--font-weight-light);
+  letter-spacing: 0.04em;
+  color: var(--color-negro-60);
+  text-transform: uppercase;
+}
+
+/* Cuerpo: columna principal + columna lateral (CTA) */
+.ficha-propiedad__cuerpo {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 48px;
+}
+
+@media (min-width: 1024px) {
+  .ficha-propiedad__cuerpo {
+    grid-template-columns: 2fr 1fr;
+    align-items: start;
+  }
+}
+
+.ficha-propiedad__seccion {
+  padding-block: 32px;
+  border-top: 1px solid var(--color-arena-20);
+}
+
+.ficha-propiedad__principal .ficha-propiedad__seccion:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.ficha-propiedad__seccion-titulo {
+  font-size: 12px;
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-terracota);
+  margin-bottom: 20px;
+}
+
+.ficha-propiedad__descripcion p {
+  font-size: 16px;
+  font-weight: var(--font-weight-light);
+  line-height: 1.7;
+  color: var(--color-negro-90);
+  margin-bottom: 16px;
+}
+
+.ficha-propiedad__descripcion p:last-child {
+  margin-bottom: 0;
+}
+
+.ficha-propiedad__descripcion .ficha-propiedad__lista {
+  padding-left: 20px;
+  margin-bottom: 16px;
+}
+
+.ficha-propiedad__descripcion .ficha-propiedad__lista li {
+  font-size: 16px;
+  font-weight: var(--font-weight-light);
+  line-height: 1.7;
+  list-style: disc;
+}
+
+.ficha-propiedad__checklist {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px 24px;
+  list-style: none;
+}
+
+.ficha-propiedad__checklist li {
+  font-size: 14px;
+  font-weight: var(--font-weight-light);
+  color: var(--color-negro-90);
+  padding-left: 18px;
+  position: relative;
+}
+
+.ficha-propiedad__checklist li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 6px;
+  height: 6px;
+  background-color: var(--color-terracota);
+}
+
+.ficha-propiedad__specs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 20px;
+  list-style: none;
+}
+
+.ficha-propiedad__specs li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ficha-propiedad__specs li span {
+  font-size: 12px;
+  font-weight: var(--font-weight-light);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-negro-60);
+}
+
+.ficha-propiedad__specs li strong {
+  font-size: 18px;
+  font-weight: var(--font-weight-medium);
+}
+
+.ficha-propiedad__ubicacion-texto {
+  font-size: 15px;
+  font-weight: var(--font-weight-light);
+  color: var(--color-negro-90);
+}
+
+/* CTA lateral */
+.ficha-propiedad__lateral {
+  position: sticky;
+  top: calc(var(--header-height) + 32px);
+}
+
+.ficha-propiedad__cta {
+  padding: 32px 24px;
+  border: 1px solid var(--color-arena-20);
+  background-color: var(--color-blanco);
+  box-shadow: var(--shadow-card);
+}
+
+.ficha-propiedad__cta-precio {
+  font-size: 22px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-terracota);
+  margin-bottom: 20px;
+}
+
+.ficha-propiedad__cta-btn {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.ficha-propiedad__cta-btn:last-of-type {
+  margin-bottom: 20px;
+}
+
+.ficha-propiedad__referencia {
+  font-size: 12px;
+  font-weight: var(--font-weight-light);
+  letter-spacing: 0.04em;
+  color: var(--color-negro-60);
+  text-align: center;
+}
+
+@media (max-width: 1023.98px) {
+  .ficha-propiedad__lateral {
+    position: static;
+  }
+}
+
+@media (max-width: 767px) {
+  .ficha-propiedad__titulo {
+    font-size: 26px;
+  }
+
+  .ficha-propiedad {
+    padding-top: calc(var(--header-height) + 32px);
+  }
+}
