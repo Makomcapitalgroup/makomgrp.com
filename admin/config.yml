@@ -1,0 +1,334 @@
+# Panel administrativo de MAKOM CAPITAL GROUP — Decap CMS
+#
+# backend.name se mantiene en "github" (forma definitiva de producción).
+# local_backend:true es inerte en producción (solo se activa si Decap
+# detecta un proxy decap-server corriendo en localhost/127.0.0.1) — ver
+# packages/decap-cms-core/src/actions/config.ts (handleLocalBackend) en
+# el código fuente oficial de Decap CMS. Esto permite probar el panel
+# localmente sin OAuth, sin necesitar un segundo archivo de configuración
+# ni tocar nada para cuando se conecte el OAuth real (Milestone 10).
+backend:
+  name: github
+  repo: Makomcapitalgroup/makomgrp.com
+  branch: main
+
+local_backend: true
+
+publish_mode: simple
+locale: "es"
+
+media_folder: "assets/propiedades/uploads"
+public_folder: "/assets/propiedades/uploads"
+
+collections:
+  - name: "propiedades"
+    label: "Propiedades"
+    label_singular: "Propiedad"
+    description: "Propiedades administradas por MAKOM CAPITAL GROUP."
+    folder: "content/propiedades"
+    create: true
+    slug: "{{slug}}"
+    format: "json"
+    extension: "json"
+    identifier_field: "titulo"
+    summary: "{{titulo}} — {{estado}}"
+    editor:
+      preview: false
+    fields:
+      # ---------------------------------------------------------
+      # 1. INFORMACIÓN BÁSICA
+      # ---------------------------------------------------------
+      - label: "Título"
+        name: "titulo"
+        widget: "string"
+        hint: "Nombre público de la propiedad. Ej.: Apartamento en Punta Pacífica"
+
+      - label: "Operación"
+        name: "operacion"
+        widget: "select"
+        options:
+          - { label: "Venta", value: "venta" }
+          - { label: "Alquiler", value: "alquiler" }
+
+      - label: "Tipo de propiedad"
+        name: "tipo"
+        widget: "select"
+        options:
+          - { label: "Apartamento", value: "apartamento" }
+          - { label: "Casa", value: "casa" }
+          - { label: "Penthouse", value: "penthouse" }
+          - { label: "Oficina", value: "oficina" }
+          - { label: "Local comercial", value: "local-comercial" }
+          - { label: "Terreno", value: "terreno" }
+          - { label: "Bodega", value: "bodega" }
+          - { label: "Edificio", value: "edificio" }
+          - { label: "PH", value: "ph" }
+          - { label: "Otro", value: "otro" }
+
+      - label: "Categoría general"
+        name: "categoriaGeneral"
+        widget: "select"
+        options:
+          - { label: "Residencial", value: "residencial" }
+          - { label: "Comercial", value: "comercial" }
+          - { label: "Terreno", value: "terreno" }
+          - { label: "Otro", value: "otro" }
+
+      - label: "Estado"
+        name: "estado"
+        widget: "select"
+        default: "borrador"
+        options:
+          - { label: "Borrador", value: "borrador" }
+          - { label: "Disponible", value: "disponible" }
+          - { label: "Reservada", value: "reservada" }
+          - { label: "Vendida", value: "vendida" }
+          - { label: "Alquilada", value: "alquilada" }
+          - { label: "Archivada", value: "archivada" }
+        hint: "Solo Disponible y Reservada aparecen públicamente en /propiedades/."
+
+      - label: "Descripción"
+        name: "descripcion"
+        widget: "richtext"
+        buttons: ["bold", "italic", "bulleted-list", "numbered-list"]
+        hint: "Editor visual — no es necesario escribir Markdown a mano."
+
+      # ---------------------------------------------------------
+      # 2. PRECIO
+      # ---------------------------------------------------------
+      - label: "Precio"
+        name: "precio"
+        widget: "object"
+        collapsed: false
+        fields:
+          - label: "Monto"
+            name: "monto"
+            widget: "number"
+            value_type: "int"
+            min: 0
+          - label: "Moneda"
+            name: "moneda"
+            widget: "select"
+            default: "USD"
+            options:
+              - { label: "USD", value: "USD" }
+          - label: "Periodicidad"
+            name: "periodicidad"
+            widget: "select"
+            required: false
+            hint: "Solo aplica a propiedades en Alquiler. Deje vacío en Venta."
+            options:
+              - { label: "Mensual", value: "mensual" }
+              - { label: "Quincenal", value: "quincenal" }
+              - { label: "Otra", value: "otra" }
+
+      # ---------------------------------------------------------
+      # 3. UBICACIÓN
+      # ---------------------------------------------------------
+      - label: "Ubicación administrativa (uso interno)"
+        name: "ubicacionInterna"
+        widget: "object"
+        collapsed: false
+        hint: "Estos datos NUNCA se muestran públicamente en el sitio."
+        fields:
+          - { label: "Provincia", name: "provincia", widget: "string" }
+          - { label: "Distrito", name: "distrito", widget: "string" }
+          - { label: "Corregimiento", name: "corregimiento", widget: "string", required: false }
+          - { label: "Sector / Área", name: "sector", widget: "string" }
+          - { label: "Edificio / PH", name: "edificioPH", widget: "string", required: false }
+          - label: "Dirección interna"
+            name: "direccionInterna"
+            widget: "string"
+            required: false
+            hint: "La dirección interna NO se muestra públicamente."
+
+      - label: "Ubicación pública"
+        name: "ubicacionPublica"
+        widget: "string"
+        hint: "Este es el texto que verá el visitante del sitio. Ej.: Punta Pacífica, Ciudad de Panamá"
+
+      # ---------------------------------------------------------
+      # 4. DETALLES DE LA PROPIEDAD
+      # ---------------------------------------------------------
+      - label: "Detalles cuantitativos"
+        name: "detallesCuantitativos"
+        widget: "object"
+        collapsed: false
+        fields:
+          - { label: "Habitaciones", name: "habitaciones", widget: "number", value_type: "int", min: 0, required: false }
+          - { label: "Baños", name: "banos", widget: "number", value_type: "float", step: 0.5, min: 0, required: false }
+          - { label: "Estacionamientos", name: "estacionamientos", widget: "number", value_type: "int", min: 0, required: false }
+          - { label: "Metraje interno (m²)", name: "metrajeInterno", widget: "number", value_type: "float", min: 0, required: false }
+          - { label: "Metraje total (m²)", name: "metrajeTotal", widget: "number", value_type: "float", min: 0, required: false }
+          - { label: "Año de construcción", name: "anoConstruccion", widget: "number", value_type: "int", required: false }
+          - { label: "Piso", name: "piso", widget: "string", required: false, hint: "Puede ser un número o texto (ej. PB, Ático)." }
+
+      - label: "Detalles de la propiedad"
+        name: "detalles"
+        widget: "select"
+        multiple: true
+        required: false
+        hint: "Seleccione todo lo que aplique."
+        options:
+          - { label: "Cuarto de empleada", value: "cuarto-empleada" }
+          - { label: "Baño de empleada", value: "bano-empleada" }
+          - { label: "Depósito", value: "deposito" }
+          - { label: "Área de lavandería", value: "lavanderia" }
+          - { label: "Balcón", value: "balcon" }
+          - { label: "Terraza", value: "terraza" }
+          - { label: "Jardín", value: "jardin" }
+          - { label: "Den", value: "den" }
+          - { label: "Estudio", value: "estudio" }
+          - { label: "Sala familiar", value: "sala-familiar" }
+          - { label: "Walk-in closet", value: "walk-in-closet" }
+          - { label: "Cocina abierta", value: "cocina-abierta" }
+          - { label: "Cocina cerrada", value: "cocina-cerrada" }
+          - { label: "Línea blanca", value: "linea-blanca" }
+          - { label: "Amoblado", value: "amoblado" }
+          - { label: "Aires acondicionados", value: "aires-acondicionados" }
+          - { label: "Vista al mar", value: "vista-mar" }
+          - { label: "Vista a la ciudad", value: "vista-ciudad" }
+          - { label: "Vista al parque", value: "vista-parque" }
+          - { label: "Frente al mar", value: "frente-mar" }
+          - { label: "Piso alto", value: "piso-alto" }
+          - { label: "Acceso directo al elevador", value: "acceso-directo-elevador" }
+
+      # ---------------------------------------------------------
+      # 5. CARACTERÍSTICAS / AMENIDADES
+      # ---------------------------------------------------------
+      - label: "Características / Amenidades"
+        name: "amenidades"
+        widget: "select"
+        multiple: true
+        required: false
+        hint: "Seleccione todo lo que aplique."
+        options:
+          - { label: "Piscina", value: "piscina" }
+          - { label: "Gimnasio", value: "gimnasio" }
+          - { label: "Lobby", value: "lobby" }
+          - { label: "Seguridad 24/7", value: "seguridad-24-7" }
+          - { label: "Garita de seguridad", value: "garita-seguridad" }
+          - { label: "Acceso controlado", value: "acceso-controlado" }
+          - { label: "Cerradura digital", value: "cerradura-digital" }
+          - { label: "Elevadores", value: "elevadores" }
+          - { label: "Elevador de servicio", value: "elevador-servicio" }
+          - { label: "Planta eléctrica", value: "planta-electrica" }
+          - { label: "Planta eléctrica total", value: "planta-electrica-total" }
+          - { label: "Tanque de reserva", value: "tanque-reserva" }
+          - { label: "Área social", value: "area-social" }
+          - { label: "Salón de eventos", value: "salon-eventos" }
+          - { label: "Coworking", value: "coworking" }
+          - { label: "Parque infantil", value: "parque-infantil" }
+          - { label: "Cancha deportiva", value: "cancha-deportiva" }
+          - { label: "Rooftop", value: "rooftop" }
+          - { label: "Área BBQ", value: "bbq" }
+          - { label: "Pet friendly", value: "pet-friendly" }
+          - { label: "Estacionamientos de visitas", value: "estacionamientos-visitas" }
+          - { label: "Estacionamientos techados", value: "estacionamientos-techados" }
+          - { label: "Cargador para vehículo eléctrico", value: "cargador-electrico" }
+          - { label: "Concierge", value: "concierge" }
+          - { label: "Administración en sitio", value: "administracion-sitio" }
+          - { label: "Acceso para personas con movilidad reducida", value: "accesibilidad" }
+
+      # ---------------------------------------------------------
+      # 6. FOTOGRAFÍAS
+      # ---------------------------------------------------------
+      - label: "Fotografías"
+        name: "fotografias"
+        widget: "object"
+        collapsed: false
+        fields:
+          - label: "Galería (3 a 5 fotografías)"
+            name: "galeria"
+            widget: "list"
+            required: false
+            fields:
+              - { label: "Archivo", name: "archivo", widget: "image" }
+              - label: "Texto alternativo"
+                name: "alt"
+                widget: "string"
+                required: false
+                hint: "Si se deja vacío, se usa el título de la propiedad."
+              - { label: "Usar como portada", name: "portada", widget: "boolean", default: false }
+
+      # ---------------------------------------------------------
+      # 7. MAPA (ubicación aproximada — interfaz se conecta en un
+      #    milestone posterior; por ahora solo el interruptor y las
+      #    coordenadas quedan preparados en el modelo)
+      # ---------------------------------------------------------
+      - label: "Mapa"
+        name: "mapa"
+        widget: "object"
+        collapsed: true
+        required: false
+        fields:
+          - { label: "Activo", name: "activo", widget: "boolean", default: false }
+          - { label: "Latitud", name: "latitud", widget: "number", value_type: "float", required: false }
+          - { label: "Longitud", name: "longitud", widget: "number", value_type: "float", required: false }
+          - { label: "Nivel de zoom", name: "nivelZoom", widget: "number", value_type: "int", required: false }
+
+      # ---------------------------------------------------------
+      # 8. PUBLICACIÓN
+      # ---------------------------------------------------------
+      - label: "Mostrar en página principal"
+        name: "mostrarEnHome"
+        widget: "boolean"
+        default: false
+        hint: "MAKOM mostrará un máximo de 3 propiedades destacadas."
+
+      - label: "Orden en Home"
+        name: "ordenHome"
+        widget: "number"
+        value_type: "int"
+        required: false
+        hint: "Opcional. Si varias propiedades están destacadas, decide cuál aparece primero."
+
+      # ---------------------------------------------------------
+      # 9. SEO AVANZADO (siempre al final, siempre opcional)
+      # ---------------------------------------------------------
+      - label: "SEO avanzado"
+        name: "seo"
+        widget: "object"
+        collapsed: true
+        required: false
+        hint: "Opcional — el sitio genera automáticamente estos valores si se dejan vacíos."
+        fields:
+          - { label: "Título SEO", name: "titulo", widget: "string", required: false }
+          - { label: "Descripción SEO", name: "descripcion", widget: "text", required: false }
+          - { label: "Imagen social", name: "imagenSocial", widget: "image", required: false }
+          - { label: "No indexar (noindex)", name: "noIndex", widget: "boolean", default: false }
+
+      # ---------------------------------------------------------
+      # CAMPOS TÉCNICOS — nunca visibles para Loyra/Yurlio.
+      # Ver Milestone 6, sección "Campos automáticos" del reporte
+      # para la clasificación y el porqué de cada uno.
+      # ---------------------------------------------------------
+      - label: "Referencia MAKOM (interna)"
+        name: "referenciaMakom"
+        widget: "hidden"
+        default: "PENDIENTE-ASIGNACION"
+
+      # "metadatos" se declara como grupo anidado (no campos sueltos)
+      # para calzar con el modelo aprobado en el Milestone 2, donde
+      # las plantillas leen propiedad.metadatos.fechaCreacion, etc.
+      #
+      # Sin "default" en ninguno de los tres: se comprobó en la prueba
+      # local de este milestone que el valor dinámico "{{now}}" NO se
+      # interpola de forma fiable en un widget hidden (se guarda el
+      # texto literal "{{now}}") — el mismo tipo de limitación ya
+      # documentada para "{{slug}}" (decaporg/decap-cms#4022, #4787).
+      # Los tres quedan vacíos hasta que un script/hook posterior
+      # (Milestone 11) los asigne. Se declaran igual como campos
+      # "hidden" (en vez de omitirlos del todo) para que Decap CMS
+      # conserve ese valor futuro en cada guardado posterior — con
+      # format: "json", cualquier clave NO declarada en "fields" se
+      # descarta silenciosamente al guardar.
+      - label: "Metadatos (interno)"
+        name: "metadatos"
+        widget: "object"
+        collapsed: true
+        required: false
+        fields:
+          - { label: "Fecha de creación", name: "fechaCreacion", widget: "hidden", required: false }
+          - { label: "Fecha de publicación", name: "fechaPublicacion", widget: "hidden", required: false }
+          - { label: "Fecha de actualización", name: "fechaActualizacion", widget: "hidden", required: false }

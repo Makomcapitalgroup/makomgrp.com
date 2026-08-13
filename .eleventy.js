@@ -1,5 +1,47 @@
 const fs = require("fs");
 const path = require("path");
+const yaml = require("js-yaml");
+
+// Compara las opciones de los campos "detalles" y "amenidades" en
+// admin/config.yml contra las listas canónicas de
+// _data/propiedadesConfig.json. Lanza un error de build (detiene
+// `npm run build`) si divergen, para que una lista nunca quede
+// desincronizada de la otra sin que alguien lo note.
+function validarConfigCmsContraFuenteCentral(raiz) {
+  const rutaConfigYml = path.join(raiz, "admin", "config.yml");
+  const rutaConfigCentral = path.join(raiz, "_data", "propiedadesConfig.json");
+  if (!fs.existsSync(rutaConfigYml) || !fs.existsSync(rutaConfigCentral)) return;
+
+  const configYml = yaml.load(fs.readFileSync(rutaConfigYml, "utf8"));
+  const configCentral = JSON.parse(fs.readFileSync(rutaConfigCentral, "utf8"));
+
+  const campos = configYml.collections?.[0]?.fields || [];
+  const errores = [];
+
+  ["detalles", "amenidades"].forEach((nombreCampo) => {
+    const campo = campos.find((f) => f.name === nombreCampo);
+    if (!campo) {
+      errores.push(`admin/config.yml no tiene un campo "${nombreCampo}".`);
+      return;
+    }
+    const valoresYml = (campo.options || []).map((o) => o.value).sort();
+    const valoresCentral = (configCentral[nombreCampo] || []).map((o) => o.valor).sort();
+    if (JSON.stringify(valoresYml) !== JSON.stringify(valoresCentral)) {
+      errores.push(
+        `"${nombreCampo}" difiere entre admin/config.yml (${valoresYml.length} opciones) y ` +
+          `_data/propiedadesConfig.json (${valoresCentral.length} opciones).`
+      );
+    }
+  });
+
+  if (errores.length > 0) {
+    throw new Error(
+      "Validación de configuración del CMS falló:\n" +
+        errores.map((e) => `  - ${e}`).join("\n") +
+        "\nActualiza admin/config.yml y _data/propiedadesConfig.json para que coincidan."
+    );
+  }
+}
 
 module.exports = function (eleventyConfig) {
   // Milestone 1: andamiaje delimitado. Eleventy solo copia el sitio actual
@@ -16,18 +58,47 @@ module.exports = function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy("assets");
   eleventyConfig.addPassthroughCopy("MAKOM_Logo_Files_v4.0");
 
+  // Milestone 6: /admin/ se sirve tal cual (Decap CMS se carga por CDN
+  // dentro de admin/index.html) — nunca se procesa como plantilla ni se
+  // referencia desde ninguna página pública.
+  eleventyConfig.addPassthroughCopy("admin");
+
   // Milestone 3: colección de propiedades leída directamente de
   // content/propiedades/*.json. Son archivos de datos puros (no
   // plantillas Eleventy), por lo que se leen a mano con fs — esto es
   // lo que permite generar una página por propiedad sin convertir esos
   // JSON en archivos con front matter.
+  //
+  // Milestone 6: "slug" ya NO se confía al valor que trae el JSON — se
+  // deriva siempre del nombre de archivo real. Investigado durante este
+  // milestone: el valor por defecto "{{slug}}" en un campo widget:hidden
+  // de Decap CMS es conocido por no interpolarse de forma fiable (bug
+  // reportado: decaporg/decap-cms#4022, #4787), mientras que el nombre
+  // de archivo que Decap sí genera de forma fiable mediante `slug:
+  // "{{slug}}"` a nivel de colección. Derivarlo del nombre de archivo
+  // elimina esa fuente de datos inconsistente en vez de depender de un
+  // campo que podría no coincidir con la URL real generada.
   eleventyConfig.addCollection("propiedades", () => {
     const dir = path.join(__dirname, "content", "propiedades");
     if (!fs.existsSync(dir)) return [];
     return fs
       .readdirSync(dir)
       .filter((archivo) => archivo.endsWith(".json"))
-      .map((archivo) => JSON.parse(fs.readFileSync(path.join(dir, archivo), "utf8")));
+      .map((archivo) => {
+        const datos = JSON.parse(fs.readFileSync(path.join(dir, archivo), "utf8"));
+        datos.slug = path.basename(archivo, ".json");
+        return datos;
+      });
+  });
+
+  // Milestone 6: valida, en cada build, que las listas de "detalles" y
+  // "amenidades" del panel administrativo (admin/config.yml) no hayan
+  // divergido de la fuente central (_data/propiedadesConfig.json). Son
+  // dos archivos que Decap CMS no puede compartir de forma nativa (ver
+  // reporte del Milestone 6) — esta validación es la mitigación acordada
+  // en vez de una solución más compleja.
+  eleventyConfig.on("eleventy.before", () => {
+    validarConfigCmsContraFuenteCentral(__dirname);
   });
 
   // Resuelve una clave técnica (ej. "vista-mar") a su etiqueta pública
