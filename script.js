@@ -220,6 +220,13 @@ document.addEventListener('DOMContentLoaded', function () {
       this.classList.add('filter-tab--active');
       this.setAttribute('aria-selected', 'true');
 
+      if (typeof window.makomTrack === 'function') {
+        window.makomTrack('Search', null, {
+          search_string: filter,
+          content_category: 'property_filter'
+        });
+      }
+
       // Filter cards
       propertyCards.forEach(function (card) {
         var types = card.getAttribute('data-type') || '';
@@ -416,15 +423,31 @@ document.addEventListener('DOMContentLoaded', function () {
 
       if (typeof window.makomTrack === 'function') {
         var partesNombre = nombre.split(/\s+/);
-        window.makomTrack('Lead', {
+        var userLead = {
           em: emailRemitente,
           ph: telefono,
           fn: partesNombre[0] || '',
-          ln: partesNombre.slice(1).join(' ')
-        }, {
+          ln: partesNombre.slice(1).join(' '),
+          country: 'pa',
+          ct: 'panama',
+          st: 'panama',
+          external_id: emailRemitente
+        };
+        window.makomTrack('Lead', userLead, {
           content_name: servicio,
           content_category: 'contact_form'
         });
+        window.makomTrack('SubmitApplication', userLead, {
+          content_name: servicio,
+          content_category: 'contact_form',
+          status: 'submitted'
+        });
+        if (servicioSelect && servicioSelect.value === 'mantenimiento') {
+          window.makomTrack('Schedule', userLead, {
+            content_name: 'Inspección / mantenimiento',
+            content_category: 'schedule'
+          });
+        }
       }
 
       setTimeout(function () {
@@ -927,12 +950,42 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   document.addEventListener('click', function (e) {
-    var link = e.target.closest && e.target.closest('a[href*="wa.me"]');
+    var link = e.target.closest && e.target.closest('a[href]');
     if (!link) return;
-    makomTrack('Contact', null, {
-      content_name: 'WhatsApp',
-      content_category: 'whatsapp'
-    });
+
+    var href = link.getAttribute('href') || '';
+    var label = (link.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+    if (href.indexOf('wa.me') !== -1) {
+      makomTrack('Contact', null, {
+        content_name: 'WhatsApp',
+        content_category: 'whatsapp'
+      });
+      return;
+    }
+
+    if (href.indexOf('mailto:') === 0) {
+      makomTrack('Contact', null, {
+        content_name: 'Email',
+        content_category: 'email'
+      });
+      return;
+    }
+
+    if (label.indexOf('solicitar inspecci') !== -1) {
+      makomTrack('Schedule', null, {
+        content_name: 'Solicitar inspección',
+        content_category: 'schedule'
+      });
+      return;
+    }
+
+    if (label.indexOf('registrar inter') !== -1) {
+      makomTrack('CompleteRegistration', null, {
+        content_name: 'Registrar interés',
+        status: 'started'
+      });
+    }
   });
 
 });
