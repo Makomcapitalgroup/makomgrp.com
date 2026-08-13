@@ -2739,28 +2739,28 @@ body.hero--loaded .hero__subheadline {
 /* Esta página no tiene un Hero oscuro detrás del header (a diferencia
    del Home), por lo que el header permanece siempre en su variante
    "con fondo claro" — nunca en el estado transparente inicial. */
-.pagina-propiedad .header {
+.pagina-interior .header {
   background-color: var(--color-blanco);
   box-shadow: var(--shadow-header);
 }
 
-.pagina-propiedad .header__logo-svg--neg {
+.pagina-interior .header__logo-svg--neg {
   display: none;
 }
 
-.pagina-propiedad .header__logo-svg--pos {
+.pagina-interior .header__logo-svg--pos {
   display: block;
 }
 
-.pagina-propiedad .header__nav-link {
+.pagina-interior .header__nav-link {
   color: var(--color-negro);
 }
 
-.pagina-propiedad .header__nav-link--cta {
+.pagina-interior .header__nav-link--cta {
   border-color: var(--color-arena-40);
 }
 
-.pagina-propiedad .hamburger__bar {
+.pagina-interior .hamburger__bar {
   background-color: var(--color-negro);
 }
 
@@ -3010,4 +3010,59 @@ body.hero--loaded .hero__subheadline {
   .ficha-propiedad {
     padding-top: calc(var(--header-height) + 32px);
   }
+}
+
+/* 29. CATÁLOGO DE PROPIEDADES
+   ============================================================= */
+
+/* Esta página reutiliza la sección .propiedades del Home tal cual,
+   pero aquí es la primera sección de la página (sin Hero oscuro
+   delante), por lo que necesita compensar la altura del header fijo. */
+.pagina-interior .propiedades {
+  padding-top: calc(var(--header-height) + 48px);
+}
+
+@media (max-width: 767px) {
+  .pagina-interior .propiedades {
+    padding-top: calc(var(--header-height) + 32px);
+  }
+}
+
+/* Estado vacío de la imagen de portada en una tarjeta del catálogo
+   (mismo criterio sobrio del Milestone 3: nunca una foto inventada). */
+.property-card__image-vacia {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-arena-15);
+}
+
+.property-card__image-vacia-texto {
+  font-size: 11px;
+  font-weight: var(--font-weight-light);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-negro-60);
+}
+
+.property-card__ref {
+  font-size: 11px;
+  font-weight: var(--font-weight-light);
+  letter-spacing: 0.04em;
+  color: var(--color-negro-60);
+}
+
+/* Estado vacío del catálogo completo (0 propiedades públicas) */
+.catalogo-vacio {
+  padding-block: 48px;
+  border-top: 1px solid var(--color-arena-20);
+  text-align: center;
+}
+
+.catalogo-vacio__texto {
+  font-size: 16px;
+  font-weight: var(--font-weight-light);
+  color: var(--color-negro-70);
 }

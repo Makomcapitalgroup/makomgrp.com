@@ -1,0 +1,70 @@
+{
+  "_notaInterna": "CONTENIDO DE PRUEBA — Milestone 4 (validación visual del catálogo). No es una propiedad real de MAKOM CAPITAL GROUP. No debe publicarse ni usarse como referencia comercial.",
+
+  "id": "mkw-pro-test-0002",
+  "referenciaMakom": "MKW-PRO-TEST-0002",
+  "slug": "propiedad-residencial-de-prueba",
+  "titulo": "Propiedad residencial de prueba",
+  "estado": "disponible",
+  "operacion": "venta",
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+
+  "mostrarEnHome": false,
+  "ordenHome": null,
+
+  "precio": {
+    "monto": 285000,
+    "moneda": "USD",
+    "periodicidad": null
+  },
+
+  "ubicacionInterna": {
+    "provincia": "Provincia de prueba",
+    "distrito": "Distrito de prueba",
+    "corregimiento": "Corregimiento de prueba",
+    "sector": "Sector de prueba B",
+    "edificioPH": null,
+    "direccionInterna": "Dato de prueba — no representa una dirección real"
+  },
+  "ubicacionPublica": "Zona de prueba B — no publicar",
+
+  "mapa": {
+    "activo": false,
+    "latitud": null,
+    "longitud": null,
+    "nivelZoom": null
+  },
+
+  "descripcion": "Registro de prueba número dos, usado para validar el catálogo con más de una tarjeta.\n\nNo describe una propiedad real de MAKOM CAPITAL GROUP.",
+
+  "detallesCuantitativos": {
+    "habitaciones": 3,
+    "banos": 2,
+    "estacionamientos": 2,
+    "metrajeInterno": 140,
+    "metrajeTotal": 150,
+    "anoConstruccion": null,
+    "piso": "5"
+  },
+
+  "detalles": ["balcon", "walk-in-closet"],
+  "amenidades": ["piscina", "gimnasio", "seguridad-24-7"],
+
+  "fotografias": {
+    "galeria": []
+  },
+
+  "seo": {
+    "titulo": null,
+    "descripcion": null,
+    "imagenSocial": null,
+    "noIndex": true
+  },
+
+  "metadatos": {
+    "fechaCreacion": "2026-08-01T00:00:00-05:00",
+    "fechaPublicacion": "2026-08-10T00:00:00-05:00",
+    "fechaActualizacion": "2026-08-10T00:00:00-05:00"
+  }
+}

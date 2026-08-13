@@ -1,0 +1,99 @@
+---
+permalink: "/propiedades/"
+eleventyExcludeFromCollections: true
+---
+{% set publicas = collections.propiedades | propiedadesPublicas %}
+{% set filtrosDisp = publicas | filtrosDisponibles %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="MAKOM CAPITAL GROUP — Gestora integral de patrimonio inmobiliario en Panamá. Cada propiedad fue evaluada antes de ser publicada." />
+  <meta name="theme-color" content="#0A0A0A" />
+  <!-- Temporalmente noindex: mientras el inventario público sea
+       exclusivamente contenido de prueba/desarrollo (Milestone 4).
+       Se retira cuando existan propiedades reales publicadas. -->
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="canonical" href="https://makomgrp.com/propiedades/" />
+  <link rel="icon" type="image/svg+xml" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon-16.png" />
+  <link rel="apple-touch-icon" href="/MAKOM_Logo_Files_v4.0/04_Favicon/apple-touch-icon.png" />
+  <title>Propiedades | MAKOM CAPITAL GROUP</title>
+  <meta property="og:title" content="Propiedades | MAKOM CAPITAL GROUP" />
+  <meta property="og:description" content="MAKOM CAPITAL GROUP — Gestora integral de patrimonio inmobiliario en Panamá. Cada propiedad fue evaluada antes de ser publicada." />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="es_PA" />
+  <meta property="og:url" content="https://makomgrp.com/propiedades/" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Propiedades | MAKOM CAPITAL GROUP" />
+  <meta name="twitter:description" content="MAKOM CAPITAL GROUP — Gestora integral de patrimonio inmobiliario en Panamá. Cada propiedad fue evaluada antes de ser publicada." />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="pagina-interior">
+
+{% include "header.njk" %}
+
+<main id="main" role="main">
+  <section class="propiedades" aria-labelledby="catalogo-heading">
+    <div class="container propiedades__inner">
+      <div class="propiedades__header">
+        <span class="text-label">Propiedades Disponibles</span>
+        <h1 class="propiedades__heading" id="catalogo-heading" data-reveal>Propiedades seleccionadas. No un catálogo — una curaduría.</h1>
+        <p class="propiedades__subheadline" data-reveal>Cada propiedad en MAKOM fue evaluada antes de ser publicada.</p>
+      </div>
+
+      {% if publicas.length > 0 %}
+      <div class="prop-filters" role="tablist" aria-label="Filtrar propiedades">
+        <button class="filter-tab filter-tab--active" role="tab" aria-selected="true" data-filter="all">Todos</button>
+        {% if filtrosDisp.venta %}<button class="filter-tab" role="tab" aria-selected="false" data-filter="venta">Venta</button>{% endif %}
+        {% if filtrosDisp.alquiler %}<button class="filter-tab" role="tab" aria-selected="false" data-filter="alquiler">Alquiler</button>{% endif %}
+        {% if filtrosDisp.comercial %}<button class="filter-tab" role="tab" aria-selected="false" data-filter="comercial">Comercial</button>{% endif %}
+        {% if filtrosDisp.residencial %}<button class="filter-tab" role="tab" aria-selected="false" data-filter="residencial">Residencial</button>{% endif %}
+      </div>
+
+      <div class="propiedades__grid" role="list" aria-live="polite" aria-label="Listado de propiedades">
+        {% for p in publicas %}
+        {% set portada = p.fotografias.galeria | portadaDe %}
+        {% set specs = p.detallesCuantitativos | specsTexto %}
+        <article class="property-card" data-type="{{ p.operacion }} {{ p.categoriaGeneral }}" role="listitem" aria-labelledby="cat-{{ p.slug }}-name">
+          <div class="property-card__image">
+            {% if portada %}
+              <img src="{{ portada.archivo }}" alt="{{ portada.alt or p.titulo }}" loading="lazy" />
+            {% else %}
+              <div class="property-card__image-vacia">
+                <span class="property-card__image-vacia-texto">Foto próximamente</span>
+              </div>
+            {% endif %}
+            <div class="property-card__badges">
+              <span class="property-card__type">{{ p.operacion | etiqueta(propiedadesConfig.operaciones) }}</span>
+              <span class="property-card__category">{{ p.categoriaGeneral | capitalize }}</span>
+              {% if p.estado == "reservada" %}<span class="ficha-propiedad__estado-tag">Reservada</span>{% endif %}
+            </div>
+          </div>
+          <div class="property-card__body">
+            <h2 class="property-card__name" id="cat-{{ p.slug }}-name">{{ p.titulo }}</h2>
+            <p class="property-card__location">{{ p.ubicacionPublica }}</p>
+            <p class="property-card__price">{{ p.precio | precioFormato(p.operacion) }}</p>
+            {% if specs %}<p class="property-card__specs">{{ specs }}</p>{% endif %}
+            <p class="property-card__ref">Ref. {{ p.referenciaMakom }}</p>
+            <a href="/propiedades/{{ p.slug }}/" class="link--arrow property-card__cta">Ver propiedad</a>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="catalogo-vacio" data-reveal>
+        <p class="catalogo-vacio__texto">En este momento no hay propiedades públicas disponibles. Vuelva pronto o contáctenos directamente.</p>
+      </div>
+      {% endif %}
+
+    </div>
+  </section>
+</main>
+
+{% include "footer.njk" %}
+
+</body>
+</html>

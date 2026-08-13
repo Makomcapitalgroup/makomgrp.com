@@ -31,7 +31,7 @@ module.exports = function (eleventyConfig) {
   });
 
   // Resuelve una clave técnica (ej. "vista-mar") a su etiqueta pública
-  // (ej. "Vista al mar") contra un catálogo de _data/propiedades-config.json.
+  // (ej. "Vista al mar") contra un catálogo de _data/propiedadesConfig.json.
   eleventyConfig.addFilter("etiqueta", (valor, catalogo) => {
     const item = (catalogo || []).find((i) => i.valor === valor);
     return item ? item.etiqueta : valor;
@@ -87,6 +87,43 @@ module.exports = function (eleventyConfig) {
   eleventyConfig.addFilter("portadaDe", (galeria) => {
     if (!galeria || galeria.length === 0) return null;
     return galeria.find((foto) => foto.portada) || galeria[0];
+  });
+
+  // Milestone 4: propiedades visibles en el catálogo público —
+  // solo "disponible" y "reservada" — ordenadas por fechaPublicacion
+  // descendente (fechaCreacion como respaldo si aún no tiene fecha
+  // de publicación asignada).
+  eleventyConfig.addFilter("propiedadesPublicas", (lista) => {
+    const fechaOrden = (p) =>
+      (p.metadatos && (p.metadatos.fechaPublicacion || p.metadatos.fechaCreacion)) || "";
+    return (lista || [])
+      .filter((p) => p.estado === "disponible" || p.estado === "reservada")
+      .sort((a, b) => fechaOrden(b).localeCompare(fechaOrden(a)));
+  });
+
+  // Texto breve de specs para la tarjeta de catálogo (ej. "3 hab ·
+  // 2 baños · 125 m²"), omitiendo cualquier valor no aplicable (null).
+  eleventyConfig.addFilter("specsTexto", (d) => {
+    if (!d) return "";
+    const partes = [];
+    if (d.habitaciones != null) partes.push(`${d.habitaciones} hab`);
+    if (d.banos != null) partes.push(`${d.banos} baños`);
+    if (d.estacionamientos != null) partes.push(`${d.estacionamientos} est.`);
+    if (d.metrajeInterno != null) partes.push(`${d.metrajeInterno} m²`);
+    return partes.join(" · ");
+  });
+
+  // Milestone 4: qué pestañas de filtro tienen al menos una propiedad
+  // — para no generar una pestaña "inútil" (ej. "Comercial") mientras
+  // ninguna propiedad pública coincida con esa categoría.
+  eleventyConfig.addFilter("filtrosDisponibles", (lista) => {
+    const l = lista || [];
+    return {
+      venta: l.some((p) => p.operacion === "venta"),
+      alquiler: l.some((p) => p.operacion === "alquiler"),
+      comercial: l.some((p) => p.categoriaGeneral === "comercial"),
+      residencial: l.some((p) => p.categoriaGeneral === "residencial"),
+    };
   });
 
   return {
