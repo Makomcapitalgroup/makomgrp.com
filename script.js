@@ -681,4 +681,128 @@ document.addEventListener('DOMContentLoaded', function () {
     propiedadesGrid.innerHTML = destacadas.map(tarjetaDestacadaHtml).join('');
   }
 
+  /* ============================================================
+     16. GALERÍA DE FOTOGRAFÍAS — LIGHTBOX (FICHA DE PROPIEDAD)
+     Vanilla JS, sin librerías. Lee las imágenes ya presentes en el
+     DOM (portada + miniaturas, ya optimizadas por eleventy-img) — no
+     depende de un bloque de datos aparte. Se activa solo si existe
+     [data-galeria] en la página.
+  ============================================================ */
+  var galeriaFicha = document.querySelector('[data-galeria]');
+
+  if (galeriaFicha) {
+    var botonesGaleria = Array.from(galeriaFicha.querySelectorAll('[data-galeria-abrir]'));
+
+    function mejorSrcDe(img) {
+      var srcset = img.getAttribute('srcset');
+      if (!srcset) return img.currentSrc || img.getAttribute('src');
+      var candidatos = srcset.split(',').map(function (c) {
+        var partes = c.trim().split(/\s+/);
+        return { url: partes[0], ancho: parseInt(partes[1], 10) || 0 };
+      });
+      candidatos.sort(function (a, b) { return b.ancho - a.ancho; });
+      return candidatos[0].url;
+    }
+
+    var fotosLightbox = botonesGaleria.map(function (boton) {
+      var img = boton.querySelector('img');
+      return { src: mejorSrcDe(img), alt: img.getAttribute('alt') || '' };
+    });
+
+    var indiceActual = 0;
+    var disparadorActual = null;
+    var lightbox = null;
+
+    function crearLightbox() {
+      var el = document.createElement('div');
+      el.className = 'lightbox';
+      el.setAttribute('role', 'dialog');
+      el.setAttribute('aria-modal', 'true');
+      el.setAttribute('aria-label', 'Galería de fotografías');
+      el.hidden = true;
+      el.innerHTML =
+        '<div class="lightbox__figura">' +
+          '<button type="button" class="lightbox__cerrar" aria-label="Cerrar galería">&times;</button>' +
+          '<button type="button" class="lightbox__anterior" aria-label="Fotografía anterior">&larr;</button>' +
+          '<img class="lightbox__imagen" src="" alt="" />' +
+          '<button type="button" class="lightbox__siguiente" aria-label="Fotografía siguiente">&rarr;</button>' +
+          '<span class="lightbox__contador"></span>' +
+        '</div>';
+      document.body.appendChild(el);
+      return el;
+    }
+
+    function actualizarLightbox() {
+      var foto = fotosLightbox[indiceActual];
+      var imgEl = lightbox.querySelector('.lightbox__imagen');
+      imgEl.src = foto.src;
+      imgEl.alt = foto.alt;
+      lightbox.querySelector('.lightbox__contador').textContent =
+        (indiceActual + 1) + ' / ' + fotosLightbox.length;
+      var mostrarNav = fotosLightbox.length > 1;
+      lightbox.querySelector('.lightbox__anterior').style.display = mostrarNav ? '' : 'none';
+      lightbox.querySelector('.lightbox__siguiente').style.display = mostrarNav ? '' : 'none';
+    }
+
+    function abrirLightbox(indice, disparador) {
+      if (!lightbox) lightbox = crearLightbox();
+      indiceActual = indice;
+      disparadorActual = disparador;
+      actualizarLightbox();
+      lightbox.hidden = false;
+      lightbox.querySelector('.lightbox__cerrar').focus();
+      document.addEventListener('keydown', onTeclaLightbox);
+    }
+
+    function cerrarLightbox() {
+      if (!lightbox) return;
+      lightbox.hidden = true;
+      document.removeEventListener('keydown', onTeclaLightbox);
+      if (disparadorActual) disparadorActual.focus();
+    }
+
+    function siguienteFoto() {
+      indiceActual = (indiceActual + 1) % fotosLightbox.length;
+      actualizarLightbox();
+    }
+
+    function anteriorFoto() {
+      indiceActual = (indiceActual - 1 + fotosLightbox.length) % fotosLightbox.length;
+      actualizarLightbox();
+    }
+
+    function onTeclaLightbox(e) {
+      if (e.key === 'Escape') cerrarLightbox();
+      else if (e.key === 'ArrowRight') siguienteFoto();
+      else if (e.key === 'ArrowLeft') anteriorFoto();
+      else if (e.key === 'Tab') {
+        // Foco simple contenido dentro del lightbox (4 controles).
+        var focosables = lightbox.querySelectorAll('button');
+        var primero = focosables[0];
+        var ultimo = focosables[focosables.length - 1];
+        if (e.shiftKey && document.activeElement === primero) {
+          e.preventDefault();
+          ultimo.focus();
+        } else if (!e.shiftKey && document.activeElement === ultimo) {
+          e.preventDefault();
+          primero.focus();
+        }
+      }
+    }
+
+    botonesGaleria.forEach(function (boton, indice) {
+      boton.addEventListener('click', function () {
+        abrirLightbox(indice, boton);
+      });
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!lightbox || lightbox.hidden) return;
+      if (e.target.closest('.lightbox__cerrar')) cerrarLightbox();
+      else if (e.target.closest('.lightbox__siguiente')) siguienteFoto();
+      else if (e.target.closest('.lightbox__anterior')) anteriorFoto();
+      else if (e.target === lightbox) cerrarLightbox();
+    });
+  }
+
 });

@@ -1,6 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 const yaml = require("js-yaml");
+const { eleventyImageTransformPlugin } = require("@11ty/eleventy-img");
+const Image = require("@11ty/eleventy-img").default;
 
 // Compara las opciones de los campos "detalles" y "amenidades" en
 // admin/config.yml contra las listas canónicas de
@@ -62,6 +64,32 @@ module.exports = function (eleventyConfig) {
   // dentro de admin/index.html) — nunca se procesa como plantilla ni se
   // referencia desde ninguna página pública.
   eleventyConfig.addPassthroughCopy("admin");
+
+  // Milestone 7: optimización automática de fotografías de propiedades.
+  // "Image HTML Transform" (recomendado por la documentación oficial de
+  // @11ty/eleventy-img) post-procesa cualquier <img> presente en el HTML
+  // ya generado por Eleventy — nunca toca páginas servidas por
+  // passthrough copy (index.html, aviso-legal.html, privacidad.html),
+  // porque esas nunca pasan por el motor de plantillas. Solo afecta las
+  // páginas que SÍ genera Eleventy: ficha individual y catálogo de
+  // propiedades. Las imágenes de marca (logos SVG en header/footer) se
+  // excluyen explícitamente con el atributo eleventy:ignore en las
+  // plantillas — de lo contrario el plugin intentaría rasterizarlas.
+  eleventyConfig.addPlugin(eleventyImageTransformPlugin, {
+    formats: ["webp", "jpeg"],
+    // Ancho por defecto para tarjetas (Home/catálogo) y miniaturas. La
+    // portada de la ficha individual pide anchos mayores explícitamente
+    // vía el atributo eleventy:widths en su propia plantilla.
+    widths: [400, 800],
+    htmlOptions: {
+      imgAttributes: {
+        loading: "lazy",
+        decoding: "async",
+      },
+    },
+    outputDir: "_site/assets/propiedades/_optimizadas/",
+    urlPath: "/assets/propiedades/_optimizadas/",
+  });
 
   // Milestone 3: colección de propiedades leída directamente de
   // content/propiedades/*.json. Son archivos de datos puros (no
@@ -154,10 +182,32 @@ module.exports = function (eleventyConfig) {
   });
 
   // Determina la foto de portada de una galería: la marcada
-  // explícitamente con portada:true, o la primera si ninguna lo está.
+  // explícitamente con portada:true (la PRIMERA marcada, si hubiera más
+  // de una por error — .find() ya es determinista en ese sentido), o
+  // la primera de la lista si ninguna está marcada.
   eleventyConfig.addFilter("portadaDe", (galeria) => {
     if (!galeria || galeria.length === 0) return null;
     return galeria.find((foto) => foto.portada) || galeria[0];
+  });
+
+  // Milestone 7: alt automático — si Loyra/Yurlio no escriben un texto
+  // alternativo, se genera a partir del título y la ubicación pública
+  // en vez de dejar el atributo alt vacío o repetir solo el título.
+  eleventyConfig.addFilter("altAuto", (alt, titulo, ubicacionPublica) => {
+    if (alt) return alt;
+    return [titulo, ubicacionPublica].filter(Boolean).join(", ");
+  });
+
+  // Milestone 7: reordena la galería para la ficha individual — portada
+  // primero (misma regla determinista de portadaDe: la marcada, o si
+  // ninguna lo está, la primera), el resto conserva su orden original.
+  // Separa "principal" (para la foto grande) de "miniaturas" (el resto)
+  // para que la plantilla no tenga que hacer aritmética de índices.
+  eleventyConfig.addFilter("galeriaOrdenada", (galeria) => {
+    if (!galeria || galeria.length === 0) return { principal: null, miniaturas: [], todas: [] };
+    const principal = galeria.find((f) => f.portada) || galeria[0];
+    const miniaturas = galeria.filter((f) => f !== principal);
+    return { principal, miniaturas, todas: [principal, ...miniaturas] };
   });
 
   // Milestone 4: propiedades visibles en el catálogo público —
@@ -197,13 +247,37 @@ module.exports = function (eleventyConfig) {
     };
   });
 
+  // Milestone 7: genera una única variante optimizada (WebP, 800px) de
+  // una fotografía original, para usarse en /data/propiedades-destacadas.json.
+  // Es necesaria porque ese feed lo consume script.js en el navegador —
+  // nunca pasa por el "Image HTML Transform" (que solo post-procesa el
+  // HTML que Eleventy ya generó), así que sin este paso el Home cargaría
+  // la fotografía ORIGINAL sin optimizar. Una sola variante (no un
+  // srcset completo) alcanza para una tarjeta pequeña y mantiene el
+  // feed simple.
+  async function optimizarPortadaParaFeed(portada) {
+    if (!portada || !portada.archivo) return null;
+    const rutaOriginal = path.join(__dirname, portada.archivo.replace(/^\//, ""));
+    if (!fs.existsSync(rutaOriginal)) return null;
+    const stats = await Image(rutaOriginal, {
+      formats: ["webp"],
+      widths: [800],
+      outputDir: "_site/assets/propiedades/_optimizadas/",
+      urlPath: "/assets/propiedades/_optimizadas/",
+    });
+    const variante = stats.webp[0];
+    return { archivo: variante.url, ancho: variante.width, alto: variante.height };
+  }
+
   // Milestone 5: selecciona hasta 3 propiedades destacadas para el
   // Home (disponible/reservada + mostrarEnHome=true), ordenadas por
   // ordenHome ascendente (las que no lo tienen quedan al final,
   // ordenadas entre sí por fechaPublicacion descendente — fechaCreacion
   // como respaldo). Devuelve únicamente los campos públicos que
   // consume la tarjeta del Home — nunca datos internos/administrativos.
-  eleventyConfig.addFilter("propiedadesDestacadas", (lista) => {
+  // Es async (Milestone 7) porque genera la portada optimizada antes
+  // de escribir el feed.
+  eleventyConfig.addFilter("propiedadesDestacadas", async (lista) => {
     const fechaOrden = (p) =>
       (p.metadatos && (p.metadatos.fechaPublicacion || p.metadatos.fechaCreacion)) || "";
     const destacadas = (lista || []).filter(
@@ -217,28 +291,34 @@ module.exports = function (eleventyConfig) {
       if (aOrden === null && bOrden !== null) return 1;
       return fechaOrden(b).localeCompare(fechaOrden(a));
     });
-    return destacadas.slice(0, 3).map((p) => {
-      const galeria = (p.fotografias && p.fotografias.galeria) || [];
-      const portada = galeria.find((f) => f.portada) || galeria[0] || null;
-      const d = p.detallesCuantitativos || {};
-      return {
-        referenciaMakom: p.referenciaMakom,
-        slug: p.slug,
-        titulo: p.titulo,
-        estado: p.estado,
-        operacion: p.operacion,
-        categoriaGeneral: p.categoriaGeneral,
-        ubicacionPublica: p.ubicacionPublica,
-        precio: p.precio,
-        detalles: {
-          habitaciones: d.habitaciones != null ? d.habitaciones : null,
-          banos: d.banos != null ? d.banos : null,
-          estacionamientos: d.estacionamientos != null ? d.estacionamientos : null,
-          metrajeInterno: d.metrajeInterno != null ? d.metrajeInterno : null,
-        },
-        portada: portada ? { archivo: portada.archivo, alt: portada.alt || p.titulo } : null,
-      };
-    });
+    return Promise.all(
+      destacadas.slice(0, 3).map(async (p) => {
+        const galeria = (p.fotografias && p.fotografias.galeria) || [];
+        const portadaOriginal = galeria.find((f) => f.portada) || galeria[0] || null;
+        const d = p.detallesCuantitativos || {};
+        const alt = portadaOriginal
+          ? portadaOriginal.alt || [p.titulo, p.ubicacionPublica].filter(Boolean).join(", ")
+          : null;
+        const portadaOptimizada = await optimizarPortadaParaFeed(portadaOriginal);
+        return {
+          referenciaMakom: p.referenciaMakom,
+          slug: p.slug,
+          titulo: p.titulo,
+          estado: p.estado,
+          operacion: p.operacion,
+          categoriaGeneral: p.categoriaGeneral,
+          ubicacionPublica: p.ubicacionPublica,
+          precio: p.precio,
+          detalles: {
+            habitaciones: d.habitaciones != null ? d.habitaciones : null,
+            banos: d.banos != null ? d.banos : null,
+            estacionamientos: d.estacionamientos != null ? d.estacionamientos : null,
+            metrajeInterno: d.metrajeInterno != null ? d.metrajeInterno : null,
+          },
+          portada: portadaOptimizada ? { archivo: portadaOptimizada.archivo, alt } : null,
+        };
+      })
+    );
   });
 
   return {

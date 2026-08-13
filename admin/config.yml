@@ -17,8 +17,21 @@ local_backend: true
 publish_mode: simple
 locale: "es"
 
-media_folder: "assets/propiedades/uploads"
-public_folder: "/assets/propiedades/uploads"
+# Milestone 7: carpeta de medios por propiedad (assets/propiedades/<slug>/)
+# en vez de una carpeta compartida. Decisión basada en verificar el código
+# fuente real de Decap CMS: la resolución de "{{slug}}" aquí pasa por
+# folderFormatter()/compileStringTemplate() en
+# packages/decap-cms-core/src/lib/formatters.ts — un mecanismo maduro que
+# lee los datos reales de la entrada al momento de subir el archivo. Es
+# un motor DISTINTO (y confirmado más confiable) del que falla con
+# "{{now}}"/"{{slug}}" en valores por defecto de campos hidden (ver
+# Milestone 6 y sección de investigación del Milestone 7). Se descartó
+# una carpeta compartida porque se confirmó que Decap CMS NO renombra
+# automáticamente archivos con el mismo nombre (ej. "IMG_1234.jpg" de
+# dos propiedades distintas) — pediría reemplazar el existente. Una
+# carpeta por propiedad elimina ese riesgo de raíz.
+media_folder: "assets/propiedades/{{slug}}"
+public_folder: "/assets/propiedades/{{slug}}"
 
 collections:
   - name: "propiedades"
@@ -238,17 +251,28 @@ collections:
         widget: "object"
         collapsed: false
         fields:
-          - label: "Galería (3 a 5 fotografías)"
+          - label: "Galería"
             name: "galeria"
             widget: "list"
             required: false
+            min: 3
+            max: 5
+            collapsed: true
+            summary: "{{fields.archivo}}"
+            label_singular: "Fotografía"
+            hint: >
+              Suba entre 3 y 5 fotografías. Arrastre para reordenar; la
+              primera se usa como portada salvo que marque otra distinta.
+              Si por error pulsa "Añadir Fotografía" y queda un elemento
+              sin archivo, use el ícono de la papelera de ese elemento
+              para eliminarlo antes de publicar.
             fields:
               - { label: "Archivo", name: "archivo", widget: "image" }
               - label: "Texto alternativo"
                 name: "alt"
                 widget: "string"
                 required: false
-                hint: "Si se deja vacío, se usa el título de la propiedad."
+                hint: "Si se deja vacío, se genera automáticamente a partir del título y la ubicación."
               - { label: "Usar como portada", name: "portada", widget: "boolean", default: false }
 
       # ---------------------------------------------------------

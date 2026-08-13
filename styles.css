@@ -2816,18 +2816,6 @@ body.hero--loaded .hero__subheadline {
   margin-bottom: 48px;
 }
 
-.ficha-propiedad__galeria-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
-}
-
-.ficha-propiedad__foto {
-  width: 100%;
-  aspect-ratio: 4/3;
-  object-fit: cover;
-}
-
 .ficha-propiedad__galeria-vacia {
   display: flex;
   align-items: center;
@@ -3082,4 +3070,171 @@ body.hero--loaded .hero__subheadline {
   font-size: 16px;
   font-weight: var(--font-weight-light);
   color: var(--color-negro-70);
+}
+
+/* 31. GALERÍA DE FOTOGRAFÍAS — FICHA INDIVIDUAL + LIGHTBOX
+   ============================================================= */
+
+/* Portada dominante + tira de miniaturas. Sin bordes redondeados
+   (--radius: 0 ya es la convención del sitio); las imágenes las genera
+   @11ty/eleventy-img — este bloque solo define el recorte/proporción. */
+.galeria-ficha__principal {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: zoom-in;
+}
+
+.galeria-ficha__principal img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--dur-slow) var(--ease);
+}
+
+.galeria-ficha__principal:hover img {
+  transform: scale(1.02);
+}
+
+.galeria-ficha__miniaturas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.galeria-ficha__miniatura {
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: none;
+  border: 1px solid transparent;
+  padding: 0;
+  cursor: zoom-in;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+.galeria-ficha__miniatura:hover,
+.galeria-ficha__miniatura:focus-visible {
+  border-color: var(--color-terracota);
+}
+
+.galeria-ficha__miniatura img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Lightbox: overlay de pantalla completa, generado por script.js
+   (sección 16) solo cuando existe una galería con fotos. */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(10, 10, 10, 0.92);
+}
+
+.lightbox[hidden] {
+  display: none;
+}
+
+.lightbox__figura {
+  position: relative;
+  width: min(1100px, 92vw);
+  max-height: 86vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox__imagen {
+  max-width: 100%;
+  max-height: 86vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.lightbox__cerrar,
+.lightbox__anterior,
+.lightbox__siguiente {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-negro-90);
+  color: var(--color-blanco);
+  border: none;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+.lightbox__cerrar:hover,
+.lightbox__anterior:hover,
+.lightbox__siguiente:hover {
+  background-color: var(--color-terracota);
+}
+
+.lightbox__cerrar {
+  top: -48px;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+}
+
+@media (min-width: 768px) {
+  .lightbox__cerrar {
+    top: 0;
+    right: -56px;
+  }
+}
+
+.lightbox__anterior,
+.lightbox__siguiente {
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+}
+
+.lightbox__anterior {
+  left: -8px;
+}
+
+.lightbox__siguiente {
+  right: -8px;
+}
+
+@media (min-width: 768px) {
+  .lightbox__anterior {
+    left: -64px;
+  }
+  .lightbox__siguiente {
+    right: -64px;
+  }
+}
+
+.lightbox__contador {
+  position: absolute;
+  bottom: -32px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--color-blanco-70);
+}
+
+@media (max-width: 767px) {
+  .galeria-ficha__miniaturas {
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  }
 }

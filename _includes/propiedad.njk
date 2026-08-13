@@ -51,12 +51,37 @@
         <p class="ficha-propiedad__ubicacion">{{ propiedad.ubicacionPublica }}</p>
       </div>
 
+      {% set galeria = propiedad.fotografias.galeria | galeriaOrdenada %}
       <div class="ficha-propiedad__galeria" data-reveal>
-        {% if propiedad.fotografias.galeria and propiedad.fotografias.galeria.length > 0 %}
-          <div class="ficha-propiedad__galeria-grid">
-            {% for foto in propiedad.fotografias.galeria %}
-              <img src="{{ foto.archivo }}" alt="{{ foto.alt or propiedad.titulo }}" class="ficha-propiedad__foto" loading="lazy" />
-            {% endfor %}
+        {% if galeria.principal %}
+          <div class="galeria-ficha" data-galeria>
+            <button type="button" class="galeria-ficha__principal" data-galeria-abrir="0" aria-label="Ampliar fotografía">
+              <img
+                src="{{ galeria.principal.archivo }}"
+                alt="{{ galeria.principal.alt | altAuto(propiedad.titulo, propiedad.ubicacionPublica) }}"
+                eleventy:widths="800,1200"
+                sizes="(min-width: 1024px) 700px, 100vw"
+                loading="eager"
+                fetchpriority="high"
+                decoding="async"
+              />
+            </button>
+            {% if galeria.miniaturas.length > 0 %}
+            <div class="galeria-ficha__miniaturas" role="list">
+              {% for foto in galeria.miniaturas %}
+                <button type="button" class="galeria-ficha__miniatura" data-galeria-abrir="{{ loop.index }}" role="listitem" aria-label="Ver fotografía {{ loop.index + 1 }}">
+                  <img
+                    src="{{ foto.archivo }}"
+                    alt="{{ foto.alt | altAuto(propiedad.titulo, propiedad.ubicacionPublica) }}"
+                    eleventy:widths="200,600"
+                    sizes="150px"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </button>
+              {% endfor %}
+            </div>
+            {% endif %}
           </div>
         {% else %}
           <div class="ficha-propiedad__galeria-vacia">
