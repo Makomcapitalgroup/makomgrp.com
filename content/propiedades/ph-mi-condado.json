@@ -9,9 +9,11 @@
   ],
   "referenciaMakom": "MKW-RE-001",
   "mapa": {
-    "activo": false,
+    "activo": true,
     "precision": "aproximada",
-    "nivelZoom": 15
+    "nivelZoom": 15,
+    "latitud": 9.027715,
+    "longitud": -79.522744
   },
   "estado": "disponible",
   "precio": {
