@@ -15,6 +15,21 @@ name: Build y Deploy (Eleventy → GitHub Pages)
 #
 # Ninguna de las dos protecciones depende de la otra — cualquiera de
 # las dos, por sí sola, ya es suficiente.
+#
+# Milestone 12 — Etapa 8C: se agrega el job "asignar-referencia", que
+# ejecuta scripts/asignar-referencia-makom.js (Etapa 8B) ANTES de
+# "build", únicamente en push a main. Verificado contra la
+# documentación oficial de GitHub Actions antes de implementar esto:
+# un push realizado con el GITHUB_TOKEN automático de un workflow NO
+# dispara un nuevo workflow run ("if a workflow run pushes code using
+# the repository's GITHUB_TOKEN, a new workflow will not run even when
+# the repository contains a workflow configured to run when push
+# events occur" — con la única excepción de workflow_dispatch/
+# repository_dispatch, que no aplica aquí). Por eso no hace falta
+# "[skip ci]": la plataforma ya previene la recursión por diseño. Y
+# como el propio job "build" corre DESPUÉS de "asignar-referencia"
+# dentro de esta MISMA ejecución (no en una segunda), nunca hay una
+# ventana donde se publique un commit con "PENDIENTE-ASIGNACION".
 
 on:
   push:
@@ -25,26 +40,236 @@ on:
   workflow_dispatch:
 
 # Permiso por defecto para todo el workflow: solo lectura del
-# repositorio. El job "deploy" declara sus propios permisos, más
-# amplios pero estrictamente los que necesita — un job nunca hereda
-# permisos que no declaró explícitamente si define su propio bloque.
+# repositorio. Cada job declara sus propios permisos si necesita más
+# — un job nunca hereda permisos que no declaró explícitamente si
+# define su propio bloque "permissions".
 permissions:
   contents: read
 
-# Evita despliegues simultáneos a Pages (patrón oficial de GitHub:
-# mismo grupo "pages", sin cancelar despliegues en curso). Aplicado a
-# todo el workflow, como en la plantilla oficial de GitHub Pages.
+# Evita despliegues simultáneos a Pages Y, desde la Etapa 8C, también
+# evita que dos ejecuciones lean/asignen Referencia MAKOM al mismo
+# tiempo — un único grupo para todo el workflow, deliberadamente
+# (mantiene el diseño simple: mientras el volumen real de publicaciones
+# sea el de un panel administrativo de 1-2 personas, no se justifica
+# separar la serialización de "asignar-referencia" de la de "deploy").
+#
+# Milestone 12 — Etapa 8C.1: "queue: max" (hasta 100 ejecuciones
+# pendientes) en vez del valor por defecto ("queue: single"). Verificado
+# contra la documentación oficial: con "single" (el default si se omite
+# "queue"), "at most one job or workflow run can be pending... any
+# existing pending run is canceled and replaced" — es decir, si tres
+# pushes a main llegan seguidos, el segundo podría cancelarse al llegar
+# el tercero, sin haber llegado nunca a ejecutar su propio
+# "asignar-referencia". Con "queue: max", ninguna ejecución en cola se
+# cancela — todas corren, en orden, una tras otra. Sigue sin permitirse
+# "cancel-in-progress: true" junto con "queue: max" (error de validación
+# documentado) — no es un problema aquí, ya que necesitamos exactamente
+# lo contrario: nunca cancelar nada.
 concurrency:
   group: "pages"
   cancel-in-progress: false
+  queue: max
 
 jobs:
-  build:
-    name: Build Eleventy
+  # ============================================================
+  # Milestone 12 — Etapa 8C: asigna automáticamente la Referencia MAKOM
+  # de cualquier propiedad creada con "PENDIENTE-ASIGNACION". Es el
+  # único job de todo el workflow con permiso de escritura sobre el
+  # repositorio, y el único que se ejecuta exclusivamente en push
+  # directo a "main" — nunca en feature/**, fix/**, pull_request, ni
+  # workflow_dispatch desde otra rama.
+  # ============================================================
+  asignar-referencia:
+    name: Asignar Referencia MAKOM
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    outputs:
+      did_commit: ${{ steps.asignar.outputs.did_commit }}
+
     steps:
+      # persist-credentials es true por defecto en actions/checkout —
+      # exactamente lo que se necesita para poder hacer "git push" más
+      # abajo sin configurar nada adicional. No se usa ningún PAT: el
+      # token es el GITHUB_TOKEN automático de esta ejecución, ya
+      # acotado por el bloque "permissions" de este job (contents:write
+      # únicamente aquí, nunca a nivel de todo el workflow).
       - name: Checkout
         uses: actions/checkout@v7
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          # Sin "cache: npm" aquí a propósito: este job no ejecuta
+          # "npm ci" ni instala dependencias — scripts/asignar-referencia-makom.js
+          # usa exclusivamente los módulos nativos de Node ("fs", "path").
+
+      # ============================================================
+      # Milestone 12 — Etapa 8C.1: bucle de reintento seguro.
+      #
+      # Problema que resuelve: Decap puede publicar una propiedad
+      # NUEVA y avanzar "main" en cualquier momento — incluso mientras
+      # este job ya está corriendo, entre el checkout y el intento de
+      # push. Ningún "concurrency" de Actions protege contra esto: ese
+      # mecanismo solo serializa EJECUCIONES DE WORKFLOW entre sí, no
+      # los pushes que Decap hace directamente a través de la API de
+      # GitHub. Si eso ocurre, "git push origin HEAD:main" es
+      # rechazado por git de forma estándar (non-fast-forward) — nunca
+      # se sobrescribe ni se pierde el commit de Decap.
+      #
+      # Ante ese rechazo, en vez de fallar inmediatamente, este bucle:
+      #   1. descarta ÚNICAMENTE el commit local que este mismo job
+      #      acababa de crear (nunca un commit ya publicado — "git
+      #      reset --hard origin/main" solo afecta la copia de trabajo
+      #      efímera de este runner, jamás reescribe el remoto);
+      #   2. adopta el nuevo "origin/main" tal cual (nunca rebase, nunca
+      #      fusión manual de referencias calculadas sobre un contador
+      #      viejo);
+      #   3. vuelve a ejecutar el asignador desde cero contra ese
+      #      estado — que ya refleja el contador real y cualquier
+      #      propiedad adicional que haya llegado mientras tanto — y
+      #      reintenta el push.
+      #
+      # Nunca se usa "--force". Un número máximo de intentos evita un
+      # bucle infinito ante un escenario verdaderamente patológico
+      # (pushes a "main" sin ninguna pausa) — en ese caso el job falla
+      # de forma explícita y ruidosa, nunca en silencio.
+      # ============================================================
+      - name: Ejecutar asignador y hacer commit solo si hubo cambios reales
+        id: asignar
+        run: |
+          set -e
+          MAX_INTENTOS=5
+          intento=1
+
+          while [ "$intento" -le "$MAX_INTENTOS" ]; do
+            echo "--- Intento $intento de $MAX_INTENTOS ---"
+            node scripts/asignar-referencia-makom.js
+
+            CAMBIOS="$(git status --porcelain)"
+            if [ -z "$CAMBIOS" ]; then
+              echo "Sin referencias pendientes — nada que commitear."
+              echo "did_commit=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            # Verificación estricta de alcance: cada línea modificada
+            # debe pertenecer EXCLUSIVAMENTE a content/propiedades/*.json
+            # o al contador. Nunca se usa "git add -A" ni "git add .".
+            INESPERADOS="$(echo "$CAMBIOS" | grep -vE '^.. (content/propiedades/.*\.json|_data/referenciaMakomSecuencia\.json)$' || true)"
+            if [ -n "$INESPERADOS" ]; then
+              echo "::error::El asignador modificó archivos fuera del alcance permitido:"
+              echo "$INESPERADOS"
+              exit 1
+            fi
+
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add content/propiedades/*.json _data/referenciaMakomSecuencia.json
+
+            # Segunda verificación, ahora sobre lo que quedó realmente
+            # en stage (no solo sobre el working tree previo al "add").
+            # Redundante con la comprobación de arriba a propósito —
+            # confirma que "git add" no incorporó nada fuera del
+            # alcance permitido antes de crear el commit.
+            STAGEADOS="$(git diff --cached --name-only)"
+            INESPERADOS_STAGE="$(echo "$STAGEADOS" | grep -vE '^(content/propiedades/.*\.json|_data/referenciaMakomSecuencia\.json)$' || true)"
+            if [ -n "$INESPERADOS_STAGE" ]; then
+              echo "::error::El staging contiene archivos fuera del alcance permitido:"
+              echo "$INESPERADOS_STAGE"
+              exit 1
+            fi
+
+            git commit -m "chore: assign Makom property reference"
+
+            if git push origin HEAD:main; then
+              echo "did_commit=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            echo "Push rechazado — 'main' avanzó mientras se asignaba (probablemente Decap publicó otra propiedad). Releyendo el estado real antes de reintentar."
+            git fetch origin main
+            git reset --hard origin/main
+            intento=$((intento + 1))
+          done
+
+          echo "::error::No se pudo publicar la asignación de Referencia MAKOM tras $MAX_INTENTOS intentos — 'main' avanzó demasiado rápido. Ningún dato se perdió (los reintentos nunca sobrescriben commits ajenos); reintentar manualmente re-ejecutando este workflow."
+          exit 1
+
+  build:
+    name: Build Eleventy
+    needs: asignar-referencia
+    runs-on: ubuntu-latest
+    # ============================================================
+    # Condición explícita, no solo el comportamiento por defecto —
+    # aunque verificamos contra la documentación oficial que un job
+    # "needs" ya trata a un job SKIPPED como si hubiera terminado en
+    # "Success" ("A job that is skipped will report its status as
+    # 'Success'"), preferimos dejarlo escrito aquí mismo para que sea
+    # auditable sin tener que conocer esa particularidad de GitHub
+    # Actions. "always()" es obligatorio: en cuanto un job declara su
+    # propia condición "if", el chequeo implícito de success() deja de
+    # aplicarse solo, así que hay que declarar explícitamente qué
+    # resultados de "asignar-referencia" permiten continuar.
+    #
+    #   result == 'success'  → asignó referencias (o no había
+    #                          pendientes) y todo salió bien.
+    #   result == 'skipped'  → no corría en este evento/rama
+    #                          (feature/**, fix/**, pull_request,
+    #                          workflow_dispatch fuera de main) — build
+    #                          debe seguir funcionando exactamente igual
+    #                          que antes de la Etapa 8C.
+    #
+    # Cualquier otro resultado ('failure', 'cancelled') detiene aquí
+    # mismo el pipeline — build y deploy nunca corren si la asignación
+    # de referencias falló.
+    # ============================================================
+    if: |
+      always() &&
+      (needs.asignar-referencia.result == 'success' || needs.asignar-referencia.result == 'skipped')
+    steps:
+      # Dos pasos de checkout mutuamente excluyentes (uno u otro se
+      # ejecuta, nunca ambos) — así el caso "push a main" es el ÚNICO
+      # que cambia de comportamiento; feature/**, fix/**, pull_request
+      # y workflow_dispatch desde otra rama quedan exactamente igual
+      # que antes de la Etapa 8C.
+      #
+      # Problema que esto resuelve: actions/checkout, sin "ref"
+      # explícito, usa "la referencia o SHA de ese evento" — es decir,
+      # el commit que originalmente disparó ESTA ejecución. Si
+      # "asignar-referencia" acaba de hacer push de un commit nuevo,
+      # ese SHA original ya quedó desactualizado y seguiría conteniendo
+      # "PENDIENTE-ASIGNACION". Por eso, únicamente en push a main, se
+      # pide explícitamente "ref: main" — la rama, no un commit
+      # congelado — para obtener el HEAD real y actual en el momento
+      # en que este job se ejecuta.
+      - name: Checkout (push a main — HEAD actualizado tras el asignador)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Checkout (cualquier otro caso — sin cambios)
+        if: "!(github.ref == 'refs/heads/main' && github.event_name == 'push')"
+        uses: actions/checkout@v7
+
+      - name: Verificar que el checkout corresponde al HEAD real de main
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          set -e
+          LOCAL="$(git rev-parse HEAD)"
+          REMOTO="$(git ls-remote origin refs/heads/main | cut -f1)"
+          echo "HEAD del checkout: $LOCAL"
+          echo "HEAD real de origin/main: $REMOTO"
+          if [ "$LOCAL" != "$REMOTO" ]; then
+            echo "::error::El checkout ($LOCAL) no coincide con el HEAD real de main ($REMOTO)."
+            exit 1
+          fi
+          echo "Confirmado: se está construyendo el HEAD real y actual de main."
 
       - name: Configurar Node.js
         uses: actions/setup-node@v7
