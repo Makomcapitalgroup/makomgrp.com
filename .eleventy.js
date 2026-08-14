@@ -66,6 +66,118 @@ function validarConfigCmsContraFuenteCentral(raiz) {
   }
 }
 
+// Milestone 12 — Etapa 8A: valida en cada build que "referenciaMakom"
+// de cada propiedad sea real, única y tenga el formato correcto
+// (MKW-RE-### o superior), y que el contador persistente
+// (_data/referenciaMakomSecuencia.json) nunca esté por debajo del
+// número más alto ya asignado. Esta función SOLO valida — la
+// asignación automática real (Etapa 8B/8C, todavía no implementada)
+// vivirá en GitHub Actions, el único punto donde es posible serializar
+// la asignación sin riesgo de que dos administradores obtengan la
+// misma referencia (ver diseño de la Etapa 7).
+const FORMATO_REFERENCIA_MAKOM = /^MKW-RE-(\d{3,})$/;
+
+function validarReferenciasMakom(raiz) {
+  const dirPropiedades = path.join(raiz, "content", "propiedades");
+  const rutaSecuencia = path.join(raiz, "_data", "referenciaMakomSecuencia.json");
+  if (!fs.existsSync(dirPropiedades)) return;
+
+  const errores = [];
+  const numerosVistos = new Map(); // numero (int) -> [archivos]
+  let numeroMaximoAsignado = 0;
+
+  const archivos = fs.readdirSync(dirPropiedades).filter((a) => a.endsWith(".json"));
+
+  archivos.forEach((archivo) => {
+    const rutaRelativa = path.join("content", "propiedades", archivo);
+    const datos = JSON.parse(fs.readFileSync(path.join(dirPropiedades, archivo), "utf8"));
+    const referencia = datos.referenciaMakom;
+
+    if (referencia === undefined || referencia === null || referencia === "") {
+      errores.push(`Referencia MAKOM faltante en:\n    ${rutaRelativa}`);
+      return;
+    }
+    if (referencia === "PENDIENTE-ASIGNACION") {
+      errores.push(
+        `Referencia MAKOM pendiente de asignación en:\n    ${rutaRelativa}\n` +
+          `    (todavía no se ha asignado un número real — la asignación automática` +
+          ` se implementará en una etapa posterior)`
+      );
+      return;
+    }
+
+    const coincidencia = FORMATO_REFERENCIA_MAKOM.exec(referencia);
+    if (!coincidencia) {
+      errores.push(
+        `Referencia MAKOM inválida:\n    ${referencia}\n    Archivo:\n    ${rutaRelativa}\n` +
+          `    Formato esperado: MKW-RE-### (3 o más dígitos, ej. MKW-RE-001)`
+      );
+      return;
+    }
+
+    const numero = parseInt(coincidencia[1], 10);
+    numeroMaximoAsignado = Math.max(numeroMaximoAsignado, numero);
+
+    if (!numerosVistos.has(numero)) numerosVistos.set(numero, []);
+    numerosVistos.get(numero).push(rutaRelativa);
+  });
+
+  numerosVistos.forEach((archivosConEsteNumero, numero) => {
+    if (archivosConEsteNumero.length > 1) {
+      errores.push(
+        `Referencia MAKOM duplicada:\n    MKW-RE-${String(numero).padStart(3, "0")}\n    Archivos:\n` +
+          archivosConEsteNumero.map((a) => `      ${a}`).join("\n")
+      );
+    }
+  });
+
+  // Coherencia del contador persistente — solo se exige si existe al
+  // menos una propiedad con referencia válida que verificar contra él.
+  if (fs.existsSync(rutaSecuencia)) {
+    let secuencia;
+    try {
+      secuencia = JSON.parse(fs.readFileSync(rutaSecuencia, "utf8"));
+    } catch {
+      errores.push(`_data/referenciaMakomSecuencia.json no es un JSON válido.`);
+      secuencia = null;
+    }
+    if (secuencia) {
+      const { ultimoNumero } = secuencia;
+      if (!Number.isInteger(ultimoNumero)) {
+        errores.push(
+          `_data/referenciaMakomSecuencia.json: "ultimoNumero" debe ser un entero (valor actual: ${JSON.stringify(
+            ultimoNumero
+          )}).`
+        );
+      } else if (ultimoNumero < 1) {
+        errores.push(`_data/referenciaMakomSecuencia.json: "ultimoNumero" debe ser >= 1 (valor actual: ${ultimoNumero}).`);
+      } else if (ultimoNumero < numeroMaximoAsignado) {
+        errores.push(
+          `_data/referenciaMakomSecuencia.json: "ultimoNumero" (${ultimoNumero}) es menor que el número más alto ` +
+            `ya asignado en las propiedades (${numeroMaximoAsignado}). El contador nunca debe estar por debajo ` +
+            `de una referencia ya existente.`
+        );
+      }
+      // ultimoNumero > numeroMaximoAsignado es válido a propósito: puede
+      // reflejar referencias históricas de propiedades ya eliminadas,
+      // que nunca deben reutilizarse.
+    }
+  } else if (numeroMaximoAsignado > 0) {
+    errores.push(
+      `_data/referenciaMakomSecuencia.json no existe, pero ya hay propiedades con referencias asignadas ` +
+        `(la más alta: MKW-RE-${String(numeroMaximoAsignado).padStart(3, "0")}).`
+    );
+  }
+
+  if (errores.length > 0) {
+    throw new Error(
+      "Validación de Referencia MAKOM falló:\n\n" +
+        errores.map((e) => `  - ${e}`).join("\n\n") +
+        "\n"
+    );
+  }
+}
+
 module.exports = function (eleventyConfig) {
   // Milestone 1: andamiaje delimitado. Eleventy solo copia el sitio actual
   // tal cual (passthrough), sin procesarlo como plantilla. Nada se
@@ -177,6 +289,7 @@ module.exports = function (eleventyConfig) {
   // en vez de una solución más compleja.
   eleventyConfig.on("eleventy.before", () => {
     validarConfigCmsContraFuenteCentral(__dirname);
+    validarReferenciasMakom(__dirname);
   });
 
   // Resuelve una clave técnica (ej. "vista-mar") a su etiqueta pública
