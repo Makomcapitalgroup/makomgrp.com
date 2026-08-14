@@ -50,7 +50,7 @@
   },
   "mostrarEnHome": true,
   "ordenHome": 1,
-  "descripcion": "**Proyecto residencial en Condado del Rey,** uno de los proyectos residenciales más completos de la ciudad de Panamá. La Torre 2 está terminada: **las unidades se entregan de inmediato,** sin espera de obra.\n\nLa comunidad reúne **amenidades para cada etapa de la vida**: piscina estilo resort, rooftop con vista a la ciudad, canchas de fútbol 5 y básquetbol, playground, kids zone, teen lounge, sala de tareas, gaming zone, lounge, BBQ spot y un parque para mascotas con grama sintética y estación de baño. El control de acceso se maneja con la app Munily, sistema de cámaras CCTV **y cerradura digital en cada apartamento.**",
+  "descripcion": "**Mi Condado, Torre 2** es un proyecto residencial en Condado del Rey, ciudad de Panamá, uno de los corredores residenciales más completos de la capital. La torre está terminada: **las unidades se entregan de inmediato,** sin esperar a que termine la obra.\n\nEl proyecto ofrece dos tipologías: apartamentos de **2 recámaras y 2 baños, de 72 a 77 m²,** y apartamentos de **3 recámaras y 2 baños, de 89 a 97 m².** Todas las unidades incluyen un puesto de estacionamiento, horno, estufa y cerradura digital, con la opción de personalizar tu unidad con aires acondicionados, línea blanca y muebles de diseño.\n\nLa comunidad reúne **amenidades para cada etapa de la vida**: piscina estilo resort, rooftop con vista a la ciudad, canchas de fútbol 5 y básquetbol, playground, kids zone, teen lounge, sala de tareas, gaming zone, lounge, BBQ spot y un parque para mascotas con grama sintética y estación de baño. El control de acceso se maneja con la app Munily y sistema de cámaras CCTV.\n\nDentro de la misma comunidad hay **más de 36 locales comerciales y 100 oficinas** — mini súper, restaurante, clínica, gimnasio y más — y las universidades quedan a solo 3 y 5 minutos.\n\nAgenda tu visita y conoce la unidad disponible.",
   "ubicacionInterna": {
     "provincia": "Panamá",
     "sector": "Condado del Rey",
@@ -59,8 +59,8 @@
   "tipo": "apartamento",
   "categoriaGeneral": "residencial",
   "operacion": "venta",
-  "ubicacionPublica": "CIUDAD DE PANAMÁ",
-  "titulo": "PH MI CONDADO ",
+  "ubicacionPublica": "Condado del Rey, Ciudad de Panamá",
+  "titulo": "Mi Condado, Torre 2 — 2 y 3 recámaras en Condado del Rey, entrega inmediata",
   "detalles": [
     "balcon",
     "lavanderia"
