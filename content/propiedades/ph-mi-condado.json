@@ -1,0 +1,71 @@
+{
+  "amenidades": [
+    "gimnasio",
+    "piscina",
+    "cerradura-digital",
+    "area-social",
+    "coworking",
+    "rooftop"
+  ],
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "borrador",
+  "precio": {
+    "moneda": "USD",
+    "monto": 185
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/{{slug}}/dji_20250724_164651_115-1-.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/{{slug}}/procasa-23-1-.jpg"
+      },
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/{{slug}}/procasa-28-1-.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/{{slug}}/dji_20250724_164734_120-1-.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/{{slug}}/dji_20250724_165638_161_pano-1-.jpg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 2,
+    "banos": 2,
+    "estacionamientos": 1,
+    "metrajeInterno": 74
+  },
+  "mostrarEnHome": false,
+  "ordenHome": 1,
+  "descripcion": "**Proyecto residencial en Condado del Rey,** uno de los proyectos residenciales más completos de la ciudad de Panamá. La Torre 2 está terminada: **las unidades se entregan de inmediato,** sin espera de obra.\n\nLa comunidad reúne **amenidades para cada etapa de la vida**: piscina estilo resort, rooftop con vista a la ciudad, canchas de fútbol 5 y básquetbol, playground, kids zone, teen lounge, sala de tareas, gaming zone, lounge, BBQ spot y un parque para mascotas con grama sintética y estación de baño. El control de acceso se maneja con la app Munily, sistema de cámaras CCTV **y cerradura digital en cada apartamento.**",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "sector": "Condado del Rey",
+    "distrito": "Panamá"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "operacion": "venta",
+  "ubicacionPublica": "CIUDAD DE PANAMÁ",
+  "titulo": "PH MI CONDADO ",
+  "detalles": [
+    "balcon",
+    "lavanderia"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
