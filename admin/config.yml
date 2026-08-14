@@ -28,21 +28,17 @@ local_backend: true
 publish_mode: simple
 locale: "es"
 
-# Milestone 7: carpeta de medios por propiedad (assets/propiedades/<slug>/)
-# en vez de una carpeta compartida. Decisión basada en verificar el código
-# fuente real de Decap CMS: la resolución de "{{slug}}" aquí pasa por
-# folderFormatter()/compileStringTemplate() en
-# packages/decap-cms-core/src/lib/formatters.ts — un mecanismo maduro que
-# lee los datos reales de la entrada al momento de subir el archivo. Es
-# un motor DISTINTO (y confirmado más confiable) del que falla con
-# "{{now}}"/"{{slug}}" en valores por defecto de campos hidden (ver
-# Milestone 6 y sección de investigación del Milestone 7). Se descartó
-# una carpeta compartida porque se confirmó que Decap CMS NO renombra
-# automáticamente archivos con el mismo nombre (ej. "IMG_1234.jpg" de
-# dos propiedades distintas) — pediría reemplazar el existente. Una
-# carpeta por propiedad elimina ese riesgo de raíz.
-media_folder: "assets/propiedades/{{slug}}"
-public_folder: "/assets/propiedades/{{slug}}"
+# Milestone 12 — Etapa 3: Decap exige un media_folder/public_folder
+# GLOBAL para validar el archivo de configuración (comprobado en una
+# prueba real local: sin esto, el panel ni siquiera carga — error
+# "config must have required property 'media_folder'"). Este valor
+# global queda como respaldo inerte: la única colección del sitio
+# ("propiedades") declara su propio media_folder/public_folder más
+# abajo, que es el que realmente se usa para cada subida de foto. Este
+# valor global nunca debería llegar a usarse en la práctica mientras
+# exista esa colección con su propia definición.
+media_folder: "assets/propiedades/uploads"
+public_folder: "/assets/propiedades/uploads"
 
 collections:
   - name: "propiedades"
@@ -58,6 +54,23 @@ collections:
     summary: "{{titulo}} — {{estado}}"
     editor:
       preview: false
+    # Milestone 12 — Etapa 3: carpeta de medios por propiedad
+    # (assets/propiedades/<slug>/), corregido de una definición GLOBAL
+    # anterior que dejaba "{{slug}}" sin resolver (confirmado con la
+    # primera propiedad real, "PH Mi Condado", y con el código fuente
+    # de Decap: evaluateFolder()/folderFormatter() en
+    # packages/decap-cms-core solo pasa el valor global de media_folder/
+    # public_folder por su motor de plantillas cuando también se
+    # declaran AQUÍ, a nivel de colección — nunca cuando quedan
+    # únicamente a nivel global. La afirmación del Milestone 7 de que
+    # esto ya funcionaba fue incorrecta; esta ubicación es la que
+    # realmente resuelve "{{slug}}" (usando identifier_field: "titulo",
+    # saneado igual que el nombre de archivo de la entrada). El
+    # objetivo — una carpeta por propiedad, para no arriesgar que dos
+    # propiedades distintas sobrescriban archivos con el mismo nombre —
+    # sigue siendo el mismo, solo cambia dónde se declara.
+    media_folder: "assets/propiedades/{{slug}}"
+    public_folder: "/assets/propiedades/{{slug}}"
     fields:
       # ---------------------------------------------------------
       # 1. INFORMACIÓN BÁSICA
