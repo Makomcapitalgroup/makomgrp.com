@@ -389,10 +389,11 @@ collections:
       # Ver Milestone 6, sección "Campos automáticos" del reporte
       # para la clasificación y el porqué de cada uno.
       # ---------------------------------------------------------
-      - label: "Referencia MAKOM (interna)"
+      - label: "Referencia MAKOM"
         name: "referenciaMakom"
-        widget: "hidden"
+        widget: "string"
         default: "PENDIENTE-ASIGNACION"
+        hint: "Se asigna automáticamente al publicar. No editar manualmente."
 
       # "metadatos" se declara como grupo anidado (no campos sueltos)
       # para calzar con el modelo aprobado en el Milestone 2, donde
