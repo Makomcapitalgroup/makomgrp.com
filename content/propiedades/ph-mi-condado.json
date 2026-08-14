@@ -22,23 +22,23 @@
     "galeria": [
       {
         "portada": false,
-        "archivo": "/assets/propiedades/{{slug}}/dji_20250724_164651_115-1-.jpg"
+        "archivo": "/assets/propiedades/ph-mi-condado/dji_20250724_164651_115-1-.jpg"
       },
       {
         "portada": false,
-        "archivo": "/assets/propiedades/{{slug}}/procasa-23-1-.jpg"
+        "archivo": "/assets/propiedades/ph-mi-condado/procasa-23-1-.jpg"
       },
       {
         "portada": true,
-        "archivo": "/assets/propiedades/{{slug}}/procasa-28-1-.jpg"
+        "archivo": "/assets/propiedades/ph-mi-condado/procasa-28-1-.jpg"
       },
       {
         "portada": false,
-        "archivo": "/assets/propiedades/{{slug}}/dji_20250724_164734_120-1-.jpg"
+        "archivo": "/assets/propiedades/ph-mi-condado/dji_20250724_164734_120-1-.jpg"
       },
       {
         "portada": false,
-        "archivo": "/assets/propiedades/{{slug}}/dji_20250724_165638_161_pano-1-.jpg"
+        "archivo": "/assets/propiedades/ph-mi-condado/dji_20250724_165638_161_pano-1-.jpg"
       }
     ]
   },
