@@ -1,0 +1,123 @@
+{#
+  Milestone 14 — ficha de Proyecto, bilingüe ES/EN. Mismo criterio que
+  _includes/propiedad.njk: "lang" (default "es"), campos "...En" con
+  fallback silencioso al campo ES, hreflang real entre las dos rutas
+  equivalentes. Reutiliza clases CSS ya existentes (ficha-propiedad__*,
+  galeria-ficha__principal) en vez de crear estilos nuevos — no es
+  "propiedad", pero la tipografía/espaciado de una ficha de contenido
+  ya resuelto sirve igual aquí sin rediseñar nada.
+#}
+{% set lang = lang or "es" %}
+{% set esEn = lang == "en" %}
+{% set tituloMostrado = (proyecto.tituloEn or proyecto.titulo) if esEn else proyecto.titulo %}
+{% set descripcionMostrada = (proyecto.descripcionEn or proyecto.descripcion) if esEn else proyecto.descripcion %}
+{% set extractoMostrado = (proyecto.extractoEn or proyecto.extracto) if esEn else proyecto.extracto %}
+{% set ubicacionMostrada = (proyecto.ubicacionEn or proyecto.ubicacion) if esEn else proyecto.ubicacion %}
+{% set ctaTextoMostrado = (proyecto.ctaTextoEn or proyecto.ctaTexto) if esEn else proyecto.ctaTexto %}
+{% set urlBase = "https://makomgrp.com/en/projects/" if esEn else "https://makomgrp.com/proyectos/" %}
+{% set urlCanonica = urlBase + proyecto.slug + "/" %}
+{% set urlAlternoEs = "https://makomgrp.com/proyectos/" + proyecto.slug + "/" %}
+{% set urlAlternoEn = "https://makomgrp.com/en/projects/" + proyecto.slug + "/" %}
+{% set langSwitchUrl = urlAlternoEs if esEn else urlAlternoEn %}
+{% set esIndexableProyecto = proyecto | esIndexable %}
+{% set tituloBase = (proyecto.seo.titulo if not esEn else (proyecto.seo.tituloEn or proyecto.seo.titulo)) or (tituloMostrado + " | MAKOM CAPITAL GROUP") %}
+{% set tituloSeo = tituloBase | resumenSeo(60) %}
+{% set descripcionSeoBase = (proyecto.seo.descripcion if not esEn else (proyecto.seo.descripcionEn or proyecto.seo.descripcion)) %}
+{% set descripcionSeo = descripcionSeoBase or (extractoMostrado | resumenSeo(155)) %}
+{% set imagenAbsoluta = ("https://makomgrp.com" + proyecto.imagenPrincipal) if proyecto.imagenPrincipal else null %}
+{% set imagenOgUrl = imagenAbsoluta or "https://makomgrp.com/assets/og/makom-capital-group-og.jpg" %}
+{% set estadoEtiquetas = {
+  "proximo": {"es": "Próximamente", "en": "Coming soon"},
+  "en_desarrollo": {"es": "En desarrollo", "en": "In progress"},
+  "completado": {"es": "Completado", "en": "Completed"}
+} %}
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="{{ descripcionSeo }}" />
+  <meta name="theme-color" content="#0A0A0A" />
+  <meta name="robots" content="{{ 'index, follow' if esIndexableProyecto else 'noindex, follow' }}" />
+  <link rel="canonical" href="{{ urlCanonica }}" />
+  <link rel="alternate" hreflang="es" href="{{ urlAlternoEs }}" />
+  <link rel="alternate" hreflang="en" href="{{ urlAlternoEn }}" />
+  <link rel="alternate" hreflang="x-default" href="{{ urlAlternoEs }}" />
+  <link rel="icon" type="image/svg+xml" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon-16.png" />
+  <link rel="apple-touch-icon" href="/MAKOM_Logo_Files_v4.0/04_Favicon/apple-touch-icon.png" />
+  <title>{{ tituloSeo }}</title>
+  <meta property="og:title" content="{{ tituloSeo }}" />
+  <meta property="og:description" content="{{ descripcionSeo }}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="{{ 'en_US' if esEn else 'es_PA' }}" />
+  <meta property="og:url" content="{{ urlCanonica }}" />
+  <meta property="og:image" content="{{ imagenOgUrl }}" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="{{ tituloSeo }}" />
+  <meta name="twitter:description" content="{{ descripcionSeo }}" />
+  <meta name="twitter:image" content="{{ imagenOgUrl }}" />
+  <link rel="stylesheet" href="/styles.css" />
+  {% include "meta-pixel.njk" %}
+</head>
+<body class="pagina-interior">
+
+{% include "header.njk" %}
+
+<main id="main" role="main">
+  <section class="ficha-propiedad" aria-labelledby="ficha-titulo">
+    <div class="container ficha-propiedad__inner">
+
+      <nav class="ficha-propiedad__breadcrumb" aria-label="{{ 'Breadcrumb' if esEn else 'Ruta de navegación' }}">
+        <a href="{{ '/en/projects/' if esEn else '/proyectos/' }}">{{ "Projects" if esEn else "Proyectos" }}</a>
+        <span aria-hidden="true"> / </span>
+        <span aria-current="page">{{ tituloMostrado }}</span>
+      </nav>
+
+      <div class="ficha-propiedad__encabezado" data-reveal>
+        <div class="ficha-propiedad__badges">
+          {% if proyecto.tipoProyecto %}<span class="property-card__type">{{ proyecto.tipoProyecto }}</span>{% endif %}
+          {% if proyecto.estado %}<span class="property-card__category">{{ estadoEtiquetas[proyecto.estado].en if esEn else estadoEtiquetas[proyecto.estado].es }}</span>{% endif %}
+        </div>
+        <h1 class="ficha-propiedad__titulo" id="ficha-titulo">{{ tituloMostrado }}</h1>
+        {% if ubicacionMostrada %}<p class="ficha-propiedad__ubicacion">{{ ubicacionMostrada }}</p>{% endif %}
+      </div>
+
+      <div class="ficha-propiedad__galeria" data-reveal>
+        {% if proyecto.imagenPrincipal %}
+          <div class="galeria-ficha__principal">
+            <img src="{{ proyecto.imagenPrincipal }}" alt="{{ tituloMostrado }}" eleventy:widths="800,1200" sizes="(min-width: 1024px) 700px, 100vw" loading="eager" decoding="async" />
+          </div>
+        {% else %}
+          <div class="ficha-propiedad__galeria-vacia">
+            <span class="ficha-propiedad__galeria-vacia-texto">{{ "Photos coming soon" if esEn else "Fotografías disponibles próximamente" }}</span>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="ficha-propiedad__cuerpo">
+        <div class="ficha-propiedad__principal">
+          {% if descripcionMostrada %}
+          <div class="ficha-propiedad__seccion" data-reveal>
+            <h2 class="ficha-propiedad__seccion-titulo">{{ "Description" if esEn else "Descripción" }}</h2>
+            <div class="ficha-propiedad__descripcion">{{ descripcionMostrada | descripcionHtml | safe }}</div>
+          </div>
+          {% endif %}
+        </div>
+
+        <aside class="ficha-propiedad__lateral">
+          <div class="ficha-propiedad__cta" data-reveal>
+            <a class="btn btn--outline ficha-propiedad__cta-btn" href="{{ '/en/#contacto' if esEn else '/#contacto' }}">{{ "Request information" if esEn else "Solicitar información" }}</a>
+          </div>
+        </aside>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+{% include "footer.njk" %}
+
+</body>
+</html>

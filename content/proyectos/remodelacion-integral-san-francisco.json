@@ -1,0 +1,17 @@
+{
+  "titulo": "Remodelación Integral · San Francisco",
+  "tituloEn": "Full Renovation · San Francisco",
+  "estado": "proximo",
+  "tipoProyecto": "Remodelación Integral",
+  "ubicacion": "San Francisco, Ciudad de Panamá",
+  "ubicacionEn": "San Francisco, Panama City",
+  "extracto": "Transformación completa de apartamento de 180m² con selección de materiales nobles, actualización de sistemas e intervención arquitectónica.",
+  "extractoEn": "Complete transformation of a 180 m² apartment with a selection of premium materials, systems upgrade, and architectural intervention.",
+  "descripcion": "Transformación completa de apartamento de 180m² con selección de materiales nobles, actualización de sistemas e intervención arquitectónica.",
+  "descripcionEn": "Complete transformation of a 180 m² apartment with a selection of premium materials, systems upgrade, and architectural intervention.",
+  "mostrarEnHome": true,
+  "ordenHome": 1,
+  "seo": {
+    "noIndex": false
+  }
+}

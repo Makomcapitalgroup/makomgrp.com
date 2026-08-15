@@ -1,0 +1,10 @@
+---
+pagination:
+  data: collections.perspectivas
+  size: 1
+  alias: perspectiva
+permalink: "/en/insights/{{ perspectiva.slug }}/"
+eleventyExcludeFromCollections: true
+---
+{% set lang = "en" %}
+{% include "perspectiva.njk" %}

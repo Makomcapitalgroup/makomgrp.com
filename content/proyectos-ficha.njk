@@ -1,0 +1,9 @@
+---
+pagination:
+  data: collections.proyectos
+  size: 1
+  alias: proyecto
+permalink: "/proyectos/{{ proyecto.slug }}/"
+eleventyExcludeFromCollections: true
+---
+{% include "proyecto.njk" %}

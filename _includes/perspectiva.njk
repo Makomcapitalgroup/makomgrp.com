@@ -1,0 +1,117 @@
+{#
+  Milestone 14 — ficha de Perspectiva (artículo), bilingüe ES/EN.
+  Mismo criterio que propiedad.njk/proyecto.njk. "contenido"/"contenidoEn"
+  usan el mismo filtro "descripcionHtml" que Propiedades — el mismo
+  subconjunto de Markdown (bold/italic/listas) que el CMS ya sabe
+  producir, sin reinventar nada.
+#}
+{% set lang = lang or "es" %}
+{% set esEn = lang == "en" %}
+{% set tituloMostrado = (perspectiva.tituloEn or perspectiva.titulo) if esEn else perspectiva.titulo %}
+{% set contenidoMostrado = (perspectiva.contenidoEn or perspectiva.contenido) if esEn else perspectiva.contenido %}
+{% set extractoMostrado = (perspectiva.extractoEn or perspectiva.extracto) if esEn else perspectiva.extracto %}
+{% set urlBase = "https://makomgrp.com/en/insights/" if esEn else "https://makomgrp.com/perspectivas/" %}
+{% set urlCanonica = urlBase + perspectiva.slug + "/" %}
+{% set urlAlternoEs = "https://makomgrp.com/perspectivas/" + perspectiva.slug + "/" %}
+{% set urlAlternoEn = "https://makomgrp.com/en/insights/" + perspectiva.slug + "/" %}
+{% set langSwitchUrl = urlAlternoEs if esEn else urlAlternoEn %}
+{% set esIndexablePerspectiva = perspectiva | esIndexable %}
+{% set tituloBase = (perspectiva.seo.titulo if not esEn else (perspectiva.seo.tituloEn or perspectiva.seo.titulo)) or (tituloMostrado + " | MAKOM CAPITAL GROUP") %}
+{% set tituloSeo = tituloBase | resumenSeo(60) %}
+{% set descripcionSeoBase = (perspectiva.seo.descripcion if not esEn else (perspectiva.seo.descripcionEn or perspectiva.seo.descripcion)) %}
+{% set descripcionSeo = descripcionSeoBase or (extractoMostrado | resumenSeo(155)) %}
+{% set imagenAbsoluta = ("https://makomgrp.com" + perspectiva.imagenPortada) if perspectiva.imagenPortada else null %}
+{% set imagenOgUrl = imagenAbsoluta or "https://makomgrp.com/assets/og/makom-capital-group-og.jpg" %}
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="{{ descripcionSeo }}" />
+  <meta name="theme-color" content="#0A0A0A" />
+  <meta name="robots" content="{{ 'index, follow' if esIndexablePerspectiva else 'noindex, follow' }}" />
+  <link rel="canonical" href="{{ urlCanonica }}" />
+  <link rel="alternate" hreflang="es" href="{{ urlAlternoEs }}" />
+  <link rel="alternate" hreflang="en" href="{{ urlAlternoEn }}" />
+  <link rel="alternate" hreflang="x-default" href="{{ urlAlternoEs }}" />
+  <link rel="icon" type="image/svg+xml" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon-16.png" />
+  <link rel="apple-touch-icon" href="/MAKOM_Logo_Files_v4.0/04_Favicon/apple-touch-icon.png" />
+  <title>{{ tituloSeo }}</title>
+  <meta property="og:title" content="{{ tituloSeo }}" />
+  <meta property="og:description" content="{{ descripcionSeo }}" />
+  <meta property="og:type" content="article" />
+  <meta property="og:locale" content="{{ 'en_US' if esEn else 'es_PA' }}" />
+  <meta property="og:url" content="{{ urlCanonica }}" />
+  <meta property="og:image" content="{{ imagenOgUrl }}" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="{{ tituloSeo }}" />
+  <meta name="twitter:description" content="{{ descripcionSeo }}" />
+  <meta name="twitter:image" content="{{ imagenOgUrl }}" />
+  <link rel="stylesheet" href="/styles.css" />
+  {% if esIndexablePerspectiva %}
+  <script type="application/ld+json">{{ perspectiva | jsonLdArticulo(urlCanonica, imagenAbsoluta, lang, tituloMostrado, extractoMostrado) | dump | safe }}</script>
+  {% endif %}
+  {% include "meta-pixel.njk" %}
+</head>
+<body class="pagina-interior">
+
+{% include "header.njk" %}
+
+<main id="main" role="main">
+  <section class="ficha-propiedad" aria-labelledby="ficha-titulo">
+    <div class="container ficha-propiedad__inner">
+
+      <nav class="ficha-propiedad__breadcrumb" aria-label="{{ 'Breadcrumb' if esEn else 'Ruta de navegación' }}">
+        <a href="{{ '/en/insights/' if esEn else '/perspectivas/' }}">{{ "Insights" if esEn else "Perspectivas" }}</a>
+        <span aria-hidden="true"> / </span>
+        <span aria-current="page">{{ tituloMostrado }}</span>
+      </nav>
+
+      <div class="ficha-propiedad__encabezado" data-reveal>
+        <div class="ficha-propiedad__badges">
+          {% if perspectiva.categoria %}<span class="article-card__category">{{ perspectiva.categoria }}</span>{% endif %}
+        </div>
+        <h1 class="ficha-propiedad__titulo" id="ficha-titulo">{{ tituloMostrado }}</h1>
+        {% if perspectiva.fecha or perspectiva.autor %}
+        <p class="article-card__date">
+          {%- if perspectiva.fecha %}{{ perspectiva.fecha | fechaFormato(lang) }}{% endif -%}
+          {%- if perspectiva.fecha and perspectiva.autor %} · {% endif -%}
+          {%- if perspectiva.autor %}{{ perspectiva.autor }}{% endif -%}
+        </p>
+        {% endif %}
+      </div>
+
+      <div class="ficha-propiedad__galeria" data-reveal>
+        {% if perspectiva.imagenPortada %}
+          <div class="galeria-ficha__principal">
+            <img src="{{ perspectiva.imagenPortada }}" alt="{{ tituloMostrado }}" eleventy:widths="800,1200" sizes="(min-width: 1024px) 700px, 100vw" loading="eager" decoding="async" />
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="ficha-propiedad__cuerpo">
+        <div class="ficha-propiedad__principal">
+          {% if contenidoMostrado %}
+          <div class="ficha-propiedad__seccion" data-reveal>
+            <div class="ficha-propiedad__descripcion">{{ contenidoMostrado | descripcionHtml | safe }}</div>
+          </div>
+          {% endif %}
+        </div>
+
+        <aside class="ficha-propiedad__lateral">
+          <div class="ficha-propiedad__cta" data-reveal>
+            <a class="btn btn--outline ficha-propiedad__cta-btn" href="{{ '/en/#contacto' if esEn else '/#contacto' }}">{{ "Contact us" if esEn else "Contáctenos" }}</a>
+          </div>
+        </aside>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+{% include "footer.njk" %}
+
+</body>
+</html>
