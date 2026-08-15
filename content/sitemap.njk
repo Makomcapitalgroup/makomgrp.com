@@ -5,17 +5,48 @@ eleventyExcludeFromCollections: true
 {%- set indexables = collections.propiedades | propiedadesIndexables -%}
 {%- set catalogoIndexable = collections.propiedades | catalogoEsIndexable -%}
 {%- set lastmodHome = "index.html" | lastmodDeArchivo -%}
+{%- set lastmodHomeEn = "en/index.html" | lastmodDeArchivo -%}
+{#
+  Milestone 13 — bilingüe: cada URL indexable existe en ES y EN (mismo
+  contenido real, distinta ruta). Se anota con <xhtml:link
+  rel="alternate" hreflang="..."> en AMBAS entradas — es la forma
+  recomendada por Google para sitemaps bilingües, y evita depender
+  únicamente de las etiquetas <link rel="alternate"> del <head> de
+  cada página (que ya existen, pero el sitemap las refuerza). /admin/
+  nunca se incluye aquí — nunca lo estuvo.
+#}
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://makomgrp.com/</loc>
     {% if lastmodHome %}<lastmod>{{ lastmodHome }}</lastmod>{% endif %}
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://makomgrp.com/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://makomgrp.com/en/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://makomgrp.com/" />
+  </url>
+  <url>
+    <loc>https://makomgrp.com/en/</loc>
+    {% if lastmodHomeEn %}<lastmod>{{ lastmodHomeEn }}</lastmod>{% endif %}
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://makomgrp.com/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://makomgrp.com/en/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://makomgrp.com/" />
   </url>
   {%- if catalogoIndexable %}
   <url>
     <loc>https://makomgrp.com/propiedades/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://makomgrp.com/propiedades/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://makomgrp.com/en/properties/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://makomgrp.com/propiedades/" />
+  </url>
+  <url>
+    <loc>https://makomgrp.com/en/properties/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://makomgrp.com/propiedades/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://makomgrp.com/en/properties/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://makomgrp.com/propiedades/" />
   </url>
   {%- endif %}
   {%- for p in indexables %}
@@ -23,6 +54,16 @@ eleventyExcludeFromCollections: true
   <url>
     <loc>https://makomgrp.com/propiedades/{{ p.slug }}/</loc>
     {% if lastmodProp %}<lastmod>{{ lastmodProp }}</lastmod>{% endif %}
+    <xhtml:link rel="alternate" hreflang="es" href="https://makomgrp.com/propiedades/{{ p.slug }}/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://makomgrp.com/en/properties/{{ p.slug }}/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://makomgrp.com/propiedades/{{ p.slug }}/" />
+  </url>
+  <url>
+    <loc>https://makomgrp.com/en/properties/{{ p.slug }}/</loc>
+    {% if lastmodProp %}<lastmod>{{ lastmodProp }}</lastmod>{% endif %}
+    <xhtml:link rel="alternate" hreflang="es" href="https://makomgrp.com/propiedades/{{ p.slug }}/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://makomgrp.com/en/properties/{{ p.slug }}/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://makomgrp.com/propiedades/{{ p.slug }}/" />
   </url>
   {%- endfor %}
 </urlset>

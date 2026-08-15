@@ -1,0 +1,121 @@
+{#
+  Milestone 13 — bilingüe ES/EN. Cuerpo compartido del catálogo público
+  de propiedades — usado por content/propiedades-catalogo.njk (ES,
+  /propiedades/) y content/propiedades-catalogo-en.njk (EN,
+  /en/properties/). "lang" lo fija cada uno de esos dos archivos antes
+  de incluir esta plantilla. Los datos (propiedades, filtros
+  disponibles, indexabilidad) son exactamente los mismos para ambos
+  idiomas — nunca se duplica contenido estructurado, solo la interfaz.
+#}
+{% set lang = lang or "es" %}
+{% set esEn = lang == "en" %}
+{% set publicas = collections.propiedades | propiedadesPublicas %}
+{% set filtrosDisp = publicas | filtrosDisponibles %}
+{% set catalogoIndexable = collections.propiedades | catalogoEsIndexable %}
+{% set urlAlternoEs = "https://makomgrp.com/propiedades/" %}
+{% set urlAlternoEn = "https://makomgrp.com/en/properties/" %}
+{% set urlCanonica = urlAlternoEn if esEn else urlAlternoEs %}
+{% set langSwitchUrl = "/propiedades/" if esEn else "/en/properties/" %}
+{% set descripcionSeo = "MAKOM CAPITAL GROUP — full-service real estate wealth management in Panama. Every property is reviewed before it is published." if esEn else "MAKOM CAPITAL GROUP — Gestora integral de patrimonio inmobiliario en Panamá. Cada propiedad fue evaluada antes de ser publicada." %}
+{% set tituloSeo = "Properties | MAKOM CAPITAL GROUP" if esEn else "Propiedades | MAKOM CAPITAL GROUP" %}
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="{{ descripcionSeo }}" />
+  <meta name="theme-color" content="#0A0A0A" />
+  <!-- Milestone 9: indexabilidad automática — indexable en cuanto
+       exista al menos una propiedad real "disponible" publicada (sin
+       seo.noIndex forzado); noindex mientras el inventario público sea
+       exclusivamente contenido de prueba/desarrollo. Nadie necesita
+       alternar esto a mano. -->
+  <meta name="robots" content="{{ 'index, follow' if catalogoIndexable else 'noindex, nofollow' }}" />
+  <link rel="canonical" href="{{ urlCanonica }}" />
+  <link rel="alternate" hreflang="es" href="{{ urlAlternoEs }}" />
+  <link rel="alternate" hreflang="en" href="{{ urlAlternoEn }}" />
+  <link rel="alternate" hreflang="x-default" href="{{ urlAlternoEs }}" />
+  <link rel="icon" type="image/svg+xml" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon-16.png" />
+  <link rel="apple-touch-icon" href="/MAKOM_Logo_Files_v4.0/04_Favicon/apple-touch-icon.png" />
+  <title>{{ tituloSeo }}</title>
+  <meta property="og:title" content="{{ tituloSeo }}" />
+  <meta property="og:description" content="{{ descripcionSeo }}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="{{ 'en_US' if esEn else 'es_PA' }}" />
+  <meta property="og:url" content="{{ urlCanonica }}" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="{{ tituloSeo }}" />
+  <meta name="twitter:description" content="{{ descripcionSeo }}" />
+  <link rel="stylesheet" href="/styles.css" />
+  {% include "meta-pixel.njk" %}
+</head>
+<body class="pagina-interior">
+
+{% include "header.njk" %}
+
+<main id="main" role="main">
+  <section class="propiedades" aria-labelledby="catalogo-heading">
+    <div class="container propiedades__inner">
+      <div class="propiedades__header">
+        <span class="text-label">{{ "Available Properties" if esEn else "Propiedades Disponibles" }}</span>
+        <h1 class="propiedades__heading" id="catalogo-heading" data-reveal>{{ "Curated properties. Not a catalog — a selection." if esEn else "Propiedades seleccionadas. No un catálogo — una curaduría." }}</h1>
+        <p class="propiedades__subheadline" data-reveal>{{ "Every property at MAKOM is reviewed before it is published." if esEn else "Cada propiedad en MAKOM fue evaluada antes de ser publicada." }}</p>
+      </div>
+
+      {% if publicas.length > 0 %}
+      <div class="prop-filters" role="tablist" aria-label="{{ 'Filter properties' if esEn else 'Filtrar propiedades' }}">
+        <button class="filter-tab filter-tab--active" role="tab" aria-selected="true" data-filter="all">{{ "All" if esEn else "Todos" }}</button>
+        {% if filtrosDisp.venta %}<button class="filter-tab" role="tab" aria-selected="false" data-filter="venta">{{ "For Sale" if esEn else "Venta" }}</button>{% endif %}
+        {% if filtrosDisp.alquiler %}<button class="filter-tab" role="tab" aria-selected="false" data-filter="alquiler">{{ "For Rent" if esEn else "Alquiler" }}</button>{% endif %}
+        {% if filtrosDisp.comercial %}<button class="filter-tab" role="tab" aria-selected="false" data-filter="comercial">{{ "Commercial" if esEn else "Comercial" }}</button>{% endif %}
+        {% if filtrosDisp.residencial %}<button class="filter-tab" role="tab" aria-selected="false" data-filter="residencial">{{ "Residential" if esEn else "Residencial" }}</button>{% endif %}
+      </div>
+
+      <div class="propiedades__grid" role="list" aria-live="polite" aria-label="{{ 'Property listings' if esEn else 'Listado de propiedades' }}">
+        {% for p in publicas %}
+        {% set portada = p.fotografias.galeria | portadaDe %}
+        {% set specs = p.detallesCuantitativos | specsTexto(lang) %}
+        {% set tituloP = (p.tituloEn or p.titulo) if esEn else p.titulo %}
+        {% set ubicacionP = (p.ubicacionPublicaEn or p.ubicacionPublica) if esEn else p.ubicacionPublica %}
+        <article class="property-card" data-type="{{ p.operacion }} {{ p.categoriaGeneral }}" role="listitem" aria-labelledby="cat-{{ p.slug }}-name">
+          <div class="property-card__image">
+            {% if portada %}
+              <img src="{{ portada.archivo }}" alt="{{ portada.alt or tituloP }}" loading="lazy" />
+            {% else %}
+              <div class="property-card__image-vacia">
+                <span class="property-card__image-vacia-texto">{{ "Photo coming soon" if esEn else "Foto próximamente" }}</span>
+              </div>
+            {% endif %}
+            <div class="property-card__badges">
+              <span class="property-card__type">{{ (p.operacion | etiquetaEn(propiedadesConfig.operaciones)) if esEn else (p.operacion | etiqueta(propiedadesConfig.operaciones)) }}</span>
+              <span class="property-card__category">{{ (p.categoriaGeneral | etiquetaEn(propiedadesConfig.categoriasGenerales)) if esEn else (p.categoriaGeneral | capitalize) }}</span>
+              {% if p.estado == "reservada" %}<span class="ficha-propiedad__estado-tag">{{ "Reserved" if esEn else "Reservada" }}</span>{% endif %}
+            </div>
+          </div>
+          <div class="property-card__body">
+            <h2 class="property-card__name" id="cat-{{ p.slug }}-name">{{ tituloP }}</h2>
+            <p class="property-card__location">{{ ubicacionP }}</p>
+            <p class="property-card__price">{{ p.precio | precioFormato(p.operacion, lang) }}</p>
+            {% if specs %}<p class="property-card__specs">{{ specs }}</p>{% endif %}
+            <p class="property-card__ref">Ref. {{ p.referenciaMakom }}</p>
+            <a href="{{ ('/en/properties/' if esEn else '/propiedades/') + p.slug + '/' }}" class="link--arrow property-card__cta">{{ "View property" if esEn else "Ver propiedad" }}</a>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="catalogo-vacio" data-reveal>
+        <p class="catalogo-vacio__texto">{{ "There are no public properties available right now. Check back soon or contact us directly." if esEn else "En este momento no hay propiedades públicas disponibles. Vuelva pronto o contáctenos directamente." }}</p>
+      </div>
+      {% endif %}
+
+    </div>
+  </section>
+</main>
+
+{% include "footer.njk" %}
+
+</body>
+</html>

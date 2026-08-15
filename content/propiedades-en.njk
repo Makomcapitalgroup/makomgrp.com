@@ -1,0 +1,10 @@
+---
+pagination:
+  data: collections.propiedades
+  size: 1
+  alias: propiedad
+permalink: "/en/properties/{{ propiedad.slug }}/"
+eleventyExcludeFromCollections: true
+---
+{% set lang = "en" %}
+{% include "propiedad.njk" %}

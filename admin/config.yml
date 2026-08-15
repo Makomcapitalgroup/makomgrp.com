@@ -67,6 +67,12 @@ collections:
         widget: "string"
         hint: "Nombre público de la propiedad. Ej.: Apartamento en Punta Pacífica"
 
+      - label: "Título en inglés"
+        name: "tituloEn"
+        widget: "string"
+        required: false
+        hint: "Se usa en /en/. Si se deja vacío, la ficha en inglés muestra el Título en español mientras se traduce."
+
       - label: "Operación"
         name: "operacion"
         widget: "select"
@@ -116,6 +122,13 @@ collections:
         widget: "richtext"
         buttons: ["bold", "italic", "bulleted-list", "numbered-list"]
         hint: "Editor visual — no es necesario escribir Markdown a mano."
+
+      - label: "Descripción en inglés"
+        name: "descripcionEn"
+        widget: "richtext"
+        buttons: ["bold", "italic", "bulleted-list", "numbered-list"]
+        required: false
+        hint: "Se usa en /en/. Si se deja vacía, la ficha en inglés muestra la Descripción en español mientras se traduce."
 
       # ---------------------------------------------------------
       # 2. PRECIO
@@ -170,6 +183,12 @@ collections:
         name: "ubicacionPublica"
         widget: "string"
         hint: "Este es el texto que verá el visitante del sitio. Ej.: Punta Pacífica, Ciudad de Panamá"
+
+      - label: "Ubicación pública en inglés"
+        name: "ubicacionPublicaEn"
+        widget: "string"
+        required: false
+        hint: "Se usa en /en/. Si se deja vacía, la ficha en inglés muestra la Ubicación pública en español mientras se traduce."
 
       # ---------------------------------------------------------
       # 4. DETALLES DE LA PROPIEDAD

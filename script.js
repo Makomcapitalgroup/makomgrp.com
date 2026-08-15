@@ -300,22 +300,27 @@ document.addEventListener('DOMContentLoaded', function () {
   function validateField(inputId, errorId, rules) {
     var value = getFieldValue(inputId);
     clearError(inputId, errorId);
+    // Milestone 13: solo el TEXTO de estos mensajes es bilingüe (misma
+    // lógica de document.documentElement.lang que las tarjetas del
+    // Home) — reglas de validación, IDs y destino del formulario no
+    // cambian.
+    var enIngles = document.documentElement.lang === 'en';
 
     if (rules.required && value === '') {
-      showError(inputId, errorId, 'Este campo es obligatorio.');
+      showError(inputId, errorId, enIngles ? 'This field is required.' : 'Este campo es obligatorio.');
       return false;
     }
 
     if (rules.type === 'email' && value !== '') {
       var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailPattern.test(value)) {
-        showError(inputId, errorId, 'Por favor ingrese un correo electrónico válido.');
+        showError(inputId, errorId, enIngles ? 'Please enter a valid email address.' : 'Por favor ingrese un correo electrónico válido.');
         return false;
       }
     }
 
     if (rules.type === 'select' && value === '') {
-      showError(inputId, errorId, 'Por favor seleccione una opción.');
+      showError(inputId, errorId, enIngles ? 'Please select an option.' : 'Por favor seleccione una opción.');
       return false;
     }
 
@@ -649,20 +654,38 @@ document.addEventListener('DOMContentLoaded', function () {
       });
   }
 
+  /* Milestone 13 — bilingüe: el feed /data/propiedades-destacadas.json
+     es UN SOLO dato compartido entre ES/EN (con los campos "...En" ya
+     resueltos con su fallback desde el build). Esta tarjeta lee
+     document.documentElement.lang (que cada Home, ES o EN, ya declara
+     en su <html lang="...">) para decidir qué campos/etiquetas usar —
+     nunca hace una segunda petición de red por idioma. */
+  function esHomeEnIngles() {
+    return document.documentElement.lang === 'en';
+  }
+
   function etiquetaOperacionHome(operacion) {
+    if (esHomeEnIngles()) return operacion === 'alquiler' ? 'For Rent' : 'For Sale';
     return operacion === 'alquiler' ? 'Alquiler' : 'Venta';
   }
 
-  function capitalizarHome(texto) {
-    return texto ? texto.charAt(0).toUpperCase() + texto.slice(1) : '';
+  function etiquetaCategoriaHome(texto) {
+    if (!texto) return '';
+    if (esHomeEnIngles()) {
+      var enUs = { residencial: 'Residential', comercial: 'Commercial', terreno: 'Land', otro: 'Other' };
+      return enUs[texto] || (texto.charAt(0).toUpperCase() + texto.slice(1));
+    }
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
   }
 
   function precioFormatoHome(precio, operacion) {
     if (!precio || typeof precio.monto !== 'number') return '';
     var monto = precio.monto.toLocaleString('en-US');
     if (operacion === 'alquiler') {
-      var sufijos = { mensual: 'mes', quincenal: 'quincena', otra: 'período' };
-      return '$' + monto + ' / ' + (sufijos[precio.periodicidad] || 'período');
+      var sufijos = esHomeEnIngles()
+        ? { mensual: 'month', quincenal: 'two weeks', otra: 'period' }
+        : { mensual: 'mes', quincenal: 'quincena', otra: 'período' };
+      return '$' + monto + ' / ' + (sufijos[precio.periodicidad] || sufijos.otra);
     }
     return '$' + monto;
   }
@@ -670,6 +693,13 @@ document.addEventListener('DOMContentLoaded', function () {
   function specsTextoHome(d) {
     if (!d) return '';
     var partes = [];
+    if (esHomeEnIngles()) {
+      if (d.habitaciones != null) partes.push(d.habitaciones + ' bed');
+      if (d.banos != null) partes.push(d.banos + ' bath');
+      if (d.estacionamientos != null) partes.push(d.estacionamientos + ' parking');
+      if (d.metrajeInterno != null) partes.push(d.metrajeInterno + ' m²');
+      return partes.join(' · ');
+    }
     if (d.habitaciones != null) partes.push(d.habitaciones + ' hab');
     if (d.banos != null) partes.push(d.banos + ' baños');
     if (d.estacionamientos != null) partes.push(d.estacionamientos + ' est.');
@@ -684,13 +714,18 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function tarjetaDestacadaHtml(p) {
+    var enIngles = esHomeEnIngles();
+    var titulo = enIngles ? (p.tituloEn || p.titulo) : p.titulo;
+    var ubicacion = enIngles ? (p.ubicacionPublicaEn || p.ubicacionPublica) : p.ubicacionPublica;
+    var alt = p.portada ? (enIngles ? (p.portada.altEn || p.portada.alt) : (p.portada.alt || p.titulo)) : '';
     var specs = specsTextoHome(p.detalles);
     var imagenHtml = p.portada
-      ? '<img src="' + escaparHtmlHome(p.portada.archivo) + '" alt="' + escaparHtmlHome(p.portada.alt || p.titulo) + '" loading="lazy" />'
-      : '<div class="property-card__image-vacia"><span class="property-card__image-vacia-texto">Foto próximamente</span></div>';
+      ? '<img src="' + escaparHtmlHome(p.portada.archivo) + '" alt="' + escaparHtmlHome(alt || titulo) + '" loading="lazy" />'
+      : '<div class="property-card__image-vacia"><span class="property-card__image-vacia-texto">' + (enIngles ? 'Photo coming soon' : 'Foto próximamente') + '</span></div>';
     var reservadaHtml = p.estado === 'reservada'
-      ? '<span class="ficha-propiedad__estado-tag">Reservada</span>'
+      ? '<span class="ficha-propiedad__estado-tag">' + (enIngles ? 'Reserved' : 'Reservada') + '</span>'
       : '';
+    var href = (enIngles ? '/en/properties/' : '/propiedades/') + encodeURIComponent(p.slug) + '/';
 
     return (
       '<article class="property-card" role="listitem">' +
@@ -698,16 +733,16 @@ document.addEventListener('DOMContentLoaded', function () {
           imagenHtml +
           '<div class="property-card__badges">' +
             '<span class="property-card__type">' + etiquetaOperacionHome(p.operacion) + '</span>' +
-            '<span class="property-card__category">' + capitalizarHome(p.categoriaGeneral) + '</span>' +
+            '<span class="property-card__category">' + etiquetaCategoriaHome(p.categoriaGeneral) + '</span>' +
             reservadaHtml +
           '</div>' +
         '</div>' +
         '<div class="property-card__body">' +
-          '<h3 class="property-card__name">' + escaparHtmlHome(p.titulo) + '</h3>' +
-          '<p class="property-card__location">' + escaparHtmlHome(p.ubicacionPublica) + '</p>' +
+          '<h3 class="property-card__name">' + escaparHtmlHome(titulo) + '</h3>' +
+          '<p class="property-card__location">' + escaparHtmlHome(ubicacion) + '</p>' +
           '<p class="property-card__price">' + precioFormatoHome(p.precio, p.operacion) + '</p>' +
           (specs ? '<p class="property-card__specs">' + escaparHtmlHome(specs) + '</p>' : '') +
-          '<a href="/propiedades/' + encodeURIComponent(p.slug) + '/" class="link--arrow property-card__cta">Ver propiedad</a>' +
+          '<a href="' + href + '" class="link--arrow property-card__cta">' + (enIngles ? 'View property' : 'Ver propiedad') + '</a>' +
         '</div>' +
       '</article>'
     );
