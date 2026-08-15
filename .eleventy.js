@@ -321,25 +321,35 @@ module.exports = function (eleventyConfig) {
     return plano.slice(0, plano.lastIndexOf(" ", maxLen)) + "…";
   });
 
-  // Convierte el campo "descripcion" (texto simple con párrafos
-  // separados por línea en blanco y listas con "- ") en HTML básico:
-  // <p> y <ul><li>, sin introducir una dependencia de Markdown todavía.
-  // Soporte de negrita/cursiva se añadirá cuando el editor enriquecido
-  // de Decap CMS quede conectado (Milestone 6).
+  // Convierte el campo "descripcion" (Markdown básico que guarda el
+  // widget "richtext" de Decap CMS — botones: bold, italic,
+  // bulleted-list, numbered-list) en HTML: <p>/<br>, <ul>/<ol><li> y
+  // <strong>/<em>. Siempre escapa el texto ANTES de envolverlo en esas
+  // etiquetas — nunca interpreta HTML arbitrario del CMS, solo el
+  // subconjunto de marcado que el propio editor puede producir.
   eleventyConfig.addFilter("descripcionHtml", (texto) => {
     if (!texto) return "";
     const escapar = (s) =>
       s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const enLinea = (s) =>
+      escapar(s)
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+        .replace(/_(.+?)_/g, "<em>$1</em>");
     const bloques = texto.split(/\n\s*\n/);
     return bloques
       .map((bloque) => {
         const lineas = bloque.split("\n").filter((l) => l.trim() !== "");
-        const esLista = lineas.length > 0 && lineas.every((l) => /^-\s+/.test(l.trim()));
-        if (esLista) {
-          const items = lineas.map((l) => `<li>${escapar(l.trim().replace(/^-\s+/, ""))}</li>`).join("");
+        const esViñetas = lineas.length > 0 && lineas.every((l) => /^-\s+/.test(l.trim()));
+        const esNumerada = lineas.length > 0 && lineas.every((l) => /^\d+\.\s+/.test(l.trim()));
+        if (esViñetas) {
+          const items = lineas.map((l) => `<li>${enLinea(l.trim().replace(/^-\s+/, ""))}</li>`).join("");
           return `<ul class="ficha-propiedad__lista">${items}</ul>`;
         }
-        return `<p>${escapar(lineas.join(" ")).trim()}</p>`;
+        if (esNumerada) {
+          const items = lineas.map((l) => `<li>${enLinea(l.trim().replace(/^\d+\.\s+/, ""))}</li>`).join("");
+          return `<ol class="ficha-propiedad__lista">${items}</ol>`;
+        }
+        return `<p>${lineas.map(enLinea).join("<br>")}</p>`;
       })
       .join("\n");
   });

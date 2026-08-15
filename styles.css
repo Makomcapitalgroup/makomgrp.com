@@ -835,9 +835,21 @@ body.hero--loaded .hero__subheadline {
   }
 }
 
+/* "sticky" solo tiene sentido en el layout de dos columnas de escritorio
+   (el heading queda fijo mientras se lee la columna derecha). En mobile
+   ".declaracion__inner" colapsa a una sola columna — sin acotar
+   "sticky" a este media query, el heading se quedaba "pegado" en
+   pantalla mientras el texto de abajo seguía haciendo scroll por
+   detrás, superponiéndose. */
 .declaracion__col-left {
-  position: sticky;
-  top: calc(var(--header-height) + 40px);
+  position: static;
+}
+
+@media (min-width: 768px) {
+  .declaracion__col-left {
+    position: sticky;
+    top: calc(var(--header-height) + 40px);
+  }
 }
 
 .declaracion__heading {
@@ -2888,6 +2900,10 @@ body.hero--loaded .hero__subheadline {
   font-weight: var(--font-weight-light);
   line-height: 1.7;
   list-style: disc;
+}
+
+.ficha-propiedad__descripcion ol.ficha-propiedad__lista li {
+  list-style: decimal;
 }
 
 .ficha-propiedad__checklist {
