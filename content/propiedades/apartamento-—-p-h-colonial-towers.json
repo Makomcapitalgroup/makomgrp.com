@@ -3,7 +3,7 @@
     "lobby",
     "garita-seguridad"
   ],
-  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "referenciaMakom": "MKW-RE-002",
   "mapa": {
     "activo": false,
     "precision": "aproximada",
