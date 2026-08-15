@@ -1,0 +1,17 @@
+{
+  "titulo": "Gestión de Portafolio · Obarrio",
+  "tituloEn": "Portfolio Management · Obarrio",
+  "estado": "proximo",
+  "tipoProyecto": "Gestión de Portafolio",
+  "ubicacion": "Obarrio, Ciudad de Panamá",
+  "ubicacionEn": "Obarrio, Panama City",
+  "extracto": "Administración integral de 12 unidades comerciales con optimización de contratos y rentabilidad.",
+  "extractoEn": "Full administration of 12 commercial units with contract and profitability optimization.",
+  "descripcion": "Administración integral de 12 unidades comerciales con optimización de contratos y rentabilidad.",
+  "descripcionEn": "Full administration of 12 commercial units with contract and profitability optimization.",
+  "mostrarEnHome": true,
+  "ordenHome": 2,
+  "seo": {
+    "noIndex": false
+  }
+}

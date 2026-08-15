@@ -307,6 +307,35 @@ module.exports = function (eleventyConfig) {
     );
   });
 
+  // Milestone 14 — Etapa 2: colección de proyectos, mismo patrón que
+  // "propiedades" (JSON puro leído a mano, slug derivado del nombre de
+  // archivo real — nunca de un campo interno).
+  eleventyConfig.addCollection("proyectos", () => {
+    const dir = path.join(__dirname, "content", "proyectos");
+    if (!fs.existsSync(dir)) return [];
+    const archivos = fs.readdirSync(dir).filter((archivo) => archivo.endsWith(".json"));
+    return archivos.map((archivo) => {
+      const datos = JSON.parse(fs.readFileSync(path.join(dir, archivo), "utf8"));
+      datos.slug = path.basename(archivo, ".json");
+      datos._archivoRelativo = path.join("content", "proyectos", archivo);
+      return datos;
+    });
+  });
+
+  // Milestone 14 — Etapa 2: colección de perspectivas (artículos),
+  // mismo patrón.
+  eleventyConfig.addCollection("perspectivas", () => {
+    const dir = path.join(__dirname, "content", "perspectivas");
+    if (!fs.existsSync(dir)) return [];
+    const archivos = fs.readdirSync(dir).filter((archivo) => archivo.endsWith(".json"));
+    return archivos.map((archivo) => {
+      const datos = JSON.parse(fs.readFileSync(path.join(dir, archivo), "utf8"));
+      datos.slug = path.basename(archivo, ".json");
+      datos._archivoRelativo = path.join("content", "perspectivas", archivo);
+      return datos;
+    });
+  });
+
   // Milestone 6: valida, en cada build, que las listas de "detalles" y
   // "amenidades" del panel administrativo (admin/config.yml) no hayan
   // divergido de la fuente central (_data/propiedadesConfig.json). Son
@@ -710,6 +739,150 @@ module.exports = function (eleventyConfig) {
         };
       })
     );
+  });
+
+  // Milestone 14 — Etapa 3: hasta 3 proyectos destacados para el Home
+  // (mostrarEnHome=true), ordenados por ordenHome ascendente (sin
+  // ordenHome, al final, en el orden en que ya vienen — sin fecha que
+  // usar de respaldo, a diferencia de propiedades/perspectivas). Mismo
+  // criterio de campos públicos únicamente que "propiedadesDestacadas".
+  eleventyConfig.addFilter("proyectosDestacados", async (lista) => {
+    const destacados = (lista || []).filter((p) => p.mostrarEnHome === true);
+    destacados.sort((a, b) => {
+      const aOrden = typeof a.ordenHome === "number" ? a.ordenHome : null;
+      const bOrden = typeof b.ordenHome === "number" ? b.ordenHome : null;
+      if (aOrden !== null && bOrden !== null && aOrden !== bOrden) return aOrden - bOrden;
+      if (aOrden !== null && bOrden === null) return -1;
+      if (aOrden === null && bOrden !== null) return 1;
+      return 0;
+    });
+    return Promise.all(
+      destacados.slice(0, 3).map(async (p) => {
+        const imagenOptimizada = await generarVarianteOptimizada(p.imagenPrincipal, { formatos: ["webp"], anchos: [800] });
+        return {
+          slug: p.slug,
+          titulo: p.titulo,
+          tituloEn: p.tituloEn || p.titulo,
+          estado: p.estado,
+          ubicacion: p.ubicacion,
+          ubicacionEn: p.ubicacionEn || p.ubicacion,
+          extracto: p.extracto,
+          extractoEn: p.extractoEn || p.extracto,
+          ctaTexto: p.ctaTexto,
+          ctaTextoEn: p.ctaTextoEn || p.ctaTexto,
+          ctaUrl: p.ctaUrl,
+          imagen: imagenOptimizada ? imagenOptimizada.archivo : null,
+        };
+      })
+    );
+  });
+
+  // Milestone 14 — Etapa 3: hasta 2 perspectivas destacadas para el
+  // Home. Orden: ordenHome ascendente si existe; si no, fecha
+  // descendente (la más reciente primero) — igual criterio pedido
+  // para el listado completo.
+  eleventyConfig.addFilter("perspectivasDestacadas", (lista) => {
+    const destacadas = (lista || []).filter((p) => p.mostrarEnHome === true);
+    destacadas.sort((a, b) => {
+      const aOrden = typeof a.ordenHome === "number" ? a.ordenHome : null;
+      const bOrden = typeof b.ordenHome === "number" ? b.ordenHome : null;
+      if (aOrden !== null && bOrden !== null && aOrden !== bOrden) return aOrden - bOrden;
+      if (aOrden !== null && bOrden === null) return -1;
+      if (aOrden === null && bOrden !== null) return 1;
+      return (b.fecha || "").localeCompare(a.fecha || "");
+    });
+    return destacadas.slice(0, 2).map((p) => ({
+      slug: p.slug,
+      titulo: p.titulo,
+      tituloEn: p.tituloEn || p.titulo,
+      categoria: p.categoria,
+      extracto: p.extracto,
+      extractoEn: p.extractoEn || p.extracto,
+    }));
+  });
+
+  // Milestone 14 — Etapa 4: mismo criterio de indexabilidad ya usado
+  // para propiedades — indexable salvo que seo.noIndex esté forzado.
+  // Proyectos y Perspectivas no tienen un estado tipo "borrador" que
+  // los oculte del todo (ver admin/config.yml): toda entrada creada es
+  // pública, "seo.noIndex" es la única forma de excluir una de
+  // buscadores sin dejar de publicarla.
+  eleventyConfig.addFilter("esIndexable", (item) => {
+    return !(item.seo && item.seo.noIndex);
+  });
+
+  // Milestone 14 — Etapa 5: para el sitemap. Mismo criterio que
+  // "catalogoEsIndexable"/"propiedadesIndexables": las listas completas
+  // filtradas por indexabilidad, y un booleano para decidir si la
+  // página de listado en sí entra al sitemap (al menos una entrada
+  // indexable).
+  eleventyConfig.addFilter("proyectosIndexables", (lista) => {
+    return (lista || []).filter((p) => !(p.seo && p.seo.noIndex));
+  });
+  eleventyConfig.addFilter("proyectosEsIndexable", (lista) => {
+    return (lista || []).some((p) => !(p.seo && p.seo.noIndex));
+  });
+  eleventyConfig.addFilter("perspectivasIndexables", (lista) => {
+    return (lista || []).filter((p) => !(p.seo && p.seo.noIndex));
+  });
+  eleventyConfig.addFilter("perspectivasEsIndexable", (lista) => {
+    return (lista || []).some((p) => !(p.seo && p.seo.noIndex));
+  });
+
+  // Milestone 14: listado completo de perspectivas, ordenado igual que
+  // el criterio de destacadas (ordenHome asc si existe, si no fecha
+  // desc) — pero SIN el tope de 2 (eso es solo para el teaser del Home).
+  eleventyConfig.addFilter("perspectivasOrdenadas", (lista) => {
+    const l = (lista || []).slice();
+    l.sort((a, b) => {
+      const aOrden = typeof a.ordenHome === "number" ? a.ordenHome : null;
+      const bOrden = typeof b.ordenHome === "number" ? b.ordenHome : null;
+      if (aOrden !== null && bOrden !== null && aOrden !== bOrden) return aOrden - bOrden;
+      if (aOrden !== null && bOrden === null) return -1;
+      if (aOrden === null && bOrden !== null) return 1;
+      return (b.fecha || "").localeCompare(a.fecha || "");
+    });
+    return l;
+  });
+
+  // Milestone 14: JSON-LD schema.org "Article" para la ficha de
+  // Perspectiva — tipo estándar reconocido para contenido editorial
+  // (a diferencia de Proyectos, que no tiene un tipo schema.org
+  // específico razonable, así que no se fuerza uno ahí).
+  eleventyConfig.addFilter("jsonLdArticulo", (perspectiva, urlCanonica, imagenAbsoluta, lang, tituloMostrado, extractoMostrado) => {
+    return {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: tituloMostrado || perspectiva.titulo,
+      description: textoPlanoDesdeMarkdown(extractoMostrado || perspectiva.extracto) || undefined,
+      url: urlCanonica,
+      image: imagenAbsoluta || undefined,
+      datePublished: perspectiva.fecha || undefined,
+      author: { "@type": "Organization", name: perspectiva.autor || "MAKOM CAPITAL GROUP" },
+      publisher: {
+        "@type": "Organization",
+        name: "MAKOM CAPITAL GROUP",
+        logo: { "@type": "ImageObject", url: "https://makomgrp.com/assets/logos/makom-capital-group-logo-positivo.svg" },
+      },
+      inLanguage: lang === "en" ? "en" : "es",
+    };
+  });
+
+  // Milestone 14: formatea "YYYY-MM-DD" (tal cual lo guarda el widget
+  // "datetime" del CMS) a fecha legible, ES o EN — sin depender de
+  // Intl/locale del sistema del runner (evita inconsistencias entre
+  // entornos), con una tabla de meses fija.
+  const MESES_ES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+  const MESES_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  eleventyConfig.addFilter("fechaFormato", (fecha, lang) => {
+    if (!fecha) return "";
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(fecha));
+    if (!m) return fecha;
+    const [, anio, mes, dia] = m;
+    const diaNum = parseInt(dia, 10);
+    const mesIdx = parseInt(mes, 10) - 1;
+    if (lang === "en") return `${MESES_EN[mesIdx]} ${diaNum}, ${anio}`;
+    return `${diaNum} de ${MESES_ES[mesIdx]} de ${anio}`;
   });
 
   return {

@@ -1,0 +1,88 @@
+{#
+  Milestone 14 — listado completo de Perspectivas, bilingüe ES/EN. Sin
+  filtro de publicación aparte (mostrarEnHome es solo para el teaser del
+  Home), orden por ordenHome/fecha vía el filtro "perspectivasOrdenadas".
+  Reutiliza ".article-card" (lista vertical con separador) tal como ya
+  existe en el Home — no ".proyecto-card" — porque las Perspectivas ya
+  tenían ese lenguaje visual propio de artículo, sin fotografía.
+#}
+{% set lang = lang or "es" %}
+{% set esEn = lang == "en" %}
+{% set todos = collections.perspectivas | perspectivasOrdenadas %}
+{% set urlAlternoEs = "https://makomgrp.com/perspectivas/" %}
+{% set urlAlternoEn = "https://makomgrp.com/en/insights/" %}
+{% set urlCanonica = urlAlternoEn if esEn else urlAlternoEs %}
+{% set langSwitchUrl = "/perspectivas/" if esEn else "/en/insights/" %}
+{% set descripcionSeo = "MAKOM CAPITAL GROUP — market insights and analysis on real estate in Panama." if esEn else "MAKOM CAPITAL GROUP — perspectivas y análisis de mercado inmobiliario en Panamá." %}
+{% set tituloSeo = "Insights | MAKOM CAPITAL GROUP" if esEn else "Perspectivas | MAKOM CAPITAL GROUP" %}
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="{{ descripcionSeo }}" />
+  <meta name="theme-color" content="#0A0A0A" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="{{ urlCanonica }}" />
+  <link rel="alternate" hreflang="es" href="{{ urlAlternoEs }}" />
+  <link rel="alternate" hreflang="en" href="{{ urlAlternoEn }}" />
+  <link rel="alternate" hreflang="x-default" href="{{ urlAlternoEs }}" />
+  <link rel="icon" type="image/svg+xml" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon-16.png" />
+  <link rel="apple-touch-icon" href="/MAKOM_Logo_Files_v4.0/04_Favicon/apple-touch-icon.png" />
+  <title>{{ tituloSeo }}</title>
+  <meta property="og:title" content="{{ tituloSeo }}" />
+  <meta property="og:description" content="{{ descripcionSeo }}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="{{ 'en_US' if esEn else 'es_PA' }}" />
+  <meta property="og:url" content="{{ urlCanonica }}" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="{{ tituloSeo }}" />
+  <meta name="twitter:description" content="{{ descripcionSeo }}" />
+  <link rel="stylesheet" href="/styles.css" />
+  {% include "meta-pixel.njk" %}
+</head>
+<body class="pagina-interior">
+
+{% include "header.njk" %}
+
+<main id="main" role="main">
+  <section class="perspectivas-listado" aria-labelledby="perspectivas-heading">
+    <div class="container proyectos__inner">
+      <div class="proyectos__header">
+        <span class="text-label">{{ "Insights" if esEn else "Perspectivas" }}</span>
+        <h1 class="proyectos__heading" id="perspectivas-heading" data-reveal>{{ "Market analysis and outlook from our team." if esEn else "Análisis y visión de mercado de nuestro equipo." }}</h1>
+      </div>
+
+      {% if todos.length > 0 %}
+      <div class="perspectivas__col-right" role="list" aria-label="{{ 'Insight articles' if esEn else 'Listado de perspectivas' }}">
+        {% for a in todos %}
+        {% set tituloA = (a.tituloEn or a.titulo) if esEn else a.titulo %}
+        {% set extractoA = (a.extractoEn or a.extracto) if esEn else a.extracto %}
+        {% if not loop.first %}<hr class="perspectivas__divider" aria-hidden="true" />{% endif %}
+        <article class="article-card" role="listitem" aria-labelledby="persp-{{ a.slug }}-title">
+          <div class="article-card__meta">
+            {% if a.categoria %}<span class="article-card__category">{{ a.categoria }}</span>{% endif %}
+            {% if a.categoria and a.fecha %}<span class="article-card__sep">·</span>{% endif %}
+            {% if a.fecha %}<span class="article-card__date">{{ a.fecha | fechaFormato(lang) }}</span>{% endif %}
+          </div>
+          <h2 class="article-card__title" id="persp-{{ a.slug }}-title">{{ tituloA }}</h2>
+          {% if extractoA %}<p class="article-card__extract">{{ extractoA }}</p>{% endif %}
+          <a href="{{ ('/en/insights/' if esEn else '/perspectivas/') + a.slug + '/' }}" class="link--arrow article-card__cta">{{ "Read article" if esEn else "Ver artículo" }}</a>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="catalogo-vacio" data-reveal>
+        <p class="catalogo-vacio__texto">{{ "There are no articles published yet." if esEn else "Todavía no hay artículos publicados." }}</p>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+</main>
+
+{% include "footer.njk" %}
+
+</body>
+</html>

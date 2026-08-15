@@ -1,0 +1,10 @@
+---
+pagination:
+  data: collections.proyectos
+  size: 1
+  alias: proyecto
+permalink: "/en/projects/{{ proyecto.slug }}/"
+eleventyExcludeFromCollections: true
+---
+{% set lang = "en" %}
+{% include "proyecto.njk" %}

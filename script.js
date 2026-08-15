@@ -753,6 +753,126 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /* ============================================================
+     15b. PROYECTOS DESTACADOS — HOME
+     Mismo criterio que Propiedades: sustituye el estado sobrio de
+     #proyectos-grid (placeholders ya presentes en el HTML) por hasta 3
+     proyectos reales (1 grande + hasta 2 pequeños, igual disposición
+     visual ya existente) cuando /data/proyectos-destacados.json está
+     disponible. Si falla o no hay ninguno destacado, el estado sobrio
+     permanece.
+  ============================================================ */
+  var proyectosGrid = document.getElementById('proyectos-grid');
+
+  if (proyectosGrid) {
+    fetch('/data/proyectos-destacados.json')
+      .then(function (res) {
+        if (!res.ok) throw new Error('Feed de proyectos destacados no disponible');
+        return res.json();
+      })
+      .then(function (destacados) {
+        if (!Array.isArray(destacados) || destacados.length === 0) return;
+        renderProyectosDestacados(destacados);
+      })
+      .catch(function () {
+        // Silencioso a propósito, igual que propiedades destacadas.
+      });
+  }
+
+  function etiquetaEstadoProyectoHome(estado) {
+    var enIngles = esHomeEnIngles();
+    var mapa = enIngles
+      ? { proximo: 'Coming soon', en_desarrollo: 'In progress', completado: 'Completed' }
+      : { proximo: 'Próximamente', en_desarrollo: 'En desarrollo', completado: 'Completado' };
+    return mapa[estado] || '';
+  }
+
+  function tarjetaProyectoHtml(p, variante) {
+    var enIngles = esHomeEnIngles();
+    var titulo = enIngles ? (p.tituloEn || p.titulo) : p.titulo;
+    var extracto = enIngles ? (p.extractoEn || p.extracto) : p.extracto;
+    var ctaTexto = (enIngles ? (p.ctaTextoEn || p.ctaTexto) : p.ctaTexto) || (enIngles ? 'View project' : 'Ver proyecto');
+    var href = p.ctaUrl || ((enIngles ? '/en/projects/' : '/proyectos/') + encodeURIComponent(p.slug) + '/');
+    var imagenHtml = p.imagen
+      ? '<img class="proyecto-card__image-inner" src="' + escaparHtmlHome(p.imagen) + '" alt="' + escaparHtmlHome(titulo) + '" loading="lazy" />'
+      : '<div class="proyecto-card__image-inner"></div>';
+    var etiquetaEstado = etiquetaEstadoProyectoHome(p.estado);
+
+    return (
+      '<article class="proyecto-card proyecto-card--' + variante + '" aria-labelledby="proy-' + escaparHtmlHome(p.slug) + '-name">' +
+        '<div class="proyecto-card__image"' + (p.imagen ? '' : ' style="background-color:#1a1a1a"') + '>' +
+          imagenHtml +
+        '</div>' +
+        '<div class="proyecto-card__body">' +
+          '<h3 class="proyecto-card__name" id="proy-' + escaparHtmlHome(p.slug) + '-name">' + escaparHtmlHome(titulo) + '</h3>' +
+          (etiquetaEstado ? '<span class="division-card__soon-tag">' + etiquetaEstado + '</span>' : '') +
+          (extracto ? '<p class="proyecto-card__desc">' + escaparHtmlHome(extracto) + '</p>' : '') +
+          '<a href="' + href + '" class="link--arrow proyecto-card__cta">' + escaparHtmlHome(ctaTexto) + '</a>' +
+        '</div>' +
+      '</article>'
+    );
+  }
+
+  function renderProyectosDestacados(destacados) {
+    var grande = destacados[0];
+    var pequenos = destacados.slice(1, 3);
+    var html = tarjetaProyectoHtml(grande, 'large');
+    if (pequenos.length > 0) {
+      html += '<div class="proyectos__small-grid">' +
+        pequenos.map(function (p) { return tarjetaProyectoHtml(p, 'small'); }).join('') +
+        '</div>';
+    }
+    proyectosGrid.innerHTML = html;
+  }
+
+  /* ============================================================
+     15c. PERSPECTIVAS DESTACADAS — HOME
+     Mismo criterio: sustituye los dos artículos placeholder de
+     #perspectivas-col-right por hasta 2 perspectivas reales cuando
+     /data/perspectivas-destacadas.json está disponible.
+  ============================================================ */
+  var perspectivasColRight = document.getElementById('perspectivas-col-right');
+
+  if (perspectivasColRight) {
+    fetch('/data/perspectivas-destacadas.json')
+      .then(function (res) {
+        if (!res.ok) throw new Error('Feed de perspectivas destacadas no disponible');
+        return res.json();
+      })
+      .then(function (destacadas) {
+        if (!Array.isArray(destacadas) || destacadas.length === 0) return;
+        renderPerspectivasDestacadas(destacadas);
+      })
+      .catch(function () {
+        // Silencioso a propósito, igual que propiedades destacadas.
+      });
+  }
+
+  function tarjetaPerspectivaHtml(a) {
+    var enIngles = esHomeEnIngles();
+    var titulo = enIngles ? (a.tituloEn || a.titulo) : a.titulo;
+    var extracto = enIngles ? (a.extractoEn || a.extracto) : a.extracto;
+    var href = (enIngles ? '/en/insights/' : '/perspectivas/') + encodeURIComponent(a.slug) + '/';
+
+    return (
+      '<article class="article-card" aria-labelledby="persp-' + escaparHtmlHome(a.slug) + '-title">' +
+        '<div class="article-card__meta">' +
+          (a.categoria ? '<span class="article-card__category">' + escaparHtmlHome(a.categoria) + '</span>' : '') +
+        '</div>' +
+        '<h3 class="article-card__title" id="persp-' + escaparHtmlHome(a.slug) + '-title">' + escaparHtmlHome(titulo) + '</h3>' +
+        (extracto ? '<p class="article-card__extract">' + escaparHtmlHome(extracto) + '</p>' : '') +
+        '<a href="' + href + '" class="link--arrow article-card__cta">' + (enIngles ? 'Read article' : 'Ver artículo') + '</a>' +
+      '</article>'
+    );
+  }
+
+  function renderPerspectivasDestacadas(destacadas) {
+    perspectivasColRight.innerHTML = destacadas.map(function (a, i) {
+      var divider = i > 0 ? '<hr class="perspectivas__divider" aria-hidden="true" />' : '';
+      return divider + tarjetaPerspectivaHtml(a);
+    }).join('');
+  }
+
+  /* ============================================================
      16. GALERÍA DE FOTOGRAFÍAS — LIGHTBOX (FICHA DE PROPIEDAD)
      Vanilla JS, sin librerías. Lee las imágenes ya presentes en el
      DOM (portada + miniaturas, ya optimizadas por eleventy-img) — no

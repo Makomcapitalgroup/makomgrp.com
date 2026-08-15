@@ -425,3 +425,249 @@ collections:
           - { label: "Fecha de creación", name: "fechaCreacion", widget: "hidden", required: false }
           - { label: "Fecha de publicación", name: "fechaPublicacion", widget: "hidden", required: false }
           - { label: "Fecha de actualización", name: "fechaActualizacion", widget: "hidden", required: false }
+
+  # ============================================================
+  # Milestone 14 — Etapa 1: colección Proyectos. Reutiliza la MISMA
+  # biblioteca de medios global (no declara media_folder/public_folder
+  # propios — hereda el de arriba) por la misma razón ya documentada
+  # para "propiedades": no usar "{{slug}}" en media_folder evita el bug
+  # conocido de Decap (decaporg/decap-cms#5444).
+  # ============================================================
+  - name: "proyectos"
+    label: "Proyectos"
+    label_singular: "Proyecto"
+    description: "Proyectos de MAKOM Development."
+    folder: "content/proyectos"
+    create: true
+    slug: "{{slug}}"
+    format: "json"
+    extension: "json"
+    identifier_field: "titulo"
+    summary: "{{titulo}} — {{estado}}"
+    editor:
+      preview: false
+    fields:
+      - label: "Título"
+        name: "titulo"
+        widget: "string"
+        hint: "Ej.: Remodelación Integral · San Francisco"
+
+      - label: "Título en inglés"
+        name: "tituloEn"
+        widget: "string"
+        required: false
+        hint: "Se usa en /en/projects/. Si se deja vacío, la versión en inglés muestra este Título en español mientras se traduce."
+
+      - label: "Estado"
+        name: "estado"
+        widget: "select"
+        default: "proximo"
+        options:
+          - { label: "Próximo", value: "proximo" }
+          - { label: "En desarrollo", value: "en_desarrollo" }
+          - { label: "Completado", value: "completado" }
+        hint: "\"Próximo\" muestra la etiqueta \"Próximamente\" en las tarjetas."
+
+      - label: "Tipo de proyecto"
+        name: "tipoProyecto"
+        widget: "string"
+        required: false
+        hint: "Ej.: Remodelación Integral, Gestión de Portafolio, Desarrollo Residencial."
+
+      - label: "Ubicación"
+        name: "ubicacion"
+        widget: "string"
+        required: false
+        hint: "Ej.: San Francisco, Ciudad de Panamá"
+
+      - label: "Ubicación en inglés"
+        name: "ubicacionEn"
+        widget: "string"
+        required: false
+
+      - label: "Año"
+        name: "ano"
+        widget: "number"
+        value_type: "int"
+        required: false
+
+      - label: "Extracto"
+        name: "extracto"
+        widget: "text"
+        hint: "Resumen corto para la tarjeta (Home y listado)."
+
+      - label: "Extracto en inglés"
+        name: "extractoEn"
+        widget: "text"
+        required: false
+
+      - label: "Descripción"
+        name: "descripcion"
+        widget: "richtext"
+        buttons: ["bold", "italic", "bulleted-list", "numbered-list"]
+        required: false
+        hint: "Texto completo para la ficha del proyecto. Editor visual — no es necesario escribir Markdown a mano."
+
+      - label: "Descripción en inglés"
+        name: "descripcionEn"
+        widget: "richtext"
+        buttons: ["bold", "italic", "bulleted-list", "numbered-list"]
+        required: false
+
+      - label: "Imagen principal"
+        name: "imagenPrincipal"
+        widget: "image"
+        required: false
+
+      - label: "Galería"
+        name: "galeria"
+        widget: "list"
+        required: false
+        collapsed: true
+        summary: "{{fields.archivo}}"
+        label_singular: "Fotografía"
+        fields:
+          - { label: "Archivo", name: "archivo", widget: "image" }
+          - { label: "Texto alternativo", name: "alt", widget: "string", required: false }
+
+      - label: "CTA — Texto"
+        name: "ctaTexto"
+        widget: "string"
+        required: false
+        hint: "Si se deja vacío, se usa \"Ver proyecto\" por defecto."
+
+      - label: "CTA — Texto en inglés"
+        name: "ctaTextoEn"
+        widget: "string"
+        required: false
+
+      - label: "CTA — Enlace"
+        name: "ctaUrl"
+        widget: "string"
+        required: false
+        hint: "Si se deja vacío, enlaza a la ficha del proyecto (/proyectos/<slug>/)."
+
+      - label: "Mostrar en página principal"
+        name: "mostrarEnHome"
+        widget: "boolean"
+        default: false
+        hint: "MAKOM mostrará un máximo de 3 proyectos destacados."
+
+      - label: "Orden en Home"
+        name: "ordenHome"
+        widget: "number"
+        value_type: "int"
+        required: false
+
+      - label: "SEO avanzado"
+        name: "seo"
+        widget: "object"
+        collapsed: true
+        required: false
+        hint: "Opcional — el sitio genera automáticamente estos valores si se dejan vacíos."
+        fields:
+          - { label: "Título SEO", name: "titulo", widget: "string", required: false }
+          - { label: "Título SEO en inglés", name: "tituloEn", widget: "string", required: false }
+          - { label: "Descripción SEO", name: "descripcion", widget: "text", required: false }
+          - { label: "Descripción SEO en inglés", name: "descripcionEn", widget: "text", required: false }
+          - { label: "No indexar (noindex)", name: "noIndex", widget: "boolean", default: false }
+
+  # ============================================================
+  # Milestone 14 — Etapa 1: colección Perspectivas (artículos /
+  # insights editoriales). Misma biblioteca de medios global que
+  # Propiedades y Proyectos.
+  # ============================================================
+  - name: "perspectivas"
+    label: "Perspectivas"
+    label_singular: "Perspectiva"
+    description: "Artículos e insights de MAKOM CAPITAL GROUP."
+    folder: "content/perspectivas"
+    create: true
+    slug: "{{slug}}"
+    format: "json"
+    extension: "json"
+    identifier_field: "titulo"
+    summary: "{{titulo}} — {{fecha}}"
+    editor:
+      preview: false
+    fields:
+      - label: "Título"
+        name: "titulo"
+        widget: "string"
+
+      - label: "Título en inglés"
+        name: "tituloEn"
+        widget: "string"
+        required: false
+        hint: "Se usa en /en/insights/. Si se deja vacío, la versión en inglés muestra este Título en español mientras se traduce."
+
+      - label: "Fecha"
+        name: "fecha"
+        widget: "datetime"
+        format: "YYYY-MM-DD"
+        date_format: "YYYY-MM-DD"
+        time_format: false
+        required: false
+        hint: "Opcional. Completar cuando el artículo tenga una fecha real de publicación."
+
+      - label: "Autor"
+        name: "autor"
+        widget: "string"
+        default: "MAKOM CAPITAL GROUP"
+
+      - label: "Categoría"
+        name: "categoria"
+        widget: "string"
+        hint: "Ej.: Mercado, Inversión."
+
+      - label: "Extracto"
+        name: "extracto"
+        widget: "text"
+        hint: "Resumen corto para la tarjeta (Home y listado)."
+
+      - label: "Extracto en inglés"
+        name: "extractoEn"
+        widget: "text"
+        required: false
+
+      - label: "Contenido"
+        name: "contenido"
+        widget: "richtext"
+        buttons: ["bold", "italic", "bulleted-list", "numbered-list"]
+        hint: "Editor visual — no es necesario escribir Markdown a mano."
+
+      - label: "Contenido en inglés"
+        name: "contenidoEn"
+        widget: "richtext"
+        buttons: ["bold", "italic", "bulleted-list", "numbered-list"]
+        required: false
+
+      - label: "Imagen de portada"
+        name: "imagenPortada"
+        widget: "image"
+        required: false
+
+      - label: "Mostrar en página principal"
+        name: "mostrarEnHome"
+        widget: "boolean"
+        default: false
+        hint: "MAKOM mostrará un máximo de 2 perspectivas destacadas."
+
+      - label: "Orden en Home"
+        name: "ordenHome"
+        widget: "number"
+        value_type: "int"
+        required: false
+
+      - label: "SEO avanzado"
+        name: "seo"
+        widget: "object"
+        collapsed: true
+        required: false
+        hint: "Opcional — el sitio genera automáticamente estos valores si se dejan vacíos."
+        fields:
+          - { label: "Título SEO", name: "titulo", widget: "string", required: false }
+          - { label: "Título SEO en inglés", name: "tituloEn", widget: "string", required: false }
+          - { label: "Descripción SEO", name: "descripcion", widget: "text", required: false }
+          - { label: "Descripción SEO en inglés", name: "descripcionEn", widget: "text", required: false }
+          - { label: "No indexar (noindex)", name: "noIndex", widget: "boolean", default: false }

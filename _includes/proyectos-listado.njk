@@ -1,0 +1,101 @@
+{#
+  Milestone 14 — listado completo de Proyectos, bilingüe ES/EN. Sin
+  filtros todavía (pedido explícitamente así) — solo lista todo lo que
+  existe en la colección, más reciente primero según ordenHome (igual
+  criterio que el teaser del Home). Reutiliza ".propiedades__grid"
+  (grid responsive ya existente) + ".proyecto-card--small" (misma
+  tarjeta ya usada en Home) en vez de crear una cuadrícula nueva.
+#}
+{% set lang = lang or "es" %}
+{% set esEn = lang == "en" %}
+{% set todos = collections.proyectos %}
+{% set estadoEtiquetas = {
+  "proximo": {"es": "Próximamente", "en": "Coming soon"},
+  "en_desarrollo": {"es": "En desarrollo", "en": "In progress"},
+  "completado": {"es": "Completado", "en": "Completed"}
+} %}
+{% set urlAlternoEs = "https://makomgrp.com/proyectos/" %}
+{% set urlAlternoEn = "https://makomgrp.com/en/projects/" %}
+{% set urlCanonica = urlAlternoEn if esEn else urlAlternoEs %}
+{% set langSwitchUrl = "/proyectos/" if esEn else "/en/projects/" %}
+{% set descripcionSeo = "MAKOM CAPITAL GROUP — real estate development and renovation projects in Panama." if esEn else "MAKOM CAPITAL GROUP — proyectos de desarrollo y remodelación inmobiliaria en Panamá." %}
+{% set tituloSeo = "Projects | MAKOM CAPITAL GROUP" if esEn else "Proyectos | MAKOM CAPITAL GROUP" %}
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="{{ descripcionSeo }}" />
+  <meta name="theme-color" content="#0A0A0A" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="{{ urlCanonica }}" />
+  <link rel="alternate" hreflang="es" href="{{ urlAlternoEs }}" />
+  <link rel="alternate" hreflang="en" href="{{ urlAlternoEn }}" />
+  <link rel="alternate" hreflang="x-default" href="{{ urlAlternoEs }}" />
+  <link rel="icon" type="image/svg+xml" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/MAKOM_Logo_Files_v4.0/04_Favicon/favicon-16.png" />
+  <link rel="apple-touch-icon" href="/MAKOM_Logo_Files_v4.0/04_Favicon/apple-touch-icon.png" />
+  <title>{{ tituloSeo }}</title>
+  <meta property="og:title" content="{{ tituloSeo }}" />
+  <meta property="og:description" content="{{ descripcionSeo }}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="{{ 'en_US' if esEn else 'es_PA' }}" />
+  <meta property="og:url" content="{{ urlCanonica }}" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="{{ tituloSeo }}" />
+  <meta name="twitter:description" content="{{ descripcionSeo }}" />
+  <link rel="stylesheet" href="/styles.css" />
+  {% include "meta-pixel.njk" %}
+</head>
+<body class="pagina-interior">
+
+{% include "header.njk" %}
+
+<main id="main" role="main">
+  <section class="proyectos" aria-labelledby="proyectos-heading">
+    <div class="container proyectos__inner">
+      <div class="proyectos__header">
+        <span class="text-label">{{ "Projects" if esEn else "Proyectos" }}</span>
+        <h1 class="proyectos__heading" id="proyectos-heading" data-reveal>{{ "What we're capable of is proven by what we've already done." if esEn else "Lo que somos capaces de hacer lo demuestra lo que ya hicimos." }}</h1>
+      </div>
+
+      {% if todos.length > 0 %}
+      <div class="propiedades__grid" role="list" aria-label="{{ 'Project listings' if esEn else 'Listado de proyectos' }}">
+        {% for p in todos %}
+        {% set tituloP = (p.tituloEn or p.titulo) if esEn else p.titulo %}
+        {% set ubicacionP = (p.ubicacionEn or p.ubicacion) if esEn else p.ubicacion %}
+        {% set extractoP = (p.extractoEn or p.extracto) if esEn else p.extracto %}
+        <article class="proyecto-card proyecto-card--small" role="listitem" aria-labelledby="proy-{{ p.slug }}-name">
+          <div class="proyecto-card__image" {% if not p.imagenPrincipal %}style="background-color:#1a1a1a"{% endif %}>
+            {% if p.imagenPrincipal %}
+              <img class="proyecto-card__image-inner" src="{{ p.imagenPrincipal }}" alt="{{ tituloP }}" loading="lazy" />
+            {% else %}
+              <div class="proyecto-card__image-inner"></div>
+            {% endif %}
+          </div>
+          <div class="proyecto-card__body">
+            <div class="proyecto-card__meta">
+              {% if p.tipoProyecto %}<span>{{ p.tipoProyecto }}</span>{% endif %}
+              {% if p.estado %}<span>{{ estadoEtiquetas[p.estado].en if esEn else estadoEtiquetas[p.estado].es }}</span>{% endif %}
+            </div>
+            <h2 class="proyecto-card__name" id="proy-{{ p.slug }}-name">{{ tituloP }}</h2>
+            {% if extractoP %}<p class="proyecto-card__desc">{{ extractoP }}</p>{% endif %}
+            <a href="{{ ('/en/projects/' if esEn else '/proyectos/') + p.slug + '/' }}" class="link--arrow proyecto-card__cta">{{ "View project" if esEn else "Ver proyecto" }}</a>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="catalogo-vacio" data-reveal>
+        <p class="catalogo-vacio__texto">{{ "There are no projects published yet." if esEn else "Todavía no hay proyectos publicados." }}</p>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+</main>
+
+{% include "footer.njk" %}
+
+</body>
+</html>

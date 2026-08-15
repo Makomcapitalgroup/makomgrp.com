@@ -1,0 +1,15 @@
+{
+  "titulo": "Análisis del mercado inmobiliario en Panamá",
+  "tituloEn": "Analysis of Panama's real estate market",
+  "autor": "MAKOM CAPITAL GROUP",
+  "categoria": "Mercado",
+  "extracto": "Un espacio dedicado a analizar el comportamiento del mercado inmobiliario panameño y los factores que influyen en el valor de los activos a lo largo del tiempo.",
+  "extractoEn": "A space dedicated to analyzing the behavior of Panama's real estate market and the factors that influence asset value over time.",
+  "contenido": "Un espacio dedicado a analizar el comportamiento del mercado inmobiliario panameño y los factores que influyen en el valor de los activos a lo largo del tiempo.",
+  "contenidoEn": "A space dedicated to analyzing the behavior of Panama's real estate market and the factors that influence asset value over time.",
+  "mostrarEnHome": true,
+  "ordenHome": 1,
+  "seo": {
+    "noIndex": false
+  }
+}

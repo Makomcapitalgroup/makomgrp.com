@@ -1,0 +1,17 @@
+{
+  "titulo": "Desarrollo Residencial · Costa del Este",
+  "tituloEn": "Residential Development · Costa del Este",
+  "estado": "proximo",
+  "tipoProyecto": "Desarrollo Residencial",
+  "ubicacion": "Costa del Este, Ciudad de Panamá",
+  "ubicacionEn": "Costa del Este, Panama City",
+  "extracto": "Transformación de espacio industrial en 6 unidades residenciales de alto estándar.",
+  "extractoEn": "Transformation of an industrial space into 6 high-standard residential units.",
+  "descripcion": "Transformación de espacio industrial en 6 unidades residenciales de alto estándar.",
+  "descripcionEn": "Transformation of an industrial space into 6 high-standard residential units.",
+  "mostrarEnHome": true,
+  "ordenHome": 3,
+  "seo": {
+    "noIndex": false
+  }
+}
