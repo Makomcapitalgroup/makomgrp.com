@@ -1,0 +1,65 @@
+{
+  "amenidades": [
+    "lobby",
+    "garita-seguridad"
+  ],
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 162500
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/photo-2026-08-06-18-27-24-4.jpg"
+      },
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/photo-2026-08-06-18-27-24.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/photo-2026-08-06-18-27-24-2.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/photo-2026-08-06-18-27-25.jpg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 3,
+    "banos": 2,
+    "estacionamientos": 2,
+    "metrajeInterno": 100.6
+  },
+  "mostrarEnHome": true,
+  "ordenHome": 2,
+  "descripcion": "**Apartamento de 3 recámaras** en el P.H. Colonial Towers, en el corazón de Villa Cáceres, Betania. La unidad cuenta con sala-comedor, desayunador, cocina equipada con muebles de fórmica y sobres de granito, 2 baños completos, área de lavandería y balcón con **vista panorámica de Villa Cáceres y parte de la ciudad de Panamá.**\n\nCon **100.60 m² de construcción**, el apartamento tiene acabados de calidad: piso de cerámica importada, paredes revestidas de azulejos hasta el cielo raso, molduras decorativas, puertas de vidrio en marcos de aluminio y puerta de metal tipo seguridad. Cuenta además con calentador de agua a gas.\n\nIncluye **2 puestos de estacionamiento** y depósito adicional. El edificio ofrece planta eléctrica, elevadores, intercomunicador, sistema de bombas de agua y gas comunal, para que nunca falte lo esencial.\n\nUbicado en una zona residencial consolidada de Betania, a pocos metros del transporte público y con todos los servicios urbanos completos.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "sector": "Villa Cáceres"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "operacion": "venta",
+  "ubicacionPublica": "Villa Cáceres, Betania, Ciudad de Panamá",
+  "titulo": "Apartamento — P.H. Colonial Towers",
+  "detalles": [
+    "deposito",
+    "lavanderia",
+    "balcon",
+    "vista-ciudad"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
