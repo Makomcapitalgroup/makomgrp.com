@@ -1,15 +1,17 @@
 {
-  "titulo": "Análisis del mercado inmobiliario en Panamá",
-  "tituloEn": "Analysis of Panama's real estate market",
+  "contenidoEn": "According to Panama's National Statistics Institute (INEC), new buildings rose from 1,240 in Q1 2025 to 2,404 in Q1 2026 — a **93.9%** increase. Total construction area also grew 13.6%, from 155,367 m² to 176,463 m².\n\n### Where the growth was concentrated\n\n- **La Chorrera:** from 182 to 1,234 buildings (more than half the national total); single-family housing +234.5%\n- **Arraiján:** from 135 to 329 buildings; single-family housing +92.4%\n- **Panama City (district):** from 850 to 783 buildings (slight dip), but apartments +6.8% and hospitals/clinics +244%\n- **Colón:** held steady at 3,699 m²\n- **San Miguelito:** from 32 to 19 buildings\n\n### Why it matters\n\nThe surge in single-family housing in La Chorrera and Arraiján — areas traditionally more accessible to first-time homebuyers — suggests demand is shifting toward the broader metro area, likely in response to higher prices in Panama City proper.\n\nFor investors, the figures also serve as a confidence gauge: growth of this scale in building permits signals that the sector still views Panama — and these expansion corridors in particular — as an attractive place to develop.\n\n*Source: [La Estrella de Panamá](https://www.laestrella.com.pa/economia/nuevas-edificaciones-aumentan-939-en-el-primer-trimestre-de-2026-CL24856756), citing INEC data*",
+  "tituloEn": "New Building Permits Surge 93.9% in Q1 2026, INEC Reports",
   "autor": "MAKOM CAPITAL GROUP",
-  "categoria": "Mercado",
-  "extracto": "Un espacio dedicado a analizar el comportamiento del mercado inmobiliario panameño y los factores que influyen en el valor de los activos a lo largo del tiempo.",
-  "extractoEn": "A space dedicated to analyzing the behavior of Panama's real estate market and the factors that influence asset value over time.",
-  "contenido": "Un espacio dedicado a analizar el comportamiento del mercado inmobiliario panameño y los factores que influyen en el valor de los activos a lo largo del tiempo.",
-  "contenidoEn": "A space dedicated to analyzing the behavior of Panama's real estate market and the factors that influence asset value over time.",
   "mostrarEnHome": true,
-  "ordenHome": 1,
+  "ordenHome": 2,
+  "imagenPortada": "/assets/propiedades/uploads/makom-news-web.jpg",
+  "extracto": "El Instituto Nacional de Estadística y Censo reportó que las nuevas edificaciones crecieron 93.9% en el primer trimestre de 2026 frente al mismo período de 2025, con un auge particular de vivienda individual en La Chorrera y Arraiján.",
+  "categoria": "Mercado, Construcción, Inversión",
+  "extractoEn": "Panama's National Statistics Institute reported new buildings grew 93.9% in Q1 2026 versus the same period in 2025, with a notable surge in single-family housing in La Chorrera and Arraiján.",
+  "contenido": "Según datos del Instituto Nacional de Estadística y Censo (INEC), las nuevas edificaciones en Panamá pasaron de 1,240 en el primer trimestre de 2025 a 2,404 en el mismo período de 2026, un incremento de **93.9%**. El área total de construcción también creció 13.6%, de 155,367 m² a 176,463 m².\n\n### Dónde se concentró el crecimiento\n\n- **La Chorrera:** de 182 a 1,234 edificaciones (más de la mitad del total nacional); vivienda individual +234.5%\n- **Arraiján:** de 135 a 329 edificaciones; vivienda individual +92.4%\n- **Panamá (distrito):** de 850 a 783 edificaciones (leve baja), pero apartamentos +6.8% y hospitales/clínicas +244%\n- **Colón:** se mantiene estable, 3,699 m²\n- **San Miguelito:** de 32 a 19 edificaciones\n\n### Lo que esto significa\n\nEl auge de vivienda individual en La Chorrera y Arraiján —zonas tradicionalmente más accesibles para compradores de primera vivienda— sugiere que buena parte de la demanda se está desplazando hacia el área metropolitana extendida, posiblemente como respuesta a precios más altos en la ciudad de Panamá.\n\nPara inversionistas, el dato también funciona como termómetro de confianza: un crecimiento de este tamaño en permisos de construcción indica que el sector sigue viendo a Panamá —y en particular a estos corredores de expansión urbana— como una plaza atractiva para desarrollar.\n\n*Fuente: [La Estrella de Panamá](https://www.laestrella.com.pa/economia/nuevas-edificaciones-aumentan-939-en-el-primer-trimestre-de-2026-CL24856756), con datos del INEC*",
+  "titulo": "Nuevas edificaciones aumentan 93.9% en el primer trimestre de 2026, según el INEC",
   "seo": {
     "noIndex": false
-  }
+  },
+  "fecha": "2026-08-13"
 }
