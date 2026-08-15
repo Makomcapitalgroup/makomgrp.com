@@ -150,7 +150,13 @@ jobs:
             echo "--- Intento $intento de $MAX_INTENTOS ---"
             node scripts/asignar-referencia-makom.js
 
-            CAMBIOS="$(git status --porcelain)"
+            # "-c core.quotepath=false" evita que git envuelva en
+            # comillas y escape en octal (\NNN) los nombres de archivo
+            # con bytes no-ASCII (acentos, ñ, em dash "—", etc.) — sin
+            # esto, un archivo legítimo dentro de content/propiedades/
+            # con esos caracteres deja de calzar con el regex de abajo
+            # y se rechaza como si estuviera fuera de alcance.
+            CAMBIOS="$(git -c core.quotepath=false status --porcelain)"
             if [ -z "$CAMBIOS" ]; then
               echo "Sin referencias pendientes — nada que commitear."
               echo "did_commit=false" >> "$GITHUB_OUTPUT"
@@ -176,7 +182,7 @@ jobs:
             # Redundante con la comprobación de arriba a propósito —
             # confirma que "git add" no incorporó nada fuera del
             # alcance permitido antes de crear el commit.
-            STAGEADOS="$(git diff --cached --name-only)"
+            STAGEADOS="$(git -c core.quotepath=false diff --cached --name-only)"
             INESPERADOS_STAGE="$(echo "$STAGEADOS" | grep -vE '^(content/propiedades/.*\.json|_data/referenciaMakomSecuencia\.json)$' || true)"
             if [ -n "$INESPERADOS_STAGE" ]; then
               echo "::error::El staging contiene archivos fuera del alcance permitido:"
