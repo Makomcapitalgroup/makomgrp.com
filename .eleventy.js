@@ -66,6 +66,24 @@ function validarConfigCmsContraFuenteCentral(raiz) {
   }
 }
 
+// Milestone 13 — Etapa 3: convierte el Markdown básico que guarda el
+// widget "richtext" del CMS (**bold**, _italic_, listas "- ") a texto
+// plano — para los contextos que EXIGEN texto sin marcado: meta
+// description, Open Graph, Twitter Card y "description" de JSON-LD.
+// Nunca se usa para el HTML visible de la ficha (eso sigue resuelto
+// por "descripcionHtml", que sí debe mostrar negrita/cursiva reales) —
+// cada uno parte del mismo campo de origen pero para una necesidad
+// distinta.
+function textoPlanoDesdeMarkdown(texto) {
+  if (!texto) return "";
+  return texto
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/_(.+?)_/g, "$1")
+    .replace(/\n+/g, " ")
+    .replace(/[-*]\s+/g, "")
+    .trim();
+}
+
 // Milestone 12 — Etapa 8A: valida en cada build que "referenciaMakom"
 // de cada propiedad sea real, única y tenga el formato correcto
 // (MKW-RE-### o superior), y que el contador persistente
@@ -188,6 +206,14 @@ module.exports = function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy("index.html");
   eleventyConfig.addPassthroughCopy("aviso-legal.html");
   eleventyConfig.addPassthroughCopy("privacidad.html");
+  // Milestone 13: home y legales en inglés — misma lógica que sus
+  // equivalentes en español (HTML estático, servido tal cual). Las
+  // rutas GENERADAS en inglés (/en/properties/, /en/properties/<slug>/)
+  // viven aparte, en content/propiedades-catalogo-en.njk y
+  // content/propiedades-en.njk — Eleventy no tiene problema en que
+  // ambos (passthrough + plantillas) escriban dentro de "_site/en/",
+  // porque son archivos distintos.
+  eleventyConfig.addPassthroughCopy("en");
   eleventyConfig.addPassthroughCopy("styles.css");
   eleventyConfig.addPassthroughCopy("script.js");
   eleventyConfig.addPassthroughCopy("robots.txt");
@@ -299,24 +325,39 @@ module.exports = function (eleventyConfig) {
     return item ? item.etiqueta : valor;
   });
 
+  // Milestone 13 — bilingüe: misma resolución que "etiqueta" pero en
+  // inglés ("etiquetaEn" del catálogo). Nunca deja un valor sin
+  // traducir de forma silenciosa ni distinta a como ya se comporta
+  // "etiqueta": si el catálogo no tiene el valor, cae al valor técnico
+  // crudo — igual que el filtro en español.
+  eleventyConfig.addFilter("etiquetaEn", (valor, catalogo) => {
+    const item = (catalogo || []).find((i) => i.valor === valor);
+    return item ? item.etiquetaEn || item.etiqueta : valor;
+  });
+
   // Formatea el precio numérico almacenado según la operación.
-  // Venta: "$485,000". Alquiler: "$2,500 / mes".
-  eleventyConfig.addFilter("precioFormato", (precio, operacion) => {
+  // Venta: "$485,000". Alquiler: "$2,500 / mes" ("$2,500 / month" en
+  // inglés, vía el parámetro opcional "lang" — Milestone 13).
+  eleventyConfig.addFilter("precioFormato", (precio, operacion, lang) => {
     if (!precio || typeof precio.monto !== "number") return "";
     const monto = precio.monto.toLocaleString("en-US");
     if (operacion === "alquiler") {
-      const sufijos = { mensual: "mes", quincenal: "quincena", otra: "período" };
-      return `$${monto} / ${sufijos[precio.periodicidad] || "período"}`;
+      const sufijos =
+        lang === "en"
+          ? { mensual: "month", quincenal: "two weeks", otra: "period" }
+          : { mensual: "mes", quincenal: "quincena", otra: "período" };
+      return `$${monto} / ${sufijos[precio.periodicidad] || sufijos.otra}`;
     }
     return `$${monto}`;
   });
 
   // Resumen automático para meta description SEO cuando no hay una
   // personalizada: primeros ~155 caracteres de la descripción, sin
-  // marcado, cortado en el último espacio para no partir una palabra.
+  // marcado (incluye **bold**/_italic_ — Milestone 13), cortado en el
+  // último espacio para no partir una palabra.
   eleventyConfig.addFilter("resumenSeo", (texto, maxLen = 155) => {
-    if (!texto) return "";
-    const plano = texto.replace(/\n+/g, " ").replace(/[-*]\s+/g, "").trim();
+    const plano = textoPlanoDesdeMarkdown(texto);
+    if (!plano) return "";
     if (plano.length <= maxLen) return plano;
     return plano.slice(0, plano.lastIndexOf(" ", maxLen)) + "…";
   });
@@ -472,17 +513,28 @@ module.exports = function (eleventyConfig) {
   // ubicacionPublica (nunca direccionInterna) y, si hay mapa activo,
   // "geo" usa EXACTAMENTE las mismas coordenadas ya redondeadas/públicas
   // que ve el mapa Leaflet — nunca coordenadas más precisas.
-  eleventyConfig.addFilter("jsonLdPropiedad", (propiedad, mapaPublico, urlCanonica, imagenAbsoluta) => {
+  // Milestone 13: "tituloMostrado"/"descripcionMostrada"/"ubicacionMostrada"
+  // son opcionales — cuando se pasan (ficha en inglés), reemplazan a los
+  // campos ES del objeto "propiedad" ya con su fallback aplicado por
+  // quien llama al filtro. El resto del structured data (precio,
+  // referencia, geo) es siempre el mismo dato compartido.
+  eleventyConfig.addFilter("jsonLdPropiedad", (propiedad, mapaPublico, urlCanonica, imagenAbsoluta, tituloMostrado, descripcionMostrada, ubicacionMostrada) => {
     const esAlquiler = propiedad.operacion === "alquiler";
     const ld = {
       "@context": "https://schema.org",
       "@type": "RealEstateListing",
-      name: propiedad.titulo,
+      name: tituloMostrado || propiedad.titulo,
       url: urlCanonica,
-      description: (propiedad.seo && propiedad.seo.descripcion) || propiedad.descripcion || undefined,
+      // Milestone 13 — Etapa 3: texto plano, sin **/_ literales — el
+      // HTML visible de la ficha sigue mostrando negrita/cursiva reales
+      // vía "descripcionHtml"; JSON-LD exige texto plano.
+      description:
+        (propiedad.seo && propiedad.seo.descripcion) ||
+        textoPlanoDesdeMarkdown(descripcionMostrada || propiedad.descripcion) ||
+        undefined,
       address: {
         "@type": "PostalAddress",
-        addressLocality: propiedad.ubicacionPublica,
+        addressLocality: ubicacionMostrada || propiedad.ubicacionPublica,
         addressCountry: "PA",
       },
     };
@@ -509,14 +561,22 @@ module.exports = function (eleventyConfig) {
   });
 
   // Milestone 9: BreadcrumbList JSON-LD acompañando al breadcrumb visual
-  // "Propiedades / [Título]" de la ficha.
-  eleventyConfig.addFilter("jsonLdBreadcrumb", (propiedad, urlCanonica) => {
+  // "Propiedades / [Título]" de la ficha. Milestone 13: variante en
+  // inglés vía "lang" — apunta a /en/properties/ y usa el título EN
+  // (con el mismo fallback ya aplicado por quien llama al filtro).
+  eleventyConfig.addFilter("jsonLdBreadcrumb", (propiedad, urlCanonica, lang, tituloMostrado) => {
+    const esEn = lang === "en";
     return {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Propiedades", item: "https://makomgrp.com/propiedades/" },
-        { "@type": "ListItem", position: 2, name: propiedad.titulo, item: urlCanonica },
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: esEn ? "Properties" : "Propiedades",
+          item: esEn ? "https://makomgrp.com/en/properties/" : "https://makomgrp.com/propiedades/",
+        },
+        { "@type": "ListItem", position: 2, name: tituloMostrado || propiedad.titulo, item: urlCanonica },
       ],
     };
   });
@@ -534,10 +594,18 @@ module.exports = function (eleventyConfig) {
   });
 
   // Texto breve de specs para la tarjeta de catálogo (ej. "3 hab ·
-  // 2 baños · 125 m²"), omitiendo cualquier valor no aplicable (null).
-  eleventyConfig.addFilter("specsTexto", (d) => {
+  // 2 baños · 125 m²" / "3 bed · 2 bath · 125 m²" en inglés — Milestone
+  // 13), omitiendo cualquier valor no aplicable (null).
+  eleventyConfig.addFilter("specsTexto", (d, lang) => {
     if (!d) return "";
     const partes = [];
+    if (lang === "en") {
+      if (d.habitaciones != null) partes.push(`${d.habitaciones} bed`);
+      if (d.banos != null) partes.push(`${d.banos} bath`);
+      if (d.estacionamientos != null) partes.push(`${d.estacionamientos} parking`);
+      if (d.metrajeInterno != null) partes.push(`${d.metrajeInterno} m²`);
+      return partes.join(" · ");
+    }
     if (d.habitaciones != null) partes.push(`${d.habitaciones} hab`);
     if (d.banos != null) partes.push(`${d.banos} baños`);
     if (d.estacionamientos != null) partes.push(`${d.estacionamientos} est.`);
@@ -611,6 +679,9 @@ module.exports = function (eleventyConfig) {
         const alt = portadaOriginal
           ? portadaOriginal.alt || [p.titulo, p.ubicacionPublica].filter(Boolean).join(", ")
           : null;
+        const altEn = portadaOriginal
+          ? portadaOriginal.alt || [p.tituloEn || p.titulo, p.ubicacionPublicaEn || p.ubicacionPublica].filter(Boolean).join(", ")
+          : null;
         const portadaOptimizada = await generarVarianteOptimizada(portadaOriginal && portadaOriginal.archivo, {
           formatos: ["webp"],
           anchos: [800],
@@ -619,10 +690,15 @@ module.exports = function (eleventyConfig) {
           referenciaMakom: p.referenciaMakom,
           slug: p.slug,
           titulo: p.titulo,
+          // Milestone 13: campos EN con fallback ya resuelto en el build
+          // — el Home en inglés (script.js) nunca necesita adivinar ni
+          // mostrar un mensaje de "traducción pendiente".
+          tituloEn: p.tituloEn || p.titulo,
           estado: p.estado,
           operacion: p.operacion,
           categoriaGeneral: p.categoriaGeneral,
           ubicacionPublica: p.ubicacionPublica,
+          ubicacionPublicaEn: p.ubicacionPublicaEn || p.ubicacionPublica,
           precio: p.precio,
           detalles: {
             habitaciones: d.habitaciones != null ? d.habitaciones : null,
@@ -630,7 +706,7 @@ module.exports = function (eleventyConfig) {
             estacionamientos: d.estacionamientos != null ? d.estacionamientos : null,
             metrajeInterno: d.metrajeInterno != null ? d.metrajeInterno : null,
           },
-          portada: portadaOptimizada ? { archivo: portadaOptimizada.archivo, alt } : null,
+          portada: portadaOptimizada ? { archivo: portadaOptimizada.archivo, alt, altEn } : null,
         };
       })
     );

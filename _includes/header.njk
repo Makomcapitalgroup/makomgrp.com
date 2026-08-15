@@ -1,49 +1,72 @@
+{#
+  Milestone 13 — Etapa 1: bilingüe ES/EN. "lang" (default "es") y
+  "langSwitchUrl" (URL de la página equivalente en el otro idioma) se
+  pasan desde cada plantilla que incluye este header — nunca se
+  calculan aquí, porque solo la plantilla que arma la página sabe cuál
+  es su equivalente real (home, catálogo, ficha de propiedad con
+  mismo slug, legales). Si una plantilla no pasa "langSwitchUrl", el
+  selector cae de vuelta al home del otro idioma — nunca a un enlace
+  roto.
+#}
+{% set lang = lang or "es" %}
+{% set langSwitchUrl = langSwitchUrl or ("/" if lang == "en" else "/en/") %}
 <header class="header" id="header" role="banner">
   <div class="container header__inner">
-    <a href="/" class="header__logo" aria-label="MAKOM CAPITAL GROUP — Inicio">
+    <a href="{{ '/en/' if lang == 'en' else '/' }}" class="header__logo" aria-label="MAKOM CAPITAL GROUP — {{ 'Home' if lang == 'en' else 'Inicio' }}">
       <img class="header__logo-svg header__logo-svg--neg" src="/assets/logos/makom-capital-group-logo-negativo.svg" alt="" aria-hidden="true" eleventy:ignore />
       <img class="header__logo-svg header__logo-svg--pos" src="/assets/logos/makom-capital-group-logo-positivo.svg" alt="" aria-hidden="true" eleventy:ignore />
     </a>
-    <nav class="header__nav" role="navigation" aria-label="Navegación principal">
+    <nav class="header__nav" role="navigation" aria-label="{{ 'Main navigation' if lang == 'en' else 'Navegación principal' }}">
       <ul class="header__nav-list" role="list">
-        <li class="header__nav-item"><a href="/#grupo" class="header__nav-link">El Grupo</a></li>
+        <li class="header__nav-item"><a href="{{ '/en/#grupo' if lang == 'en' else '/#grupo' }}" class="header__nav-link">{{ "About Us" if lang == "en" else "El Grupo" }}</a></li>
         <li class="header__nav-item header__nav-item--has-mega">
-          <a href="/#servicios" class="header__nav-link header__nav-trigger" aria-expanded="false" aria-haspopup="true" aria-controls="mega-menu">
-            Servicios
+          <a href="{{ '/en/#servicios' if lang == 'en' else '/#servicios' }}" class="header__nav-link header__nav-trigger" aria-expanded="false" aria-haspopup="true" aria-controls="mega-menu">
+            {{ "Services" if lang == "en" else "Servicios" }}
             <svg class="header__nav-chevron" width="12" height="7" viewBox="0 0 12 7" fill="none" aria-hidden="true">
               <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </a>
-          <div class="mega-menu" id="mega-menu" role="region" aria-label="Menú de servicios">
+          <div class="mega-menu" id="mega-menu" role="region" aria-label="{{ 'Services menu' if lang == 'en' else 'Menú de servicios' }}">
             <div class="container">
               <div class="mega-menu__grid">
-                <a href="/propiedades/" class="mega-menu__item">
+                <a href="{{ '/en/properties/' if lang == 'en' else '/propiedades/' }}" class="mega-menu__item">
                   <span class="mega-menu__item-name">MAKOM Properties</span>
-                  <span class="mega-menu__item-desc">Brokerage y asesoría de patrimonio</span>
+                  <span class="mega-menu__item-desc">{{ "Brokerage and wealth advisory" if lang == "en" else "Brokerage y asesoría de patrimonio" }}</span>
                 </a>
-                <a href="/#servicios" class="mega-menu__item">
+                <a href="{{ '/en/#servicios' if lang == 'en' else '/#servicios' }}" class="mega-menu__item">
                   <span class="mega-menu__item-name">MAKOM Services</span>
-                  <span class="mega-menu__item-desc">Gestión y mantenimiento de propiedades</span>
+                  <span class="mega-menu__item-desc">{{ "Property management and maintenance" if lang == "en" else "Gestión y mantenimiento de propiedades" }}</span>
                 </a>
-                <a href="/#proyectos" class="mega-menu__item">
+                <a href="{{ '/en/#proyectos' if lang == 'en' else '/#proyectos' }}" class="mega-menu__item">
                   <span class="mega-menu__item-name">MAKOM Development</span>
-                  <span class="mega-menu__item-desc">Transformación y desarrollo de espacios</span>
+                  <span class="mega-menu__item-desc">{{ "Transforming and developing spaces" if lang == "en" else "Transformación y desarrollo de espacios" }}</span>
                 </a>
-                <a href="/#contacto" class="mega-menu__item mega-menu__item--coming">
+                <a href="{{ '/en/#contacto' if lang == 'en' else '/#contacto' }}" class="mega-menu__item mega-menu__item--coming">
                   <span class="mega-menu__item-name">MAKOM Capital</span>
-                  <span class="mega-menu__item-soon">Próximamente</span>
-                  <span class="mega-menu__item-desc">Asesoría estratégica de portafolio</span>
+                  <span class="mega-menu__item-soon">{{ "Coming soon" if lang == "en" else "Próximamente" }}</span>
+                  <span class="mega-menu__item-desc">{{ "Strategic portfolio advisory" if lang == "en" else "Asesoría estratégica de portafolio" }}</span>
                 </a>
               </div>
             </div>
           </div>
         </li>
-        <li class="header__nav-item"><a href="/propiedades/" class="header__nav-link">Propiedades</a></li>
-        <li class="header__nav-item"><a href="/#proyectos" class="header__nav-link">Proyectos</a></li>
-        <li class="header__nav-item"><a href="/#contacto" class="header__nav-link header__nav-link--cta">Contacto</a></li>
+        <li class="header__nav-item"><a href="{{ '/en/properties/' if lang == 'en' else '/propiedades/' }}" class="header__nav-link">{{ "Properties" if lang == "en" else "Propiedades" }}</a></li>
+        <li class="header__nav-item"><a href="{{ '/en/#proyectos' if lang == 'en' else '/#proyectos' }}" class="header__nav-link">{{ "Projects" if lang == "en" else "Proyectos" }}</a></li>
+        <li class="header__nav-item"><a href="{{ '/en/#contacto' if lang == 'en' else '/#contacto' }}" class="header__nav-link header__nav-link--cta">{{ "Contact" if lang == "en" else "Contacto" }}</a></li>
+        <li class="header__nav-item header__nav-item--lang" aria-label="{{ 'Language selector' if lang == 'en' else 'Selector de idioma' }}">
+          {% if lang == "en" %}
+          <a href="{{ langSwitchUrl }}" class="header__nav-link header__lang-link" hreflang="es" lang="es">ES</a>
+          <span class="header__lang-sep" aria-hidden="true">|</span>
+          <span class="header__nav-link header__lang-link header__lang-link--active" aria-current="true">EN</span>
+          {% else %}
+          <span class="header__nav-link header__lang-link header__lang-link--active" aria-current="true">ES</span>
+          <span class="header__lang-sep" aria-hidden="true">|</span>
+          <a href="{{ langSwitchUrl }}" class="header__nav-link header__lang-link" hreflang="en" lang="en">EN</a>
+          {% endif %}
+        </li>
       </ul>
     </nav>
-    <button class="hamburger" id="hamburger" aria-label="Abrir menú de navegación" aria-expanded="false" aria-controls="mobile-menu">
+    <button class="hamburger" id="hamburger" aria-label="{{ 'Open navigation menu' if lang == 'en' else 'Abrir menú de navegación' }}" aria-expanded="false" aria-controls="mobile-menu">
       <span class="hamburger__bar"></span>
       <span class="hamburger__bar"></span>
       <span class="hamburger__bar"></span>
@@ -51,17 +74,28 @@
   </div>
 </header>
 
-<div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Menú de navegación" aria-hidden="true">
-  <nav class="mobile-menu__nav" aria-label="Navegación móvil">
+<div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="{{ 'Navigation menu' if lang == 'en' else 'Menú de navegación' }}" aria-hidden="true">
+  <nav class="mobile-menu__nav" aria-label="{{ 'Mobile navigation' if lang == 'en' else 'Navegación móvil' }}">
     <ul class="mobile-menu__list" role="list">
-      <li class="mobile-menu__item" style="--item-index: 0"><a href="/#grupo" class="mobile-menu__link">El Grupo</a></li>
-      <li class="mobile-menu__item" style="--item-index: 1"><a href="/#servicios" class="mobile-menu__link">Servicios</a></li>
-      <li class="mobile-menu__item" style="--item-index: 2"><a href="/propiedades/" class="mobile-menu__link">Propiedades</a></li>
-      <li class="mobile-menu__item" style="--item-index: 3"><a href="/#proyectos" class="mobile-menu__link">Proyectos</a></li>
-      <li class="mobile-menu__item" style="--item-index: 4"><a href="/#contacto" class="mobile-menu__link">Contacto</a></li>
+      <li class="mobile-menu__item" style="--item-index: 0"><a href="{{ '/en/#grupo' if lang == 'en' else '/#grupo' }}" class="mobile-menu__link">{{ "About Us" if lang == "en" else "El Grupo" }}</a></li>
+      <li class="mobile-menu__item" style="--item-index: 1"><a href="{{ '/en/#servicios' if lang == 'en' else '/#servicios' }}" class="mobile-menu__link">{{ "Services" if lang == "en" else "Servicios" }}</a></li>
+      <li class="mobile-menu__item" style="--item-index: 2"><a href="{{ '/en/properties/' if lang == 'en' else '/propiedades/' }}" class="mobile-menu__link">{{ "Properties" if lang == "en" else "Propiedades" }}</a></li>
+      <li class="mobile-menu__item" style="--item-index: 3"><a href="{{ '/en/#proyectos' if lang == 'en' else '/#proyectos' }}" class="mobile-menu__link">{{ "Projects" if lang == "en" else "Proyectos" }}</a></li>
+      <li class="mobile-menu__item" style="--item-index: 4"><a href="{{ '/en/#contacto' if lang == 'en' else '/#contacto' }}" class="mobile-menu__link">{{ "Contact" if lang == "en" else "Contacto" }}</a></li>
     </ul>
     <div class="mobile-menu__footer">
-      <p class="mobile-menu__tagline">Donde cada espacio tiene propósito.</p>
+      <div class="mobile-menu__lang">
+        {% if lang == "en" %}
+        <a href="{{ langSwitchUrl }}" class="mobile-menu__lang-link" hreflang="es" lang="es">ES</a>
+        <span class="header__lang-sep" aria-hidden="true">|</span>
+        <span class="mobile-menu__lang-link mobile-menu__lang-link--active" aria-current="true">EN</span>
+        {% else %}
+        <span class="mobile-menu__lang-link mobile-menu__lang-link--active" aria-current="true">ES</span>
+        <span class="header__lang-sep" aria-hidden="true">|</span>
+        <a href="{{ langSwitchUrl }}" class="mobile-menu__lang-link" hreflang="en" lang="en">EN</a>
+        {% endif %}
+      </div>
+      <p class="mobile-menu__tagline">{{ "Where every space has a purpose." if lang == "en" else "Donde cada espacio tiene propósito." }}</p>
     </div>
   </nav>
 </div>

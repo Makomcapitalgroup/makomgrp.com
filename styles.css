@@ -335,6 +335,48 @@ textarea {
   transform: rotate(180deg);
 }
 
+/* Milestone 13 — selector de idioma ES | EN (discreto, junto al nav) */
+.header__nav-item--lang {
+  display: flex;
+  align-items: center;
+  margin-left: 4px;
+  padding-left: 12px;
+  border-left: 1px solid rgba(245,242,238,0.25);
+}
+
+.header--scrolled .header__nav-item--lang,
+.pagina-interior .header__nav-item--lang {
+  border-left-color: var(--color-arena-40);
+}
+
+.header__lang-link {
+  padding: 8px 6px;
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.04em;
+  opacity: 0.55;
+}
+
+.header__lang-link:hover {
+  opacity: 0.85;
+}
+
+.header__lang-link--active {
+  opacity: 1;
+  cursor: default;
+}
+
+.header__lang-sep {
+  color: var(--color-blanco);
+  opacity: 0.35;
+  font-size: 12px;
+}
+
+.header--scrolled .header__lang-sep,
+.pagina-interior .header__lang-sep {
+  color: var(--color-negro);
+}
+
 /* 8. MEGA MENU
    ============================================================= */
 .mega-menu {
@@ -478,6 +520,30 @@ textarea {
   margin-top: auto;
   padding-top: 40px;
   border-top: 1px solid var(--color-blanco-08);
+}
+
+.mobile-menu__lang {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.mobile-menu__lang-link {
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.04em;
+  color: var(--color-blanco);
+  opacity: 0.55;
+}
+
+.mobile-menu__lang-link:hover {
+  opacity: 0.85;
+}
+
+.mobile-menu__lang-link--active {
+  opacity: 1;
+  cursor: default;
 }
 
 .mobile-menu__tagline {
