@@ -15,12 +15,16 @@
   "fotografias": {
     "galeria": [
       {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/d4dfd369-dcfd-45e2-be76-138f845be77e.png"
+      },
+      {
         "portada": false,
         "archivo": "/assets/propiedades/uploads/photo-2026-08-18-07-27-24.jpg"
       },
       {
-        "portada": true,
-        "archivo": "/assets/propiedades/uploads/photo-2026-08-18-07-27-20.jpg"
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/photo-2026-08-18-07-27-20-3.jpg"
       },
       {
         "portada": false,
@@ -29,10 +33,6 @@
       {
         "portada": false,
         "archivo": "/assets/propiedades/uploads/photo-2026-08-18-07-27-20-5.jpg"
-      },
-      {
-        "portada": false,
-        "archivo": "/assets/propiedades/uploads/photo-2026-08-18-07-27-20-3.jpg"
       }
     ]
   },
