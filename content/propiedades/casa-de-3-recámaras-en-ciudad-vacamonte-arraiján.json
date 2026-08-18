@@ -1,0 +1,67 @@
+{
+  "ubicacionPublicaEn": "Ciudad Vacamonte, Arraiján, Panamá Oeste",
+  "tituloEn": "3-Bedroom House in Ciudad Vacamonte, Arraiján",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 85000
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/photo-2026-08-18-07-27-24.jpg"
+      },
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/photo-2026-08-18-07-27-20.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/photo-2026-08-18-07-27-20-2.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/photo-2026-08-18-07-27-20-5.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/photo-2026-08-18-07-27-20-3.jpg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 3,
+    "banos": 2,
+    "estacionamientos": 1,
+    "metrajeTotal": 201.5
+  },
+  "mostrarEnHome": true,
+  "ordenHome": 4,
+  "descripcion": "**Casa de 3 recámaras y 2 baños** en Ciudad Vacamonte, Arraiján, con **201.50 m² de construcción** sobre un terreno del mismo tamaño. Cuenta con sala-comedor, cocina espaciosa, lavandería, pasillos completamente techados y **terrazas delantera y trasera, ambas techadas.**\n\nLa propiedad está **completamente cercada** y ofrece **amplio espacio para estacionar hasta 3 autos.** Ideal para familias que buscan comodidad, amplitud y privacidad.\n\nUbicada a pocos minutos de colegios, supermercados, farmacias, bancos, centros comerciales y de **Playa Dorada.**\n\nAgenda tu visita y conoce esta casa.",
+  "ubicacionInterna": {
+    "provincia": "Panamá Oeste",
+    "distrito": "Arraiján",
+    "sector": "Ciudad Vacamonte, sector Las Lajas",
+    "direccionInterna": "Vivienda No. F-72, Urbanización Ciudad Vacamonte, sector Las Lajas"
+  },
+  "tipo": "casa",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "**3-bedroom, 2-bathroom house** in Ciudad Vacamonte, Arraiján, with **201.50 m² of construction** on a lot of the same size. Features a living-dining room, spacious kitchen, laundry area, fully covered hallways, and **covered front and back terraces.**\n\nThe property is **fully fenced** and offers **ample parking space for up to 3 cars.** Ideal for families looking for comfort, space, and privacy.\n\nLocated just minutes from schools, supermarkets, pharmacies, banks, shopping centers, and **Playa Dorada.**\n\nSchedule your visit and see this house for yourself.",
+  "operacion": "venta",
+  "ubicacionPublica": "Ciudad Vacamonte, Arraiján, Panamá Oeste",
+  "titulo": "Casa de 3 recámaras en Ciudad Vacamonte, Arraiján",
+  "detalles": [
+    "terraza",
+    "cocina-cerrada"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
