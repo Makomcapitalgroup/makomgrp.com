@@ -17,10 +17,6 @@
   "fotografias": {
     "galeria": [
       {
-        "portada": true,
-        "archivo": "/assets/propiedades/uploads/photo-2026-08-17-17-52-41-2.jpg"
-      },
-      {
         "portada": false,
         "archivo": "/assets/propiedades/uploads/photo-2026-08-17-17-52-41-5.jpg"
       },
@@ -35,6 +31,10 @@
       {
         "portada": false,
         "archivo": "/assets/propiedades/uploads/photo-2026-08-17-17-52-41-3.jpg"
+      },
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/chatgpt-image-18-ago-2026-11_12_14-a.m..png"
       }
     ]
   },
@@ -57,7 +57,7 @@
   "descripcionEn": "Independent commercial building with **4 floors**, located on the main street of Urbanización Los Ángeles, Panama City, with **excellent city views.**\n\nIt offers **800 m² of construction** across open, spacious floors, on a **1,000 m² lot.** The interiors have been renovated with wood-look flooring, light-toned walls, glass partitions and vertical gardens — ready for corporate offices, a showroom, a clinic, or an institutional headquarters.\n\nIt provides **covered parking for 13 vehicles**, plus a storage and workshop area — a rare plus for independent commercial buildings in the area. The rooftop has a terrace with **panoramic views of the Panama City skyline.**\n\nAvailable for sale or for rent.\n\nSchedule your visit and see the building.",
   "operacion": "alquiler",
   "ubicacionPublica": "Urbanización Los Ángeles, Ciudad de Panamá",
-  "titulo": "Edificio comercial independiente de 4 pisos en Urbanización Los Ángeles — venta o alquiler",
+  "titulo": "Edificio comercial / Urbanización Los Ángeles — venta o alquiler",
   "detalles": [
     "deposito",
     "vista-ciudad"
