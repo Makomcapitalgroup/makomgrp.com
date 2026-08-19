@@ -1,0 +1,82 @@
+{
+  "amenidades": [
+    "lobby",
+    "piscina",
+    "gimnasio",
+    "garita-seguridad",
+    "acceso-controlado",
+    "cerradura-digital",
+    "elevadores",
+    "area-social",
+    "salon-eventos",
+    "cancha-deportiva",
+    "pet-friendly",
+    "estacionamientos-techados"
+  ],
+  "ubicacionPublicaEn": "Albrook, Panama City",
+  "tituloEn": "Forest-View Apartment — 2 Bedrooms, Albrook",
+  "referenciaMakom": "MKW-RE-005",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 179550
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/photo-2026-08-19-10-15-04.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/photo-2026-08-19-10-15-03.jpg"
+      },
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/foto-21-3-26-1-30-00-p-m.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/photo-2026-08-19-10-15-03-2.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/9.jpg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 2,
+    "banos": 1,
+    "estacionamientos": 1,
+    "metrajeInterno": 63
+  },
+  "mostrarEnHome": true,
+  "ordenHome": 4,
+  "descripcion": "Despierta rodeado de naturaleza sin salir de la ciudad: este apartamento de esquina en PH Forest Gate, Albrook, ofrece **vista al bosque**, **balcón propio** y **63 m² bien distribuidos** en 2 recámaras y 1 baño. De pronta entrega.\n\nAcabados de calidad: closets con puertas corredizas, cocina con muebles modulares hidrófugos, sobre de cuarzo, fregador undermount, puertas HOPSA, cerraduras Kwikset y **cerradura digital en la entrada principal.**\n\nEl proyecto cuenta con **piscina con área para eventos**, BBQ/grill, parque infantil, área para mascotas, lounge social/coworking y **gimnasio de alto rendimiento**, además de un club deportivo al natural con cancha multiuso iluminada, **cancha de pádel techada e iluminada**, área de chill out y mesa de ping pong.\n\nAgenda tu visita y conoce este apartamento.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panama",
+    "sector": "Albrook"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "Wake up surrounded by nature without leaving the city: this corner apartment at PH Forest Gate, Albrook, offers a **forest view**, a **private balcony**, and **63 well-distributed m²** across 2 bedrooms and 1 bathroom. Ready for prompt delivery.\n\nQuality finishes: sliding-door closets, kitchen with moisture-resistant modular cabinets, quartz countertop, undermount sink, HOPSA doors, Kwikset locks, and a **digital lock at the main entrance.**\n\nThe project features a **pool with an event area**, BBQ/grill, playground, pet area, social/coworking lounge, and a **high-performance gym**, plus an outdoor sports club with a lit multi-use court, a **covered, lit paddle court**, a chill-out area, and a ping pong table.\n\nSchedule your visit and see this apartment for yourself.",
+  "operacion": "venta",
+  "ubicacionPublica": "Albrook, Ciudad de Panamá",
+  "titulo": "Apartamento rodeado de naturaleza en Albrook — 2 recámaras ",
+  "detalles": [
+    "lavanderia",
+    "balcon",
+    "cocina-abierta",
+    "vista-parque"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
