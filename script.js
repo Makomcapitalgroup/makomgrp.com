@@ -373,22 +373,45 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /* ============================================================
-     8. FORM SUBMIT
+     8. FORM SUBMIT — POSTs to MAKOM CRM's public lead intake
+     (Fase 18B). mailto: is no longer the submission mechanism —
+     it stays visible only as one of the direct contact options
+     above the form (teléfono/WhatsApp/correo), untouched.
   ============================================================ */
+  var PUBLIC_LEAD_INTAKE_ENDPOINT = 'https://yqiyzqlnqrudvldpmbbi.supabase.co/functions/v1/public-lead-intake';
+  var formErrorBanner = document.getElementById('form-error-banner');
+
+  function hideFormErrorBanner() {
+    if (formErrorBanner) formErrorBanner.setAttribute('aria-hidden', 'true');
+  }
+
+  function showFormErrorBanner() {
+    if (formErrorBanner) formErrorBanner.setAttribute('aria-hidden', 'false');
+  }
+
   if (contactForm) {
+    var formSubmitInFlight = false;
+
     contactForm.addEventListener('submit', function (e) {
       e.preventDefault();
+
+      // Idempotencia mínima (Fase 18B, sección 11): una sola solicitud
+      // activa a la vez. El botón deshabilitado ya evita casi todo doble
+      // clic; este flag es una segunda barrera por si un evento llegara
+      // a dispararse antes de que el atributo disabled surta efecto.
+      if (formSubmitInFlight) return;
 
       var isValid = validateForm();
 
       if (!isValid) {
-        // Focus first error field
         var firstError = contactForm.querySelector('.form-field__input.is-error');
         if (firstError) firstError.focus();
         return;
       }
 
-      // Show loading state
+      hideFormErrorBanner();
+
+      formSubmitInFlight = true;
       if (formSubmit) {
         formSubmit.classList.add('is-loading');
         formSubmit.disabled = true;
@@ -404,6 +427,10 @@ document.addEventListener('DOMContentLoaded', function () {
           formSuccess.setAttribute('aria-hidden', 'false');
           formSuccess.focus();
         }
+      }
+
+      function restaurarBoton() {
+        formSubmitInFlight = false;
         if (formSubmit) {
           formSubmit.classList.remove('is-loading');
           formSubmit.disabled = false;
@@ -414,51 +441,96 @@ document.addEventListener('DOMContentLoaded', function () {
       var emailRemitente = getFieldValue('field-email');
       var telefono = getFieldValue('field-telefono');
       var servicioSelect = document.getElementById('field-servicio');
-      var servicio = servicioSelect ? servicioSelect.options[servicioSelect.selectedIndex].text : '';
+      var servicioValor = servicioSelect ? servicioSelect.value : '';
+      var servicioTexto = servicioSelect ? servicioSelect.options[servicioSelect.selectedIndex].text : '';
+      var websiteField = document.getElementById('field-website');
+      var requestId = metaEventId();
 
-      var asunto = 'Contacto desde makomgrp.com — ' + nombre;
-      var cuerpo =
-        'Nombre: ' + nombre +
-        '\nCorreo: ' + emailRemitente +
-        '\nTeléfono/WhatsApp: ' + (telefono || '—') +
-        '\nServicio: ' + servicio;
-      var mailtoUrl = 'mailto:gerencia@makomgrp.com' +
-        '?subject=' + encodeURIComponent(asunto) +
-        '&body=' + encodeURIComponent(cuerpo);
+      // Captura de UTM/atribución (Fase 18B, sección 12): leídos de la URL
+      // actual y de document.referrer en el momento del envío — esta página
+      // no tiene navegación interna tipo SPA, así que son exactamente los
+      // mismos valores que existían al cargar. "campaign" no se envía: no
+      // existe todavía una convención real en el CRM que lo derive de
+      // utm_campaign, y mapear uno a otro sin esa convención sería inventar
+      // semántica no pedida — queda NULL hasta que exista ese criterio.
+      var urlParams = new URLSearchParams(window.location.search);
 
-      if (typeof window.makomTrack === 'function') {
-        var partesNombre = nombre.split(/\s+/);
-        var userLead = {
-          em: emailRemitente,
-          ph: telefono,
-          fn: partesNombre[0] || '',
-          ln: partesNombre.slice(1).join(' '),
-          country: 'pa',
-          ct: 'panama',
-          st: 'panama',
-          external_id: emailRemitente
-        };
-        window.makomTrack('Lead', userLead, {
-          content_name: servicio,
-          content_category: 'contact_form'
+      var payload = {
+        nombre: nombre,
+        email: emailRemitente,
+        telefono: telefono,
+        servicio: servicioValor,
+        website: websiteField ? websiteField.value : '',
+        utm_source: urlParams.get('utm_source') || undefined,
+        utm_medium: urlParams.get('utm_medium') || undefined,
+        utm_campaign: urlParams.get('utm_campaign') || undefined,
+        utm_content: urlParams.get('utm_content') || undefined,
+        utm_term: urlParams.get('utm_term') || undefined,
+        referrer: document.referrer || undefined,
+        landing_page: window.location.href,
+        form_page: window.location.pathname,
+        request_id: requestId
+      };
+
+      fetch(PUBLIC_LEAD_INTAKE_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error('public-lead-intake respondió ' + response.status);
+          }
+          return response.json();
+        })
+        .then(function (data) {
+          if (!data || data.ok !== true) {
+            throw new Error('public-lead-intake respondió sin ok:true');
+          }
+
+          // Fase 18B, sección 15: el tracking de conversión SOLO se dispara
+          // tras confirmar el éxito real del backend — nunca antes, y nunca
+          // duplicado. window.makomTrack, el Worker de Meta CAPI y el Pixel
+          // no se modifican, solo el momento de esta llamada.
+          if (typeof window.makomTrack === 'function') {
+            var partesNombre = nombre.split(/\s+/);
+            var userLead = {
+              em: emailRemitente,
+              ph: telefono,
+              fn: partesNombre[0] || '',
+              ln: partesNombre.slice(1).join(' '),
+              country: 'pa',
+              ct: 'panama',
+              st: 'panama',
+              external_id: emailRemitente
+            };
+            window.makomTrack('Lead', userLead, {
+              content_name: servicioTexto,
+              content_category: 'contact_form'
+            });
+            window.makomTrack('SubmitApplication', userLead, {
+              content_name: servicioTexto,
+              content_category: 'contact_form',
+              status: 'submitted'
+            });
+            if (servicioSelect && servicioSelect.value === 'mantenimiento') {
+              window.makomTrack('Schedule', userLead, {
+                content_name: 'Inspección / mantenimiento',
+                content_category: 'schedule'
+              });
+            }
+          }
+
+          contactForm.reset();
+          mostrarExito();
+          restaurarBoton();
+        })
+        .catch(function () {
+          // Conservar los datos introducidos para reintento — nunca limpiar
+          // el formulario en un error real.
+          showFormErrorBanner();
+          restaurarBoton();
         });
-        window.makomTrack('SubmitApplication', userLead, {
-          content_name: servicio,
-          content_category: 'contact_form',
-          status: 'submitted'
-        });
-        if (servicioSelect && servicioSelect.value === 'mantenimiento') {
-          window.makomTrack('Schedule', userLead, {
-            content_name: 'Inspección / mantenimiento',
-            content_category: 'schedule'
-          });
-        }
-      }
-
-      setTimeout(function () {
-        window.location.href = mailtoUrl;
-        mostrarExito();
-      }, 600);
     });
   }
 

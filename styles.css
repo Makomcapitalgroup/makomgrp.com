@@ -2235,6 +2235,34 @@ body.hero--loaded .hero__subheadline {
   gap: 32px;
 }
 
+.contact-form__banner {
+  display: none;
+  padding: 16px 20px;
+  border: 1px solid var(--color-error);
+}
+
+.contact-form__banner[aria-hidden="false"] {
+  display: block;
+}
+
+.contact-form__banner-text {
+  font-size: 14px;
+  font-weight: var(--font-weight-light);
+  color: var(--color-blanco);
+  line-height: 1.6;
+}
+
+/* Honeypot — present in the DOM for bots, never visible or reachable for
+   real visitors (off-screen, removed from tab order, aria-hidden). */
+.form-field--honeypot {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 .contact-form__fields.is-hidden {
   display: none;
 }

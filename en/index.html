@@ -606,10 +606,17 @@
       <div class="contacto__col-right">
         <form class="contact-form" id="contact-form" novalidate aria-label="Contact form">
           <div class="contact-form__success" id="form-success" aria-live="polite" aria-hidden="true">
-            <p class="contact-form__success-title">One more step to send it.</p>
-            <p class="contact-form__success-text">Your email client opened with the message pre-filled — just confirm sending. If it didn't open automatically, write to us at gerencia@makomgrp.com or WhatsApp +507 6353-4377. Thank you for your interest in MAKOM CAPITAL GROUP.</p>
+            <p class="contact-form__success-title">Thank you for reaching out.</p>
+            <p class="contact-form__success-text">We received your information and a member of our team will contact you shortly. Thank you for your interest in MAKOM CAPITAL GROUP.</p>
           </div>
           <div class="contact-form__fields" id="form-fields">
+            <div class="contact-form__banner contact-form__banner--error" id="form-error-banner" role="alert" aria-live="assertive" aria-hidden="true">
+              <p class="contact-form__banner-text">We couldn't send your information. Please try again or contact us directly by phone, WhatsApp, or email (above).</p>
+            </div>
+            <div class="form-field form-field--honeypot" aria-hidden="true">
+              <label class="form-field__label" for="field-website">Leave this field empty</label>
+              <input class="form-field__input" type="text" id="field-website" name="website" tabindex="-1" autocomplete="off" />
+            </div>
             <div class="form-field">
               <label class="form-field__label" for="field-nombre">Full name</label>
               <input class="form-field__input" type="text" id="field-nombre" name="nombre" autocomplete="name" required aria-required="true" aria-describedby="field-nombre-error" />
