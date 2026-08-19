@@ -2434,18 +2434,6 @@ body.hero--loaded .hero__subheadline {
   opacity: 0.80;
 }
 
-.footer__phone {
-  font-size: 12px;
-  font-weight: var(--font-weight-light);
-  color: var(--color-blanco);
-  opacity: 0.40;
-  transition: opacity var(--dur-fast) var(--ease);
-}
-
-.footer__phone:hover {
-  opacity: 0.80;
-}
-
 .footer__social {
   display: flex;
   align-items: center;
@@ -2463,12 +2451,6 @@ body.hero--loaded .hero__subheadline {
 
 .footer__social-link:hover {
   opacity: 1;
-}
-
-@media (max-width: 639px) {
-  .footer__bottom-inner {
-    padding-bottom: 88px;
-  }
 }
 
 /* 22. BUTTONS
