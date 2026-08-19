@@ -30,7 +30,11 @@
     "galeria": [
       {
         "portada": false,
-        "archivo": "/assets/propiedades/uploads/foto-21-3-26-1-56-24-p-m.jpg"
+        "archivo": "/assets/propiedades/uploads/photo-2026-08-19-10-15-04.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/photo-2026-08-19-10-15-03.jpg"
       },
       {
         "portada": true,
@@ -38,15 +42,11 @@
       },
       {
         "portada": false,
-        "archivo": "/assets/propiedades/uploads/procasa-206.jpg"
+        "archivo": "/assets/propiedades/uploads/photo-2026-08-19-10-15-03-2.jpg"
       },
       {
         "portada": false,
-        "archivo": "/assets/propiedades/uploads/procasa-210.jpg"
-      },
-      {
-        "portada": false,
-        "archivo": "/assets/propiedades/uploads/foto-21-3-26-1-48-44-p-m.jpg"
+        "archivo": "/assets/propiedades/uploads/9.jpg"
       }
     ]
   },
