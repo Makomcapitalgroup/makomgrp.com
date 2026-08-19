@@ -7,6 +7,8 @@
     "coworking",
     "rooftop"
   ],
+  "ubicacionPublicaEn": "Condado del Rey, Panama City",
+  "tituloEn": "2 & 3-Bedroom Residences in Condado del Rey, Immediate Delivery",
   "referenciaMakom": "MKW-RE-001",
   "mapa": {
     "activo": true,
@@ -52,7 +54,7 @@
   },
   "mostrarEnHome": true,
   "ordenHome": 1,
-  "descripcion": "**Mi Condado, Torre 2** es un proyecto residencial en Condado del Rey, ciudad de Panamá, uno de los corredores residenciales más completos de la capital. La torre está terminada: **las unidades se entregan de inmediato,** sin esperar a que termine la obra.\n\nEl proyecto ofrece dos tipologías: apartamentos de **2 recámaras y 2 baños, de 72 a 77 m²,** y apartamentos de **3 recámaras y 2 baños, de 89 a 97 m².** Todas las unidades incluyen un puesto de estacionamiento, horno, estufa y cerradura digital, con la opción de personalizar tu unidad con aires acondicionados, línea blanca y muebles de diseño.\n\nLa comunidad reúne **amenidades para cada etapa de la vida**: piscina estilo resort, rooftop con vista a la ciudad, canchas de fútbol 5 y básquetbol, playground, kids zone, teen lounge, sala de tareas, gaming zone, lounge, BBQ spot y un parque para mascotas con grama sintética y estación de baño. El control de acceso se maneja con la app Munily y sistema de cámaras CCTV.\n\nDentro de la misma comunidad hay **más de 36 locales comerciales y 100 oficinas** — mini súper, restaurante, clínica, gimnasio y más — y las universidades quedan a solo 3 y 5 minutos.\n\nAgenda tu visita y conoce la unidad disponible.",
+  "descripcion": "Es un proyecto residencial en Condado del Rey, ciudad de Panamá, uno de los corredores residenciales más completos de la capital. La torre está terminada: **las unidades se entregan de inmediato,** sin esperar a que termine la obra.\n\nEl proyecto ofrece dos tipologías: apartamentos de **2 recámaras y 2 baños, de 72 a 77 m²,** y apartamentos de **3 recámaras y 2 baños, de 89 a 97 m².** Todas las unidades incluyen un puesto de estacionamiento, horno, estufa y cerradura digital, con la opción de personalizar tu unidad con aires acondicionados, línea blanca y muebles de diseño.\n\nLa comunidad reúne **amenidades para cada etapa de la vida**: piscina estilo resort, rooftop con vista a la ciudad, canchas de fútbol 5 y básquetbol, playground, kids zone, teen lounge, sala de tareas, gaming zone, lounge, BBQ spot y un parque para mascotas con grama sintética y estación de baño. El control de acceso se maneja con la app Munily y sistema de cámaras CCTV.\n\nDentro de la misma comunidad hay **más de 36 locales comerciales y 100 oficinas** — mini súper, restaurante, clínica, gimnasio y más — y las universidades quedan a solo 3 y 5 minutos.\n\nAgenda tu visita y conoce la unidad disponible.",
   "ubicacionInterna": {
     "provincia": "Panamá",
     "sector": "Condado del Rey",
@@ -60,12 +62,10 @@
   },
   "tipo": "apartamento",
   "categoriaGeneral": "residencial",
+  "descripcionEn": "**Mi Condado, Tower 2** is a residential development in Condado del Rey, Panama City, one of the capital's most complete residential corridors. The tower is finished: **units are delivered immediately,** with no wait for construction to end.\n\nThe project offers two layouts: **2-bedroom, 2-bathroom residences of 72 to 77 m²,** and **3-bedroom, 2-bathroom residences of 89 to 97 m².** Every unit includes one parking space, an oven, a stove, and a digital lock, with the option to personalize your unit with air conditioning, appliances, and designer furniture.\n\nThe community brings together **amenities for every stage of life**: a resort-style pool, a rooftop with city views, five-a-side football and basketball courts, a playground, a kids' zone, a teen lounge, a study room, a gaming zone, a lounge, a BBQ spot, and a pet park with synthetic grass and a washing station. Access control runs through the Munily app and a CCTV camera system.\n\nWithin the same community there are **more than 36 commercial spaces and 100 offices** — a mini-market, restaurant, clinic, gym, and more — and universities are just 3 to 5 minutes away.\n\nSchedule your visit and see the available unit.",
   "operacion": "venta",
   "ubicacionPublica": "Condado del Rey, Ciudad de Panamá",
-  "ubicacionPublicaEn": "Condado del Rey, Panama City",
-  "titulo": "Mi Condado, Torre 2 — 2 y 3 recámaras en Condado del Rey, entrega inmediata",
-  "tituloEn": "Mi Condado, Tower 2 — 2 & 3-Bedroom Residences in Condado del Rey, Immediate Delivery",
-  "descripcionEn": "**Mi Condado, Tower 2** is a residential development in Condado del Rey, Panama City, one of the capital's most complete residential corridors. The tower is finished: **units are delivered immediately,** with no wait for construction to end.\n\nThe project offers two layouts: **2-bedroom, 2-bathroom residences of 72 to 77 m²,** and **3-bedroom, 2-bathroom residences of 89 to 97 m².** Every unit includes one parking space, an oven, a stove, and a digital lock, with the option to personalize your unit with air conditioning, appliances, and designer furniture.\n\nThe community brings together **amenities for every stage of life**: a resort-style pool, a rooftop with city views, five-a-side football and basketball courts, a playground, a kids' zone, a teen lounge, a study room, a gaming zone, a lounge, a BBQ spot, and a pet park with synthetic grass and a washing station. Access control runs through the Munily app and a CCTV camera system.\n\nWithin the same community there are **more than 36 commercial spaces and 100 offices** — a mini-market, restaurant, clinic, gym, and more — and universities are just 3 to 5 minutes away.\n\nSchedule your visit and see the available unit.",
+  "titulo": "2 y 3 recámaras en Condado del Rey, entrega inmediata",
   "detalles": [
     "balcon",
     "lavanderia"
