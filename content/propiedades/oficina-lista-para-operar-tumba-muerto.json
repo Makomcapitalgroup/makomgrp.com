@@ -1,0 +1,66 @@
+{
+  "amenidades": [
+    "estacionamientos-visitas"
+  ],
+  "tituloEn": "Move-In Ready Office ",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 1200,
+    "periodicidad": "mensual"
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/img_2917.jpg"
+      },
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/a2.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/a3.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/img_2916.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/img_2915.jpg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "estacionamientos": 3,
+    "banos": 1,
+    "metrajeInterno": 78.78,
+    "piso": "Planta baja"
+  },
+  "mostrarEnHome": true,
+  "ordenHome": 6,
+  "descripcion": "Empieza a operar desde el día uno: este local comercial de **78.08 m²** en P.H. Villa Verona ya cuenta con **recepción**, **salón de reuniones**, **6 áreas de trabajo** y **2 oficinas cerradas con vidrio**, listo para tu equipo sin obras ni adecuaciones.\n\nIncluye cocineta equipada con medio baño, cuarto de máquina de aire acondicionado y depósito.\n\nEl alquiler incluye **luz, mantenimiento y agua** — sin sorpresas en tus gastos fijos mensuales.\n\nAgenda tu visita y conoce este espacio.",
+  "ubicacionInterna": {
+    "provincia": "Panamá ",
+    "distrito": "Panamá",
+    "sector": "Tumba Muerto "
+  },
+  "tipo": "oficina",
+  "categoriaGeneral": "comercial",
+  "descripcionEn": "Start operating from day one: this **78.08 m²** commercial space at P.H. Villa Verona already features a **reception area**, **meeting room**, **6 workstations**, and **2 glass-enclosed private offices**, ready for your team with no renovations needed.\n\nIncludes an equipped kitchenette with a half-bathroom, an air conditioning equipment room, and a storage room.\n\nRent includes **electricity, maintenance, and water** — no surprises in your monthly fixed costs.\n\nSchedule your visit and see this space for yourself.",
+  "operacion": "alquiler",
+  "ubicacionPublica": "Av. Principal, Tumba muerto, Ciudad de Panamá",
+  "titulo": "OFICINA LISTA PARA OPERAR / TUMBA MUERTO ",
+  "detalles": null,
+  "seo": {
+    "noIndex": false
+  }
+}
