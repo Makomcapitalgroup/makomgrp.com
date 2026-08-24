@@ -1,0 +1,65 @@
+{
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 52000
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/chatgpt-image-24-ago-2026-05_29_00-p.m..png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/chatgpt-image-24-ago-2026-05_29_00-p.m..png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/chatgpt-image-24-ago-2026-05_31_00-p.m..png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/chatgpt-image-24-ago-2026-05_27_40-p.m..png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/chatgpt-image-24-ago-2026-05_32_05-p.m..png"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 2,
+    "banos": 1,
+    "estacionamientos": 1,
+    "metrajeInterno": 63.95,
+    "metrajeTotal": 104.71
+  },
+  "mostrarEnHome": false,
+  "descripcion": "Casa unifamiliar de un nivel, **actualmente desocupada y lista para mudanza inmediata**, ubicada en la Urbanización Villa del Carmen, La Chorrera. Cuenta con **185.40 m² de terreno**, 2 recámaras, sala-comedor, cocina con desayunador, lavandería cerrada y portal techado.\n\nEstructura de bloques repellados y pintados, techo de láminas de zinc galvanizado, pisos de cemento rústico y **cerámica importada**, ventanas de persianas con marcos de aluminio, mallas metálicas y verjas de hierro — buena condición general y fácil de asegurar.\n\nGaraje sin techar, cerco perimetral y ubicada en zona residencial consolidada, a pocos minutos de supermercados, comida rápida y transporte público.\n\nAgenda tu visita y conoce esta casa.",
+  "ubicacionInterna": {
+    "provincia": "Panamá Oeste",
+    "distrito": "La Chorrera",
+    "corregimiento": "Guadaluoe",
+    "sector": "Urb. Villa del Carmen"
+  },
+  "tipo": "casa",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "Single-level house, **currently vacant and ready for immediate move-in**, located in Urbanización Villa del Carmen, La Chorrera. It offers **185.40 m² of land**, 2 bedrooms, a living/dining area, kitchen with breakfast bar, enclosed laundry area, and a covered porch.\n\nBlock construction with finished walls, galvanized zinc roofing, rustic cement and **imported ceramic** flooring, aluminum-framed louvered windows, security screens and iron grilles — good overall condition and easy to secure.\n\nUncovered carport, perimeter wall, and located in a consolidated residential area minutes from supermarkets, fast food, and public transportation.\n\nSchedule your visit today.",
+  "operacion": "venta",
+  "ubicacionPublica": "Urbanización Villa del Carmen, La Chorrera, Panamá Oeste",
+  "titulo": "CASA EN LA CHORRERA / 2 RECÁMARAS",
+  "detalles": [
+    "terraza",
+    "cocina-cerrada"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
