@@ -1,0 +1,73 @@
+{
+  "amenidades": [
+    "gimnasio",
+    "piscina",
+    "planta-electrica",
+    "coworking",
+    "garita-seguridad",
+    "acceso-controlado"
+  ],
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 137725
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/coworking-room.png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/balcon.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/bathroom-wide.png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/int-cocina.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/exterior-nommad-_-300dpi-1-15-03-2025-11_08_53_722.jpg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 1,
+    "banos": 1,
+    "metrajeTotal": 43
+  },
+  "mostrarEnHome": true,
+  "ordenHome": 3,
+  "descripcion": "Proyecto residencial en preventa ubicado en el cruce de Vía Porras y Vía España, Ciudad de Panamá, con apartamentos boutique de 1 recámara en dos tamaños: 33 m² y 40 m².\n\n**Datos principales**\nPrecio desde USD 137,725 · Metraje desde 33 m² (hasta 40 m² en el modelo mayor) · 1 recámara / 1 baño en todas las unidades · dos tipologías (Modelo A de 40 m² y Modelo B de 33 m²) · entrega estimada para finales de 2027 / principios de 2028 · proyecto en preventa, con disponibilidad y precio que varían por piso.\n\n**Características de las unidades**\nAmbas tipologías incluyen recámara, baño, balcón, sala-comedor y cocina integrada.\n\n**Amenidades**\nLounge, terraza, gimnasio, área de coworking, sala de cine, área de meditación, pet park, meeting room, gaming room, área de maletas y lobby de servicio en planta baja.\n\n**Ubicación**\nCruce entre Vía Porras y Vía España — a 4 minutos de la estación del Metro, 9 minutos de Multiplaza, 10 minutos del Parque Andrés Bello, 15 minutos de la Cinta Costera, 24 minutos de Albrook Mall y 25 minutos del Aeropuerto de Tocumen.\n\n**¿Para quién puede funcionar esta propiedad?**\nPuede funcionar como vivienda cerca del centro de la ciudad, o como inversión: el edificio cuenta con permisos para rentas dinámicas (rentas cortas), y cada propietario decide si administra el alquiler directamente o a través de una empresa de administración de su preferencia.\n\n**Información adicional**\nDiseño bajo estándares de certificación EDGE. Planta eléctrica de respaldo total del edificio y tanque de reserva de agua propio.\n\n¿Quieres conocer disponibilidad y precios actuales? Consulta con MAKOM las unidades disponibles en NOMMAD Residences.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "sector": "Cruce entre Vía Porras y Vía España"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "Pre-sale residential project located at the intersection of Vía Porras and Vía España, Panama City, with boutique 1-bedroom apartments in two sizes: 33 m² and 40 m².\n\n**Key facts**\nPriced from USD 137,725 · sizes from 33 m² (up to 40 m² in the larger model) · 1 bedroom / 1 bathroom in every unit · two layouts (Model A, 40 m², and Model B, 33 m²) · estimated delivery late 2027 / early 2028 · pre-sale project, with availability and pricing that vary by floor.\n\n**Unit features**\nBoth layouts include a bedroom, bathroom, balcony, living/dining area, and integrated kitchen.\n\n**Amenities**\nLounge, terrace, gym, coworking area, cinema room, meditation area, pet park, meeting room, gaming room, luggage room, and ground-floor service lobby.\n\n**Location**\nAt the Vía Porras / Vía España intersection — 4 minutes from the Metro station, 9 minutes from Multiplaza, 10 minutes from Parque Andrés Bello, 15 minutes from Cinta Costera, 24 minutes from Albrook Mall, and 25 minutes from Tocumen Airport.\n\n**Who is this for?**\nWorks as a home close to the city center, or as an investment: the building has permits for short-term rentals, and each owner decides whether to manage rentals directly or through a management company of their choice.\n\n**Additional information**\nDesigned to EDGE certification standards. Full building backup generator and its own water reserve tank.\n\nWant current availability and pricing? Contact MAKOM for the available units at NOMMAD Residences.",
+  "operacion": "venta",
+  "ubicacionPublica": "Cruce entre Vía Porras y Vía España, Ciudad de Panamá",
+  "titulo": "PROYECTO PARA INVERSIÓN EN PREVENTA — UBICACIÓN ESTRATÉGICA",
+  "detalles": [
+    "lavanderia",
+    "balcon",
+    "cocina-abierta",
+    "vista-ciudad"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
