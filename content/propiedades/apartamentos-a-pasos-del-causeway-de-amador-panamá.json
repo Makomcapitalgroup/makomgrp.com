@@ -1,0 +1,81 @@
+{
+  "amenidades": [
+    "lobby",
+    "gimnasio",
+    "piscina",
+    "planta-electrica-total",
+    "elevadores",
+    "area-social",
+    "rooftop",
+    "estacionamientos-visitas",
+    "pet-friendly",
+    "coworking"
+  ],
+  "tituloEn": "Apartments steps from the Amador Causeway, Panama",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 198500
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/vista-aerea-hacia-puente.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/sala-1d.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/dormitorio-1.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/rooftop.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/lap-pool-1.jpg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 2,
+    "banos": 2,
+    "estacionamientos": 2
+  },
+  "mostrarEnHome": true,
+  "ordenHome": 4,
+  "descripcion": "**Resumen del proyecto**\nProyecto residencial ubicado en Amador, Ciudad de Panamá, con 82 apartamentos en 12 tipologías distintas, desde 50 m² hasta 170 m², con vista hacia el Puente de las Américas o hacia la ciudad según la unidad.\n\n**Datos principales**\nPrecio desde USD 198,500 · metraje desde 50 m² (hasta 170 m² según el desarrollador; existe además un modelo mayor de 219.92 m²) · cada unidad incluye 1 o 2 estacionamientos y 1 depósito privado · 12 tipologías (Modelos A a L) · entrega estimada para el primer trimestre de 2029.\n\n**Características de las unidades**\nTodas las unidades incluyen aire acondicionado, estufa, horno, refrigeradora y lavaplatos; lavadora-secadora opcional. Algunas unidades cuentan con amplias terrazas. Estacionamientos y depósitos adicionales disponibles a la venta por separado.\n\n**Amenidades**\nLap pool, rooftop con jacuzzi y sunset BBQ lounge, cancha de tenis, fitness center, yoga & meditation deck, co-working studio, chef's kitchen, zona de bicicletas y paddle board con taller de bicicletas, pet grooming station, sauna y áreas verdes.\n\n**Ubicación**\nAmador, Ciudad de Panamá — junto al Puente de las Américas, a minutos de la Cinta Costera 3, Casco Viejo y el Biomuseo.\n\n**¿Para quién puede funcionar esta propiedad?**\nPuede funcionar como vivienda principal o como segunda propiedad, para quienes buscan cercanía con el mar, áreas verdes y amenidades completas dentro del mismo edificio.\n\n**Información adicional**\nDiseño arquitectónico de Arango+. Certificación de sostenibilidad EDGE en proceso. Sistema eléctrico con planta de emergencia total y paneles solares en áreas comunes. 4 elevadores más 1 elevador de carga.\n\n¿Quieres conocer disponibilidad y precios actuales? Consulta con MAKOM las unidades disponibles.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "sector": "Amador, junto a Puente de las Américas"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "**Project overview**\nResidential project located in Amador, Panama City, with 82 apartments across 12 different layouts, from 50 m² to 170 m², with views toward the Bridge of the Americas or the city depending on the unit.\n\n**Key facts**\nPriced from USD 198,500 · sizes from 50 m² (up to 170 m² per the developer; a larger 219.92 m² layout also exists) · every unit includes 1 or 2 parking spaces and 1 private storage unit · 12 layouts (Models A through L) · estimated delivery in Q1 2029.\n\n**Unit features**\nAll units include A/C, stove, oven, refrigerator, and dishwasher; washer-dryer optional. Some units feature large terraces. Additional parking spaces and storage units available for separate purchase.\n\n**Amenities**\nLap pool, rooftop with jacuzzi and sunset BBQ lounge, tennis court, fitness center, yoga & meditation deck, co-working studio, chef's kitchen, bike & paddle board area with bike workshop, pet grooming station, sauna, and green areas.\n\n**Location**\nAmador, Panama City — next to the Bridge of the Americas, minutes from Cinta Costera 3, Casco Viejo, and the Biomuseo.\n\n**Who is this for?**\nWorks as a primary residence or a second home, for those looking for proximity to the water, green spaces, and full amenities within the same building.\n\n**Additional information**\nArchitectural design by Arango+. EDGE sustainability certification in process. Fully electric system with total backup generator and solar panels in common areas. 4 elevators plus 1 freight elevator.\n\nWant current availability and pricing? Contact MAKOM for the available units",
+  "operacion": "venta",
+  "ubicacionPublica": "Amador, Ciudad de Panamá",
+  "titulo": "APARTAMENTOS A PASOS DEL CAUSEWAY DE AMADOR , PANAMÁ",
+  "detalles": [
+    "deposito",
+    "balcon",
+    "walk-in-closet",
+    "vista-ciudad",
+    "linea-blanca",
+    "lavanderia",
+    "vista-mar"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
