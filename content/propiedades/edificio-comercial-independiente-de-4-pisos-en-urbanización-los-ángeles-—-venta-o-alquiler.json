@@ -12,7 +12,8 @@
   "estado": "disponible",
   "precio": {
     "moneda": "USD",
-    "monto": 15000
+    "monto": 15000,
+    "periodicidad": "mensual"
   },
   "fotografias": {
     "galeria": [
@@ -43,7 +44,7 @@
     "metrajeInterno": 800,
     "metrajeTotal": 1000
   },
-  "mostrarEnHome": true,
+  "mostrarEnHome": false,
   "ordenHome": 3,
   "descripcion": "Edificio comercial independiente de **4 pisos**, ubicado en la calle principal de la Urbanización Los Ángeles, ciudad de Panamá, con **excelente vista a la ciudad.**\n\nCuenta con **800 m² de construcción** distribuidos en plantas amplias y de espacio libre, sobre un **lote de 1,000 m².** Los interiores fueron renovados con piso tipo madera, paredes en tonos claros, divisiones de vidrio y jardines verticales — listo para oficinas corporativas, showroom, clínica o sede institucional.\n\nOfrece **estacionamiento techado para 13 vehículos,** además de área de depósito y taller — un plus poco común en edificios comerciales independientes de la zona. La azotea tiene una terraza con **vista panorámica al skyline de la ciudad de Panamá.**\n\nDisponible en venta o en alquiler.\n\nAgenda tu visita y conoce el edificio.",
   "ubicacionInterna": {
@@ -57,7 +58,7 @@
   "descripcionEn": "Independent commercial building with **4 floors**, located on the main street of Urbanización Los Ángeles, Panama City, with **excellent city views.**\n\nIt offers **800 m² of construction** across open, spacious floors, on a **1,000 m² lot.** The interiors have been renovated with wood-look flooring, light-toned walls, glass partitions and vertical gardens — ready for corporate offices, a showroom, a clinic, or an institutional headquarters.\n\nIt provides **covered parking for 13 vehicles**, plus a storage and workshop area — a rare plus for independent commercial buildings in the area. The rooftop has a terrace with **panoramic views of the Panama City skyline.**\n\nAvailable for sale or for rent.\n\nSchedule your visit and see the building.",
   "operacion": "alquiler",
   "ubicacionPublica": "Urbanización Los Ángeles, Ciudad de Panamá",
-  "titulo": "Edificio comercial / Urbanización Los Ángeles — venta o alquiler",
+  "titulo": "EDIFICIO COMERCIAL / URB. LOS ANGELES — VENTA O ALQUILER",
   "detalles": [
     "deposito",
     "vista-ciudad"
