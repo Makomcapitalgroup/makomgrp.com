@@ -1,0 +1,74 @@
+{
+  "amenidades": [
+    "piscina",
+    "lobby",
+    "garita-seguridad",
+    "acceso-controlado",
+    "elevadores",
+    "planta-electrica-total",
+    "area-social",
+    "coworking",
+    "rooftop",
+    "concierge"
+  ],
+  "ubicacionPublicaEn": "Avenida Federico Boyd, Panama City",
+  "tituloEn": "INVESTMENT OPPORTUNITY — STUDIOS FROM $108,000",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 108000
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/rooftop-iglesia-del-carmen.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/fachada-stay-2.jpg"
+      },
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/lobby.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/render-apartamento-5.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/piscina.jpg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 1,
+    "banos": 1,
+    "metrajeInterno": 33,
+    "anoConstruccion": 2026
+  },
+  "mostrarEnHome": true,
+  "ordenHome": 4,
+  "descripcion": "**Resumen del proyecto**\nProyecto de inversión inmobiliaria ubicado en una esquina de alto tráfico sobre la Avenida Federico Boyd, en el corazón de la Ciudad de Panamá. Son estudios completamente amoblados y equipados, diseñados específicamente para alquiler de corta y larga estancia, a solo 20 pasos de la estación de metro Iglesia del Carmen. Panamá es un destino atractivo para este tipo de inversión: economía 100% dolarizada, posición estratégica como centro logístico entre Norte y Sudamérica, y demanda constante de propiedades de alquiler por turismo y negocios.\n\n**Datos principales**\nPrecio desde **$108,000**, con **mobiliario y equipamiento incluidos** — listo para poner en alquiler sin inversión adicional en amoblado. Estudios de **33.10 m² a 34.15 m²**, 1 baño. El brochure oficial del promotor también describe un modelo de 1 recámara y 1 baño de 33.24 m² desde $120,000 (mismo esquema, con mobiliario y equipamiento incluidos) — disponibilidad actual de ese modelo no confirmada. Estado del proyecto y fecha de entrega: dato no suministrado.\n\n**Características de las unidades**\nUnidades 100% amobladas y equipadas: cocina integrada con electrodomésticos, mobiliario funcional que incluye opciones de cama abatible/sofá-cama y closets integrados para aprovechar cada metro cuadrado, y diseño interior minimalista con materiales de alta calidad y acabados en tonos neutros. Pensadas para que el propietario no tenga que invertir nada adicional antes de ponerlas en alquiler.\n\n**Amenidades**\nEl edificio ofrece amenidades tipo hotel boutique, pensadas para atraer huéspedes e inquilinos: piscina en rooftop con vista a la ciudad, bar y zona lounge al aire libre, sala de sauna/spa, gimnasio equipado, sala de coworking y lounge social, zona de juegos al aire libre (incluye ajedrez gigante), lobby con áreas sociales, y locales comerciales en planta baja (wine bar y otros conceptos gastronómicos).\n\n**Ubicación**\nSobre la Avenida Federico Boyd, Ciudad de Panamá — a 20 pasos de la estación Iglesia del Carmen (Línea 1 del Metro de Panamá, con trasbordo a la Línea 2 hacia el Aeropuerto Internacional). A minutos de 12 puntos de interés: C.C. Multiplaza (15 min), Hospital Nacional (9 min), Universidad de Panamá (6 min), Calle Uruguay (7 min), Parque Andrés Bello (15 min), Supermercado Riba Smith (10 min), Hilton Panamá (13 min), Parque Urracá (9 min), Hospital John Hopkins (12 min), Soho Mall (10 min) y Supermercado Rey (7 min).\n\n**¿Para quién puede funcionar esta propiedad?**\nEste proyecto está pensado 100% para inversionistas, no para vivienda propia: propietarios locales o extranjeros que buscan generar ingresos por alquiler de corta o larga estancia, diversificar su portafolio con bienes raíces en una zona de alta demanda, o aprovechar un modelo de administración ofrecido por el promotor sin tener que operar la propiedad ellos mismos. Panamá además ofrece incentivos fiscales y migratorios para la inversión extranjera, según el propio material del promotor.\n\n**Información adicional**\nSegún el promotor, los beneficios para el propietario incluyen: ingresos pasivos por alquiler, administración integral y sencilla (el promotor se encarga de operar el alquiler), potencial de revalorización de la propiedad, y alta demanda gracias a la diversidad de amenidades y servicios del edificio — estas son afirmaciones del propio promotor, no una garantía de rentabilidad de MAKOM. El edificio también ofrece un servicio de conserjería con experiencias para huéspedes (visitas guiadas, experiencias gastronómicas, eventos temáticos), pensado para reforzar el atractivo de la unidad de cara al alquiler de corta estancia. Unidades entregadas completamente amobladas y equipadas. Disponibilidad limitada: 4 unidades tipo Estudio confirmadas disponibles al momento de esta ficha.\n\n¿Buscas una propiedad de inversión con administración incluida? Contáctanos y te mostramos las opciones disponibles.",
+  "ubicacionInterna": {
+    "provincia": " Panamá",
+    "distrito": " Panamá",
+    "sector": "Avenida Federico Boyd"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "**Project overview**\nReal estate investment project located on a high-traffic corner of Avenida Federico Boyd, in the heart of Panama City. Fully furnished and equipped studios, designed specifically for short- and long-term rental, just 20 steps from the Iglesia del Carmen metro station. Panama is an attractive destination for this type of investment: a 100% dollarized economy, a strategic position as a logistics hub between North and South America, and steady demand for rental properties driven by tourism and business.\n\n**Key facts**\nPriced from **$108,000**, with **furniture and equipment included** — ready to rent out with no additional furnishing investment. Studios from **33.10 m² to 34.15 m²**, 1 bathroom. The developer's official brochure also describes a 1-bedroom, 1-bathroom model of 33.24 m² from $120,000 (same scheme, furniture and equipment included) — current availability of that model not confirmed. Project status and delivery date: not provided.\n\n**Unit features**\nFully furnished and equipped units: integrated kitchen with appliances, functional furniture including fold-away bed/sofa-bed options and built-in closets to make the most of every square meter, and minimalist interior design with high-quality materials and neutral-tone finishes. Designed so the owner doesn't need to invest anything further before renting it out.\n\n**Amenities**\nThe building offers boutique-hotel-style amenities designed to attract guests and tenants: rooftop pool with city views, outdoor bar and lounge area, sauna/spa room, equipped gym, coworking room and social lounge, outdoor games area (including giant chess), lobby with social areas, and ground-floor commercial spaces (wine bar and other dining concepts).\n\n**Location**\nOn Avenida Federico Boyd, Panama City — 20 steps from the Iglesia del Carmen station (Metro Line 1, with transfer to Line 2 toward the International Airport). Minutes from 12 points of interest: C.C. Multiplaza (15 min), Hospital Nacional (9 min), Universidad de Panamá (6 min), Calle Uruguay (7 min), Parque Andrés Bello (15 min), Supermercado Riba Smith (10 min), Hilton Panamá (13 min), Parque Urracá (9 min), Hospital John Hopkins (12 min), Soho Mall (10 min) and Supermercado Rey (7 min).\n\n**Who is this for?**\nThis project is designed 100% for investors, not for a primary residence: local or foreign owners looking to generate income through short- or long-term rental, diversify their portfolio with real estate in a high-demand area, or take advantage of a management model offered by the developer without having to operate the property themselves. Panama also offers tax and immigration incentives for foreign investment, according to the developer's own materials.\n\n**Additional information**\nAccording to the developer, owner benefits include: passive rental income, full and simple management (the developer handles operating the rental), potential for property appreciation, and high demand thanks to the building's range of amenities and services — these are the developer's own claims, not a guarantee of returns from MAKOM. The building also offers a concierge service with guest experiences (guided tours, dining experiences, themed events), designed to strengthen the unit's appeal for short-term rental. Units are delivered fully furnished and equipped. Limited availability: 4 Studio units confirmed available at the time of this listing.\n\nWant current availability and pricing? Contact us and we'll show you the available options.",
+  "operacion": "venta",
+  "ubicacionPublica": "Avenida Federico Boyd, Ciudad de Panamá",
+  "titulo": "OPORTUNIDAD DE INVERSIÓN — ESTUDIOS DESDE $108,000 ",
+  "seo": {
+    "noIndex": false
+  }
+}
