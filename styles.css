@@ -1085,6 +1085,20 @@ body.hero--loaded .hero__subheadline {
   align-self: flex-start;
 }
 
+/* UX-1 — toda la tarjeta clickeable. .division-card ya tenía
+   position:relative, no requiere cambio adicional. Mismo overlay que
+   el resto, incluida la neutralización de "position: relative" de
+   .link--arrow en el propio <a>. */
+a.division-card__cta {
+  position: static;
+}
+.division-card__cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
 /* Dark card — Capital */
 .division-card--dark {
   background-color: var(--color-negro);
@@ -1699,6 +1713,7 @@ body.hero--loaded .hero__subheadline {
 }
 
 .property-card {
+  position: relative;
   border: 1px solid transparent;
   transition:
     border-color var(--dur-medium) var(--ease),
@@ -1800,6 +1815,26 @@ body.hero--loaded .hero__subheadline {
   align-self: flex-start;
 }
 
+/* UX-1 — toda la tarjeta clickeable: el CTA existente se estira sobre
+   la superficie completa de .property-card vía ::before (::after ya
+   está ocupado por la flecha de .link--arrow). Un solo <a> real, sin
+   enlaces anidados.
+   ".link--arrow" ya trae "position: relative" en el propio <a> — sin
+   este override, ese <a> (no .property-card) sería el contenedor del
+   ::before, y el overlay solo cubriría el tamaño del texto del CTA en
+   vez de toda la tarjeta. "a.property-card__cta" (especificidad 0,1,1)
+   gana de forma segura sobre ".link--arrow" (0,1,0) sin tocar esa
+   clase compartida por el resto del sitio. */
+a.property-card__cta {
+  position: static;
+}
+.property-card__cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
 .propiedades__footer {
   display: flex;
   justify-content: center;
@@ -1850,6 +1885,7 @@ body.hero--loaded .hero__subheadline {
 
 /* Project card */
 .proyecto-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1959,6 +1995,20 @@ body.hero--loaded .hero__subheadline {
   align-self: flex-start;
 }
 
+/* UX-1 — toda la tarjeta clickeable (mismo criterio que .property-card,
+   incluida la neutralización de "position: relative" de .link--arrow
+   en el propio <a> — ver comentario detallado junto a
+   .property-card__cta). */
+a.proyecto-card__cta {
+  position: static;
+}
+.proyecto-card__cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
 .proyectos__footer {
   display: flex;
   justify-content: flex-end;
@@ -2018,6 +2068,7 @@ body.hero--loaded .hero__subheadline {
 
 /* Article card */
 .article-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -2087,6 +2138,21 @@ body.hero--loaded .hero__subheadline {
 
 .article-card__cta {
   align-self: flex-start;
+}
+
+/* UX-1 — corrige la inconsistencia detectada: la tarjeta ya mostraba
+   cursor:pointer y hover terracota en el título (ver .article-card:hover
+   .article-card__title más abajo) sin que el click funcionara en toda
+   la superficie. Mismo patrón que .property-card/.proyecto-card,
+   incluida la neutralización de "position: relative" de .link--arrow. */
+a.article-card__cta {
+  position: static;
+}
+.article-card__cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
 }
 
 .perspectivas__divider {
