@@ -1,0 +1,59 @@
+{
+  "tituloEn": "2 AND 3 BEDROOM APARTMENTS — FROM $181,838 IN TUMBA MUERTO",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 181838
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/3rectítulo1_captura-de-pantalla-1-.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/img_20260828_101303_00_067_2026-09-04_10-48-54_capturadepantalla.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/3rectítulo1_captura-de-pantalla-3-.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/3rectítulo1_captura-de-pantalla.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/img_20260828_101226_00_065_2026-09-04_10-45-40_capturadepantalla.jpg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 2,
+    "banos": 2,
+    "estacionamientos": 1
+  },
+  "mostrarEnHome": true,
+  "descripcion": "**Resumen del proyecto**\nProyecto residencial ubicado sobre la Vía Ricardo J. Alfaro, sector Tumba Muerto, 2 y 3 recámaras distribuidos en 24 niveles, más un piso social exclusivo.\n\n**Datos principales**\nPrecio desde **$181,838** (**$2,525/m²**, el mejor valor disponible del inventario) · metraje de **62.57 m² a 126.02 m²** según modelo · 8-9 tipologías (Modelos A a I), de **2 a 3 recámaras y 2 a 3 baños** · 216 unidades en total, 9 por piso · 24 niveles de apartamentos (piso 7 al 30) más un piso social exclusivo (piso 31). Estado del proyecto y fecha de entrega: dato no suministrado.\n\n**Características de las unidades**\nVentanales de piso a techo (2.90 m de altura) y acabados 100% italianos en todas las unidades. El modelo de mayor metraje (126.02 m²) incluye 2 estacionamientos; en el resto de los modelos, la cantidad de estacionamientos es un dato no suministrado por unidad.\n\n**Amenidades**\nPiscina infinita, gimnasio y sundeck; parque infantil, salón montessori y área para mascotas; rooftop exclusivo en el piso 31 con zona de BBQ; sala de coworking; game room, splash park y cancha de básket 3x3.\n\n**Ubicación**\nSobre la Vía Ricardo J. Alfaro, sector Tumba Muerto — a minutos de 4 universidades (Católica Santa María La Antigua, ISAE, Interamericana, Latina) y de centros comerciales como Super Mercado Rey, Super Xtra y Farmacia Metro.\n\n**¿Para quién puede funcionar esta propiedad?**\nPor el rango de tamaños y tipologías, puede funcionar tanto para jóvenes profesionales que buscan una unidad compacta como para familias en crecimiento que necesitan más espacio.\n\n**Información adicional**\nArte integrado a la arquitectura del artista panameño Emmanuel Moses en las áreas comunes. Disponibilidad y precios sujetos a confirmación — el inventario de referencia es del 18 de agosto de 2026.\n\n¿Quieres conocer disponibilidad y precios actuales? Contáctanos y te mostramos las opciones disponibles.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "sector": " Vía Ricardo J. Alfaro, Tumba Muerto"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "**Project overview**\nResidential project located on Vía Ricardo J. Alfaro, Tumba Muerto area, with 216 two- and three-bedroom apartments across 24 floors, plus an exclusive social floor.\n\n**Key facts**\nPriced from **$181,838** (**$2,525/m²**, the best available value in the inventory) · sizes from **62.57 m² to 126.02 m²** depending on the model · 8-9 layouts (Models A through I), **2 to 3 bedrooms and 2 to 3 bathrooms** · 216 units in total, 9 per floor · 24 residential floors (7 to 30) plus an exclusive social floor (31). Project status and delivery date: not provided.\n\n**Unit features**\nFloor-to-ceiling windows (2.90 m) and 100% Italian finishes in every unit. The largest model (126.02 m²) includes 2 parking spaces; parking for the other models is not specified per unit.\n\n**Amenities**\nInfinity pool, gym and sundeck; playground, Montessori room and pet area; exclusive rooftop on floor 31 with a BBQ zone; coworking lounge; game room, splash park and a 3x3 basketball court.\n\n**Location**\nOn Vía Ricardo J. Alfaro, Tumba Muerto area — minutes from 4 universities (Universidad Católica Santa María La Antigua, ISAE, Universidad Interamericana, Universidad Latina) and from shopping destinations like Super Mercado Rey, Super Xtra and Farmacia Metro.\n\n**Who is this for?**\nGiven the range of sizes and layouts, it can work both for young professionals looking for a compact unit and for growing families needing more space.\n\n**Additional information**\nArchitecture-integrated art by Panamanian artist Emmanuel Moses in the common areas. Availability and pricing subject to confirmation — the reference inventory is from August 18, 2026.\n\nWant current availability and pricing? Contact us and we'll show you the available options.",
+  "operacion": "venta",
+  "ubicacionPublica": "Vía Ricardo J. Alfaro, Tumba Muerto, Ciudad de Panamá",
+  "titulo": "APARTAMENTOS DE 2 Y 3 RECÁMARAS — DESDE $181,838 EN TUMBA MUERTO",
+  "seo": {
+    "noIndex": false
+  }
+}
