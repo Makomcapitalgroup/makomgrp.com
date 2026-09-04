@@ -1835,6 +1835,32 @@ a.property-card__cta {
   z-index: 1;
 }
 
+/* UX-2 — versión compacta de .property-card para "También podría
+   interesarte" (ficha individual de propiedad). Mismo componente,
+   mismo mecanismo clickeable (::before de arriba) — solo reduce
+   proporciones/tipografía, sin badge de categoría ni referencia. */
+.property-card--compact .property-card__image {
+  aspect-ratio: 16 / 10;
+}
+
+.property-card--compact .property-card__body {
+  padding: 16px 16px 20px;
+  gap: 6px;
+}
+
+.property-card--compact .property-card__name {
+  font-size: 15px;
+}
+
+.property-card--compact .property-card__price {
+  font-size: 17px;
+  margin-top: 2px;
+}
+
+.property-card--compact .property-card__cta {
+  margin-top: 8px;
+}
+
 .propiedades__footer {
   display: flex;
   justify-content: center;
@@ -3175,6 +3201,34 @@ a.article-card__cta {
   .ficha-propiedad {
     padding-top: calc(var(--header-height) + 32px);
   }
+}
+
+/* UX-2 — "También podría interesarte". Hermana de .ficha-propiedad__cuerpo
+   (no dentro de .ficha-propiedad__principal ni del aside), para que
+   ocupe el ancho completo del contenido en vez de la columna angosta
+   junto al CTA lateral. Reutiliza .ficha-propiedad__seccion (borde
+   superior + padding-block) para la misma jerarquía editorial que
+   "Descripción"/"Detalles"/"Ubicación". */
+.ficha-relacionadas__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 640px) {
+  .ficha-relacionadas__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .ficha-relacionadas__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.ficha-relacionadas__vertodas {
+  margin-top: 24px;
 }
 
 /* 29. CATÁLOGO DE PROPIEDADES

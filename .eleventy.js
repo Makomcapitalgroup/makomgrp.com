@@ -622,6 +622,50 @@ module.exports = function (eleventyConfig) {
       .sort((a, b) => fechaOrden(b).localeCompare(fechaOrden(a)));
   });
 
+  // UX-2: hasta 3 propiedades relacionadas para la ficha individual.
+  // Se aplica sobre una lista ya pasada por "propiedadesPublicas" (la
+  // plantilla encadena ambos filtros) — nunca recomienda una propiedad
+  // vendida/alquilada/archivada/borrador. Regla aprobada: misma
+  // operación obligatoria (venta con venta, alquiler con alquiler),
+  // excluye siempre la propia propiedad, puntúa por afinidad (mismo
+  // tipo +2, misma zona +2, precio dentro de ±20% +1) y desempata por
+  // fecha real de modificación en git — "metadatos.fecha*" no está
+  // poblado todavía en ninguna propiedad real (ver "lastmodDeArchivo"
+  // más abajo, misma fuente que ya usa el sitemap). Los campos que
+  // faltan en registros antiguos (tipo, ubicacionInterna.sector,
+  // precio.monto) simplemente no suman puntos — nunca rompen el build.
+  eleventyConfig.addFilter("propiedadesRelacionadas", (lista, actual) => {
+    if (!actual) return [];
+    const candidatas = (lista || []).filter(
+      (p) => p.slug !== actual.slug && p.operacion === actual.operacion
+    );
+    const montoActual =
+      actual.precio && typeof actual.precio.monto === "number" ? actual.precio.monto : null;
+    const zonaActual = actual.ubicacionInterna && actual.ubicacionInterna.sector;
+
+    const puntuar = (p) => {
+      let score = 0;
+      if (p.tipo && p.tipo === actual.tipo) score += 2;
+      const zonaP = p.ubicacionInterna && p.ubicacionInterna.sector;
+      if (zonaActual && zonaP && zonaP === zonaActual) score += 2;
+      if (montoActual != null && p.precio && typeof p.precio.monto === "number") {
+        const diferencia = Math.abs(p.precio.monto - montoActual) / montoActual;
+        if (diferencia <= 0.2) score += 1;
+      }
+      return score;
+    };
+
+    return candidatas
+      .map((p) => ({
+        propiedad: p,
+        score: puntuar(p),
+        fecha: fechaModificacionGit(p._archivoRelativo) || "",
+      }))
+      .sort((a, b) => b.score - a.score || b.fecha.localeCompare(a.fecha))
+      .slice(0, 3)
+      .map((x) => x.propiedad);
+  });
+
   // Texto breve de specs para la tarjeta de catálogo (ej. "3 hab ·
   // 2 baños · 125 m²" / "3 bed · 2 bath · 125 m²" en inglés — Milestone
   // 13), omitiendo cualquier valor no aplicable (null).

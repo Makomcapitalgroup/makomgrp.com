@@ -52,6 +52,14 @@
 {% set portada = propiedad.fotografias.galeria | portadaDe %}
 {% set mapaPublico = propiedad.mapa | mapaPublico %}
 {#
+  UX-2: "También podría interesarte" / "You may also be interested in".
+  Se calcula una sola vez aquí (misma variable para el bloque de la
+  sección más abajo) encadenando los filtros ya existentes: primero
+  "propiedadesPublicas" (nunca recomienda algo vendido/archivado/
+  borrador), luego "propiedadesRelacionadas" (scoring + límite de 3).
+#}
+{% set relacionadas = collections.propiedades | propiedadesPublicas | propiedadesRelacionadas(propiedad) %}
+{#
   Milestone 9: prioridad de imagen Open Graph — imagen social (si se
   subió en el bloque "SEO avanzado") > portada de la galería > imagen
   OG corporativa existente como último respaldo, para que ninguna
@@ -251,6 +259,42 @@
           </div>
         </aside>
       </div>
+
+      {% if relacionadas.length > 0 %}
+      <div class="ficha-propiedad__seccion ficha-relacionadas" data-reveal>
+        <h2 class="ficha-propiedad__seccion-titulo">{{ "You may also be interested in" if esEn else "También podría interesarte" }}</h2>
+        <div class="ficha-relacionadas__grid" role="list" aria-label="{{ 'Related properties' if esEn else 'Propiedades relacionadas' }}">
+          {% for p in relacionadas %}
+            {% set portadaRel = p.fotografias.galeria | portadaDe %}
+            {% set specsRel = p.detallesCuantitativos | specsTexto(lang) %}
+            {% set tituloRel = (p.tituloEn or p.titulo) if esEn else p.titulo %}
+            {% set ubicacionRel = (p.ubicacionPublicaEn or p.ubicacionPublica) if esEn else p.ubicacionPublica %}
+            <article class="property-card property-card--compact" role="listitem" aria-labelledby="rel-{{ p.slug }}-name">
+              <div class="property-card__image">
+                {% if portadaRel %}
+                  <img src="{{ portadaRel.archivo }}" alt="{{ portadaRel.alt or tituloRel }}" loading="lazy" />
+                {% else %}
+                  <div class="property-card__image-vacia">
+                    <span class="property-card__image-vacia-texto">{{ "Photo coming soon" if esEn else "Foto próximamente" }}</span>
+                  </div>
+                {% endif %}
+                <div class="property-card__badges">
+                  <span class="property-card__type">{{ (p.operacion | etiquetaEn(propiedadesConfig.operaciones)) if esEn else (p.operacion | etiqueta(propiedadesConfig.operaciones)) }}</span>
+                </div>
+              </div>
+              <div class="property-card__body">
+                <h3 class="property-card__name" id="rel-{{ p.slug }}-name">{{ tituloRel }}</h3>
+                <p class="property-card__location">{{ ubicacionRel }}</p>
+                <p class="property-card__price">{{ p.precio | precioFormato(p.operacion, lang) }}</p>
+                {% if specsRel %}<p class="property-card__specs">{{ specsRel }}</p>{% endif %}
+                <a href="{{ ('/en/properties/' if esEn else '/propiedades/') + p.slug + '/' }}" class="link--arrow property-card__cta">{{ "View property" if esEn else "Ver propiedad" }}</a>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+        <a class="link--arrow ficha-relacionadas__vertodas" href="{{ '/en/properties/' if esEn else '/propiedades/' }}">{{ "View all properties" if esEn else "Ver todas las propiedades" }}</a>
+      </div>
+      {% endif %}
 
     </div>
   </section>
