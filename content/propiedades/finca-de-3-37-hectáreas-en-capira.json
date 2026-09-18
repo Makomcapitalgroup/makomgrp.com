@@ -3,11 +3,13 @@
     "bbq"
   ],
   "tituloEn": "3.37-HECTARE FARM LAND IN CAPIRA — FROM $5 PER M²",
-  "referenciaMakom": "MKW-RE-013",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
   "mapa": {
-    "activo": false,
+    "activo": true,
     "precision": "aproximada",
-    "nivelZoom": 15
+    "nivelZoom": 15,
+    "latitud": 8.85954,
+    "longitud": -79.996738
   },
   "estado": "disponible",
   "precio": {
