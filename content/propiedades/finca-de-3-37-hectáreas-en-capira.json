@@ -1,0 +1,65 @@
+{
+  "amenidades": [
+    "bbq"
+  ],
+  "tituloEn": "3.37-HECTARE FARM LAND IN CAPIRA — FROM $5 PER M²",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 168678
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/7fb07f0a-2f8c-414a-baf8-c54dbc8c6859.png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/c4136e01-830b-42a0-af2c-9b990e2e5634.png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/b697a0e1-8e45-44b5-9e84-a0264c554887.png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/6f564ece-588f-402b-82ef-9b4fa822d77e.png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/83ddc5e8-6b45-418f-b40a-50022c2ceeaf.png"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 1,
+    "banos": 0.5,
+    "metrajeTotal": 33679
+  },
+  "mostrarEnHome": false,
+  "descripcion": "Finca rústica de 3.37 hectáreas (33,735.77 m²) ubicada en el distrito de Capira, Panamá Oeste, con frente sobre camino pavimentado y acceso vehicular directo.\n\nDatos principales\n\nPrecio desde **US$5.00 por m²** · Superficie total de **33,735.77 m² (3.37 hectáreas)** · terreno plano, sin construcciones · origen: Adjudicación de Baldíos Nacionales con folio real vigente.\n\nCaracterísticas del terreno\n\n- Superficie plana, cubierta de grama, con árboles maduros que aportan sombra natural (incluye palmas).\n- Cercado perimetral en parte de su frente (cerca tipo rancho).\n- Frente sobre camino pavimentado, con acceso vehicular directo.\n- Espacio abierto apto para actividades al aire libre, uso agrícola/ganadero, o como reserva de terreno para desarrollo futuro.\n\nUbicación\n\nDistrito de Capira, Panamá Oeste. La vía frente a la propiedad conduce directo a un río cercano — un plus para quien busca un espacio con acceso natural al agua.\n\n¿Para quién puede funcionar esta propiedad?\n\nPuede funcionar para proyectos agrícolas o ganaderos, como finca de recreo, o como reserva de terreno para un desarrollo futuro, sujeto a los usos de suelo que confirmen las autoridades correspondientes.\n\nInformación adicional\n\nTerreno con origen de Adjudicación de Baldíos Nacionales (trámite agotado), con folio real vigente en el Registro Público a favor del propietario desde 2015.\n\n¿Quieres conocer más detalles o coordinar una visita? Contáctanos y te damos la información completa de esta finca.",
+  "ubicacionInterna": {
+    "provincia": "Panamá Oeste",
+    "distrito": "capira",
+    "sector": "Capira, Panamá Oeste "
+  },
+  "tipo": "terreno",
+  "categoriaGeneral": "terreno",
+  "descripcionEn": "Project overview\n\nRustic farm land of 3.37 hectares (33,735.77 m²) located in the district of Capira, West Panama, fronting a paved road with direct vehicle access.\n\nKey facts\n\nPriced from **US$5.00 per m²** · total area of **33,735.77 m² (3.37 hectares)** · flat land, no structures · originated from a National Vacant Land Adjudication with an active title.\n\nLand features\n\n- Flat, grass-covered land with mature shade trees (including palms).\n- Perimeter fencing along part of the road frontage (ranch-style fence).\n- Fronts a paved road with direct vehicle access.\n- Open space suited for outdoor activities, agricultural/livestock use, or as a land reserve for future development.\n\nLocation\n\nDistrict of Capira, West Panama. The road in front of the property leads directly to a nearby river — a plus for anyone looking for natural water access.\n\nWho is this for?\n\nCan work for agricultural or livestock projects, as a recreational property, or as a land reserve for future development, subject to the land use confirmed by the relevant authorities.\n\nAdditional information\n\nLand originated from a National Vacant Land Adjudication (process completed), with an active title in the Public Registry in the owner's favor since 2015.\n\nWant more details or to schedule a visit? Contact us for the complete information on this property.",
+  "operacion": "venta",
+  "ubicacionPublica": "Capira, Panamá Oeste — camino que conduce a Nueva Arenosa y La Florida",
+  "titulo": "FINCA DE 3.37 HECTÁREAS EN CAPIRA",
+  "detalles": [
+    "deposito"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
