@@ -12,7 +12,8 @@
   "estado": "disponible",
   "precio": {
     "moneda": "USD",
-    "monto": 1550
+    "monto": 1550,
+    "periodicidad": "mensual"
   },
   "fotografias": {
     "galeria": [
@@ -21,20 +22,16 @@
         "archivo": "/assets/propiedades/uploads/chatgpt-image-21-sept-2026-02_49_06-p.m..png"
       },
       {
-        "portada": true,
-        "archivo": "/assets/propiedades/uploads/chatgpt-image-21-sept-2026-02_51_04-p.m..png"
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/chatgpt-image-21-sept-2026-02_49_06-p.m..png"
       },
       {
         "portada": false,
-        "archivo": "/assets/propiedades/uploads/local-sevilla_captura-de-pantalla-1-.jpg"
+        "archivo": "/assets/propiedades/uploads/img_20260919_153601_00_382_2026-09-21_13-29-54_capturadepantalla.jpg"
       },
       {
         "portada": false,
         "archivo": "/assets/propiedades/uploads/local-sevilla_captura-de-pantalla-4-.jpg"
-      },
-      {
-        "portada": false,
-        "archivo": "/assets/propiedades/uploads/img_20260919_153601_00_382_2026-09-21_17-18-13_capturadepantalla.jpg"
       }
     ]
   },
