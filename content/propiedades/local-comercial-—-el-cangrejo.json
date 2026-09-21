@@ -1,0 +1,67 @@
+{
+  "amenidades": [
+    "estacionamientos-techados"
+  ],
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 1550,
+    "periodicidad": "mensual"
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/img_20260919_153601_00_382_2026-09-21_13-29-54_capturadepantalla.jpg"
+      },
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/chatgpt-image-21-sept-2026-02_51_04-p.m..png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/img_20260919_153507_00_380_2026-09-21_17-25-50_capturadepantalla.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/chatgpt-image-21-sept-2026-02_49_06-p.m..png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/local-sevilla_captura-de-pantalla-4-.jpg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 4,
+    "banos": 1,
+    "estacionamientos": 2,
+    "metrajeTotal": 52,
+    "piso": "Planta baja"
+  },
+  "mostrarEnHome": false,
+  "descripcion": "Local comercial de 52 m² ubicado en Vía Eusebio Morales, El Cangrejo, en la planta baja de un edificio de hotel, sobre una vía principal de alto tráfico.\n\nDatos principales\n\n**52 m²** de área · 4 espacios internos con divisiones ya hechas · cocineta con fregadero (espacio para microondas y similares) · 1 baño · 2 puestos de estacionamiento fijo, más acceso directo a estacionamientos de visita.\n\nCaracterísticas\n\n- Local ya dividido en 4 espacios independientes, listo para adaptar según el negocio.\n- Cocineta con fregadero, ideal para preparar café o alimentos ligeros para el personal o los clientes.\n- Baño propio.\n- 2 puestos de estacionamiento exclusivos, además de acceso directo a los estacionamientos de visita del edificio.\n\nUbicación\n\nSobre Vía Eusebio Morales, El Cangrejo — una de las vías más transitadas de la zona, en la planta baja de un edificio de hotel, con alta visibilidad para cualquier negocio.\n\n¿Para quién puede funcionar esta propiedad?\n\nPuede funcionar para oficinas, consultorios o cualquier negocio que busque visibilidad y fácil acceso en una zona corporativa de alto tráfico, con estacionamiento asegurado para clientes y personal.\n\n¿Quieres conocer más detalles o coordinar una visita? Contáctanos y con gusto te damos toda la información.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "sector": "El cangrejo"
+  },
+  "tipo": "local-comercial",
+  "categoriaGeneral": "comercial",
+  "descripcionEn": "",
+  "operacion": "alquiler",
+  "ubicacionPublica": "Calle Eusebio Morales, El Cangrejo. ",
+  "titulo": "LOCAL COMERCIAL — EL CANGREJO",
+  "detalles": [
+    "aires-acondicionados"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
