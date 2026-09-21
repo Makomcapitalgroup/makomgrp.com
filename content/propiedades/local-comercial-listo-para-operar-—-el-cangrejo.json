@@ -9,7 +9,7 @@
     "precision": "aproximada",
     "nivelZoom": 15
   },
-  "estado": "borrador",
+  "estado": "disponible",
   "precio": {
     "moneda": "USD",
     "monto": 1550
@@ -53,7 +53,7 @@
   "descripcionEn": "",
   "operacion": "alquiler",
   "ubicacionPublica": "Calle Eusebio Morales, El Cangrejo. ",
-  "titulo": "LOCAL COMERCIAL LISTO PARA OPERAR — EL CANGREJO",
+  "titulo": "LOCAL COMERCIAL  — EL CANGREJO",
   "detalles": [
     "aires-acondicionados"
   ],
