@@ -1,0 +1,77 @@
+{
+  "amenidades": [
+    "piscina",
+    "lobby",
+    "gimnasio",
+    "elevadores",
+    "planta-electrica",
+    "area-social",
+    "coworking",
+    "estacionamientos-techados"
+  ],
+  "tituloEn": "2-BEDROOM APARTMENTS WITH BALCONY — FROM $222,265 ON VÍA ESPAÑA",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 222265
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/apto4_1.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/apto4_2.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/fonduee-studio-x-efc-parksquare-lifestyle-58.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/fonduee-studio-x-efc-parksquare-lifestyle-9.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/img_3550.jpg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 2,
+    "banos": 2,
+    "estacionamientos": 1,
+    "metrajeTotal": 73
+  },
+  "mostrarEnHome": true,
+  "ordenHome": 1,
+  "descripcion": "Proyecto residencial en preventa sobre Vía España, con torre de 43 pisos y áreas sociales en dos niveles. Incluye plaza comercial y centro médico con acceso independiente.\n\n**Precio desde $222,265** — apartamentos de 70 a 99 m², 2 y 3 recámaras. Modelos de 70-73 m² con balcón y 1 estacionamiento; modelo de 80 m² con balcón y estacionamiento doble. También hay unidades tipo dúplex de mayor tamaño (93-140 m²).\n\n**Amenidades:** piscina, gimnasio, spa con sauna y jacuzzi, cine, cancha de squash y salón de coworking.\n\nA pocos pasos del Metro Fernández de Córdoba, cerca de Super 99, Riba Smith, hospitales y colegios de la zona.\n\nConsulta con un asesor de MAKOM la disponibilidad y precio vigente según piso y modelo.\n\n¿Quieres conocer disponibilidad y precios actuales? Contáctanos y te mostramos las opciones disponibles.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "sector": " Vía España"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "",
+  "operacion": "venta",
+  "ubicacionPublica": "Vía España, Ciudad de Panamá",
+  "titulo": "APARTAMENTOS DE 2 RECÁMARAS CON BALCÓN — DESDE $222,265 EN VÍA ESPAÑA",
+  "detalles": [
+    "lavanderia",
+    "balcon",
+    "cocina-cerrada",
+    "vista-ciudad"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
