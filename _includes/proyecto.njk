@@ -20,8 +20,15 @@
 {% set urlAlternoEn = "https://makomgrp.com/en/projects/" + proyecto.slug + "/" %}
 {% set langSwitchUrl = urlAlternoEs if esEn else urlAlternoEn %}
 {% set esIndexableProyecto = proyecto | esIndexable %}
-{% set tituloBase = (proyecto.seo.titulo if not esEn else (proyecto.seo.tituloEn or proyecto.seo.titulo)) or (tituloMostrado + " | MAKOM CAPITAL GROUP") %}
-{% set tituloSeo = tituloBase | resumenSeo(60) %}
+{#
+  SEO Block 2E/2F — misma arquitectura que _includes/propiedad.njk
+  ("Alternativa A"): fallback automático únicamente "tituloMostrado +
+  | MAKOM", sin ubicación automática ni truncado rígido. Override manual
+  ("seo.titulo"/"seo.tituloEn") se usa tal cual, sin truncar, y sin
+  fallback cruzado entre idiomas — una ficha EN sin "seo.tituloEn" nunca
+  cae al "seo.titulo" en español.
+#}
+{% set tituloSeo = (proyecto.seo.titulo if not esEn else proyecto.seo.tituloEn) or (tituloMostrado + " | MAKOM") %}
 {% set descripcionSeoBase = (proyecto.seo.descripcion if not esEn else (proyecto.seo.descripcionEn or proyecto.seo.descripcion)) %}
 {% set descripcionSeo = descripcionSeoBase or (extractoMostrado | resumenSeo(155)) %}
 {% set imagenAbsoluta = ("https://makomgrp.com" + proyecto.imagenPrincipal) if proyecto.imagenPrincipal else null %}

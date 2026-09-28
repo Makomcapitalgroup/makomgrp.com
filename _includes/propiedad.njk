@@ -37,17 +37,23 @@
 #}
 {% set esIndexable = propiedad | esPropiedadIndexable %}
 {% set robotsMeta = propiedad | robotsMetaDe %}
-{% set tituloBase = propiedad.seo.titulo or (tituloMostrado + " — " + operacionEtiqueta + (" in " if esEn else " en ") + ubicacionMostrada + " | MAKOM CAPITAL GROUP") %}
 {#
-  El truncado a 60 caracteres (límite práctico de un <title> en SERPs)
-  solo se aplica al título AUTOGENERADO. Si Loyra/Yurlio escriben un
-  "Título SEO" a mano en el bloque opcional, se respeta tal cual —
-  es una decisión editorial explícita, no algo que debamos recortar.
-  Milestone 13: el "Título SEO"/"Descripción SEO" manual del CMS no
-  tiene variante en inglés (fuera de alcance de este bloque) — en la
-  ficha EN se usa igual como respaldo si existe, en español.
+  SEO Block 2E/2F — arquitectura de "tituloSeo" ("Alternativa A", aprobada
+  tras auditar los 36 títulos reales del catálogo): el fallback automático
+  es únicamente "tituloMostrado + | MAKOM" — sin operación, sin ubicación,
+  sin heurísticas de detección, sin truncado rígido a 60 caracteres. El
+  título editorial (tituloMostrado) ya es la fuente principal de verdad;
+  los 3 casos que antes resultaban genéricos se corrigieron en los datos
+  (titulo/tituloEn), no en esta plantilla — "datos buenos, template simple".
+
+  Override manual: "seo.titulo" (ES) / "seo.tituloEn" (EN) se usan tal
+  cual, SIN truncar — es una decisión editorial explícita. Los dos
+  idiomas son independientes entre sí: una ficha EN sin "seo.tituloEn"
+  NUNCA cae al "seo.titulo" en español (a diferencia del comportamiento
+  anterior) — cae directamente a la fórmula automática con el
+  "tituloMostrado" ya resuelto en inglés más arriba.
 #}
-{% set tituloSeo = tituloBase if propiedad.seo.titulo else (tituloBase | resumenSeo(60)) %}
+{% set tituloSeo = (propiedad.seo.titulo if not esEn else propiedad.seo.tituloEn) or (tituloMostrado + " | MAKOM") %}
 {% set descripcionSeo = propiedad.seo.descripcion or (descripcionMostrada | resumenSeo(155)) %}
 {% set portada = propiedad.fotografias.galeria | portadaDe %}
 {% set mapaPublico = propiedad.mapa | mapaPublico %}
