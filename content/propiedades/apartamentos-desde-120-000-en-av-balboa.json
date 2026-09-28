@@ -20,19 +20,27 @@
     "galeria": [
       {
         "portada": false,
-        "archivo": "/assets/propiedades/uploads/whatsapp-image-2026-09-25-at-11.50.49-am.jpeg"
+        "archivo": "/assets/propiedades/uploads/02_sala_apto_1.jpg.jpeg"
       },
       {
         "portada": true,
-        "archivo": "/assets/propiedades/uploads/whatsapp-image-2026-09-25-at-11.50.49-am-6-.jpeg"
+        "archivo": "/assets/propiedades/uploads/04_recamara_principal_apto_1.jpg.jpeg"
       },
       {
         "portada": false,
-        "archivo": "/assets/propiedades/uploads/whatsapp-image-2026-09-25-at-11.50.49-am-1-.jpeg"
+        "archivo": "/assets/propiedades/uploads/07_cocina_apto_2.jpg.jpeg"
+      },
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/10_sala_comedor_apto_3.jpg.jpeg"
       },
       {
         "portada": false,
-        "archivo": "/assets/propiedades/uploads/whatsapp-image-2026-09-25-at-11.50.49-am-4-.jpeg"
+        "archivo": "/assets/propiedades/uploads/15_fachada_1.jpg.jpeg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/18_sky_lounge.jpg.jpeg"
       }
     ]
   },
