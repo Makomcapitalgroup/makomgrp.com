@@ -1,0 +1,67 @@
+{
+  "amenidades": [
+    "rooftop",
+    "pet-friendly",
+    "garita-seguridad"
+  ],
+  "tituloEn": "1, 2 AND 3 BEDROOM APARTMENTS — FROM $120,000 ON AV. BALBOA",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 120000
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/whatsapp-image-2026-09-25-at-11.50.49-am.jpeg"
+      },
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/whatsapp-image-2026-09-25-at-11.50.49-am-6-.jpeg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/whatsapp-image-2026-09-25-at-11.50.49-am-1-.jpeg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/whatsapp-image-2026-09-25-at-11.50.49-am-4-.jpeg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 1,
+    "banos": 2,
+    "metrajeInterno": 35,
+    "metrajeTotal": ""
+  },
+  "mostrarEnHome": false,
+  "descripcion": "Apartamentos de 1, 2 y 3 recámaras en el corazón de la ciudad, a pasos de la Avenida Balboa y cerca de una estación del metro.\n\n**Desde $120,000**, con opciones desde 35 m² hasta 63 m², en distintas tipologías según disponibilidad.\n\nEl proyecto ofrece rooftop, jacuzzi, área BBQ, concepto eco friendly y espacios pet friendly.\n\nUbicado en una zona céntrica, bien conectada por transporte público y cerca de la Avenida Balboa.\n\n¿Quieres conocer disponibilidad y precios actuales? Contáctanos y te mostramos las opciones disponibles.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "sector": "Corazón de la ciudad, cerca de la Avenida Balboa"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "1, 2 and 3-bedroom apartments in the heart of the city, steps from Avenida Balboa and close to a metro station.\n\n**Starting from $120,000**, with options from 35 m² to 63 m², across different layouts depending on availability.\n\nThe project offers a rooftop, jacuzzi, BBQ area, an eco-friendly concept and pet-friendly spaces.\n\nLocated in a central, well-connected area near public transportation and close to Avenida Balboa.\n\nWant to know current availability and pricing? Contact us and we'll show you the available options.",
+  "operacion": "venta",
+  "ubicacionPublica": "Corazón de la ciudad, a pasos de la Avenida Balboa y cerca de una estación del metro",
+  "titulo": "APARTAMENTOS DESDE $120,000 EN AV. BALBOA",
+  "fechaEntrega": "futura",
+  "detalles": [
+    "balcon",
+    "cocina-abierta",
+    "vista-ciudad"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
