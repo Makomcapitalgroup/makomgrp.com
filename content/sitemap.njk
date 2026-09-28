@@ -31,13 +31,10 @@ eleventyExcludeFromCollections: true
 {%- set proyectosListadoIndexable = collections.proyectos | proyectosEsIndexable -%}
 {%- set perspectivasIndexables = collections.perspectivas | perspectivasIndexables -%}
 {%- set perspectivasListadoIndexable = collections.perspectivas | perspectivasEsIndexable -%}
-{%- set lastmodHome = "index.html" | lastmodDeArchivo -%}
-{%- set lastmodHomeEn = "en/index.html" | lastmodDeArchivo -%}
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://makomgrp.com/</loc>
-    {% if lastmodHome %}<lastmod>{{ lastmodHome }}</lastmod>{% endif %}
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
     <xhtml:link rel="alternate" hreflang="es" href="https://makomgrp.com/" />
@@ -46,7 +43,6 @@ eleventyExcludeFromCollections: true
   </url>
   <url>
     <loc>https://makomgrp.com/en/</loc>
-    {% if lastmodHomeEn %}<lastmod>{{ lastmodHomeEn }}</lastmod>{% endif %}
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
     <xhtml:link rel="alternate" hreflang="es" href="https://makomgrp.com/" />
@@ -68,17 +64,14 @@ eleventyExcludeFromCollections: true
   </url>
   {%- endif %}
   {%- for p in indexables %}
-  {%- set lastmodProp = p._archivoRelativo | lastmodDeArchivo %}
   <url>
     <loc>https://makomgrp.com/propiedades/{{ p.slug }}/</loc>
-    {% if lastmodProp %}<lastmod>{{ lastmodProp }}</lastmod>{% endif %}
     <xhtml:link rel="alternate" hreflang="es" href="https://makomgrp.com/propiedades/{{ p.slug }}/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://makomgrp.com/en/properties/{{ p.slug }}/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://makomgrp.com/propiedades/{{ p.slug }}/" />
   </url>
   <url>
     <loc>https://makomgrp.com/en/properties/{{ p.slug }}/</loc>
-    {% if lastmodProp %}<lastmod>{{ lastmodProp }}</lastmod>{% endif %}
     <xhtml:link rel="alternate" hreflang="es" href="https://makomgrp.com/propiedades/{{ p.slug }}/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://makomgrp.com/en/properties/{{ p.slug }}/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://makomgrp.com/propiedades/{{ p.slug }}/" />
@@ -99,17 +92,14 @@ eleventyExcludeFromCollections: true
   </url>
   {%- endif %}
   {%- for p in proyectosIndexables %}
-  {%- set lastmodProy = p._archivoRelativo | lastmodDeArchivo %}
   <url>
     <loc>https://makomgrp.com/proyectos/{{ p.slug }}/</loc>
-    {% if lastmodProy %}<lastmod>{{ lastmodProy }}</lastmod>{% endif %}
     <xhtml:link rel="alternate" hreflang="es" href="https://makomgrp.com/proyectos/{{ p.slug }}/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://makomgrp.com/en/projects/{{ p.slug }}/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://makomgrp.com/proyectos/{{ p.slug }}/" />
   </url>
   <url>
     <loc>https://makomgrp.com/en/projects/{{ p.slug }}/</loc>
-    {% if lastmodProy %}<lastmod>{{ lastmodProy }}</lastmod>{% endif %}
     <xhtml:link rel="alternate" hreflang="es" href="https://makomgrp.com/proyectos/{{ p.slug }}/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://makomgrp.com/en/projects/{{ p.slug }}/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://makomgrp.com/proyectos/{{ p.slug }}/" />
@@ -130,17 +120,14 @@ eleventyExcludeFromCollections: true
   </url>
   {%- endif %}
   {%- for a in perspectivasIndexables %}
-  {%- set lastmodPersp = a._archivoRelativo | lastmodDeArchivo %}
   <url>
     <loc>https://makomgrp.com/perspectivas/{{ a.slug }}/</loc>
-    {% if lastmodPersp %}<lastmod>{{ lastmodPersp }}</lastmod>{% endif %}
     <xhtml:link rel="alternate" hreflang="es" href="https://makomgrp.com/perspectivas/{{ a.slug }}/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://makomgrp.com/en/insights/{{ a.slug }}/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://makomgrp.com/perspectivas/{{ a.slug }}/" />
   </url>
   <url>
     <loc>https://makomgrp.com/en/insights/{{ a.slug }}/</loc>
-    {% if lastmodPersp %}<lastmod>{{ lastmodPersp }}</lastmod>{% endif %}
     <xhtml:link rel="alternate" hreflang="es" href="https://makomgrp.com/perspectivas/{{ a.slug }}/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://makomgrp.com/en/insights/{{ a.slug }}/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://makomgrp.com/perspectivas/{{ a.slug }}/" />
