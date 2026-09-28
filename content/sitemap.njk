@@ -2,14 +2,6 @@
 permalink: "/sitemap.xml"
 eleventyExcludeFromCollections: true
 ---
-{%- set indexables = collections.propiedades | propiedadesIndexables -%}
-{%- set catalogoIndexable = collections.propiedades | catalogoEsIndexable -%}
-{%- set proyectosIndexables = collections.proyectos | proyectosIndexables -%}
-{%- set proyectosListadoIndexable = collections.proyectos | proyectosEsIndexable -%}
-{%- set perspectivasIndexables = collections.perspectivas | perspectivasIndexables -%}
-{%- set perspectivasListadoIndexable = collections.perspectivas | perspectivasEsIndexable -%}
-{%- set lastmodHome = "index.html" | lastmodDeArchivo -%}
-{%- set lastmodHomeEn = "en/index.html" | lastmodDeArchivo -%}
 {#
   Milestone 13 — bilingüe: cada URL indexable existe en ES y EN (mismo
   contenido real, distinta ruta). Se anota con <xhtml:link
@@ -18,7 +10,29 @@ eleventyExcludeFromCollections: true
   únicamente de las etiquetas <link rel="alternate"> del <head> de
   cada página (que ya existen, pero el sitemap las refuerza). /admin/
   nunca se incluye aquí — nunca lo estuvo.
+
+  Fix (declaración XML no comenzaba en el byte 0): este bloque de
+  comentario vivía originalmente justo antes de la línea "<?xml", sin
+  ningún recorte de espacio en blanco de por medio. El motor de
+  plantillas usado en este proyecto no admite recorte de espacio en
+  los comentarios (a diferencia de las etiquetas de asignación de
+  variables, que sí lo admiten y ya se usaban en el bloque de abajo).
+  La solución mínima es de ORDEN, no de sintaxis: mover este
+  comentario a ANTES del bloque de asignaciones, para que lo último
+  que quede inmediatamente antes de "<?xml" sea una de esas
+  asignaciones con recorte a la derecha — ese recorte elimina el salto
+  de línea real que antes quedaba como primer byte del documento y
+  rompía el parseo XML (Google Search Console reportaba: no se pudo
+  leer el sitemap, cero páginas descubiertas).
 #}
+{%- set indexables = collections.propiedades | propiedadesIndexables -%}
+{%- set catalogoIndexable = collections.propiedades | catalogoEsIndexable -%}
+{%- set proyectosIndexables = collections.proyectos | proyectosIndexables -%}
+{%- set proyectosListadoIndexable = collections.proyectos | proyectosEsIndexable -%}
+{%- set perspectivasIndexables = collections.perspectivas | perspectivasIndexables -%}
+{%- set perspectivasListadoIndexable = collections.perspectivas | perspectivasEsIndexable -%}
+{%- set lastmodHome = "index.html" | lastmodDeArchivo -%}
+{%- set lastmodHomeEn = "en/index.html" | lastmodDeArchivo -%}
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
