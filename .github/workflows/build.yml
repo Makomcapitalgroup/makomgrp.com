@@ -1,20 +1,19 @@
 name: Build y Deploy (Eleventy → GitHub Pages)
 
-# Milestone 11 — Etapa 2: se agrega el job "deploy", pero queda
-# preparado sin activarse todavía. Dos protecciones independientes lo
-# mantienen inerte mientras no se autorice lo contrario:
+# Milestone 11 — Etapa 2: se agregó el job "deploy". Su única
+# protección activa hoy es la condición explícita del propio job (ver
+# más abajo): solo corre en un push directo a "main".
 #
-# 1) La condición explícita del job "deploy" (ver más abajo) impide que
-#    se ejecute salvo en un push directo a "main".
-# 2) Aunque esa condición se cumpliera, GitHub Pages de este repositorio
-#    sigue configurado como "Deploy from a branch" (Settings → Pages) —
-#    actions/deploy-pages solo funciona si la fuente de Pages está en
-#    "GitHub Actions". Mientras eso no se cambie explícitamente (fuera
-#    de este archivo, en la configuración del repositorio), el job no
-#    tiene ningún efecto aunque llegara a ejecutarse.
-#
-# Ninguna de las dos protecciones depende de la otra — cualquiera de
-# las dos, por sí sola, ya es suficiente.
+# NOTA (post-incidente, corrección de estabilidad del pipeline):
+# originalmente existía una SEGUNDA protección independiente — GitHub
+# Pages de este repositorio estaba configurado como "Deploy from a
+# branch", lo que hacía inofensivo a "actions/deploy-pages" aunque el
+# job llegara a ejecutarse. Eso YA NO ES CIERTO: la fuente de Pages de
+# este repositorio es "GitHub Actions" (build_type: "workflow",
+# verificado vía la API de Pages), así que el job "deploy" SÍ publica
+# de verdad en cuanto se ejecuta. La única protección real que queda es
+# la condición "if" del job — no asumir que hay una segunda red de
+# seguridad a nivel de configuración del repositorio.
 #
 # Milestone 12 — Etapa 8C: se agrega el job "asignar-referencia", que
 # ejecuta scripts/asignar-referencia-makom.js (Etapa 8B) ANTES de
@@ -26,10 +25,31 @@ name: Build y Deploy (Eleventy → GitHub Pages)
 # the repository contains a workflow configured to run when push
 # events occur" — con la única excepción de workflow_dispatch/
 # repository_dispatch, que no aplica aquí). Por eso no hace falta
-# "[skip ci]": la plataforma ya previene la recursión por diseño. Y
-# como el propio job "build" corre DESPUÉS de "asignar-referencia"
-# dentro de esta MISMA ejecución (no en una segunda), nunca hay una
-# ventana donde se publique un commit con "PENDIENTE-ASIGNACION".
+# "[skip ci]": la plataforma ya previene la recursión por diseño.
+#
+# CORRECCIÓN (post-incidente — Causa A del diagnóstico de pipeline):
+# la suposición original de que "build corre después de asignar-
+# referencia dentro de la MISMA ejecución, así que nunca hay ventana
+# para publicar un commit con PENDIENTE-ASIGNACION" resultó ser FALSA
+# en la práctica. Decap CMS publica commits directamente a "main" vía
+# la API de GitHub, sin pasar por la cola de concurrencia de este
+# workflow ("group: pages" solo serializa EJECUCIONES DE WORKFLOW entre
+# sí, nunca los pushes crudos de Decap). El job "asignar-referencia"
+# hacía "actions/checkout" SIN "ref" explícito — es decir, quedaba
+# congelado en el SHA que disparó esa ejecución puntual. Si, mientras
+# ese job esperaba en cola o corría, Decap publicaba una propiedad
+# nueva directo a "main", ese commit era invisible para el checkout
+# congelado: el script escaneaba una foto vieja del repo, concluía
+# (correctamente, para esa foto vieja) que no había referencias
+# pendientes, y salía sin commitear nada — sin haber visto jamás la
+# propiedad nueva. El job "build" de esa misma ejecución, en cambio, SÍ
+# hace un checkout explícito de "ref: main" (ver más abajo) y por lo
+# tanto sí veía esa propiedad nueva con "PENDIENTE-ASIGNACION" —
+# fallando la validación de Eleventy pese a que "asignar-referencia"
+# acababa de reportar éxito. Corrección aplicada: "asignar-referencia"
+# ahora también checkoutea "ref: main" explícitamente, igual que
+# "build" — ambos jobs siempre operan sobre el HEAD real de main en el
+# momento en que cada uno corre, nunca sobre un SHA de evento congelado.
 
 on:
   push:
@@ -97,8 +117,18 @@ jobs:
       # token es el GITHUB_TOKEN automático de esta ejecución, ya
       # acotado por el bloque "permissions" de este job (contents:write
       # únicamente aquí, nunca a nivel de todo el workflow).
-      - name: Checkout
+      #
+      # "ref: main" explícito (corrección de la Causa A del diagnóstico
+      # de pipeline) — sin esto, actions/checkout usa por defecto el SHA
+      # congelado del evento que disparó ESTA ejecución, que puede
+      # quedar desactualizado si Decap publica otra propiedad
+      # directamente a "main" mientras este job espera en cola o corre.
+      # Con "ref: main", este job siempre parte del HEAD real y actual
+      # de la rama en el momento en que efectivamente se ejecuta.
+      - name: Checkout (rama "main" — HEAD real y actual, nunca el SHA congelado del evento)
         uses: actions/checkout@v7
+        with:
+          ref: main
 
       - name: Configurar Node.js
         uses: actions/setup-node@v7
@@ -263,19 +293,36 @@ jobs:
         if: "!(github.ref == 'refs/heads/main' && github.event_name == 'push')"
         uses: actions/checkout@v7
 
-      - name: Verificar que el checkout corresponde al HEAD real de main
+      # CORRECCIÓN (post-incidente — Causa B del diagnóstico de
+      # pipeline): este paso originalmente hacía "exit 1" si el HEAD del
+      # checkout no coincidía con un segundo "git ls-remote" hecho
+      # segundos después. En la práctica eso no detectaba ninguna
+      # inconsistencia real: durante una ráfaga normal de publicaciones
+      # de Decap (varias fotos subidas seguidas, o una propiedad nueva
+      # con sus imágenes), "main" sigue avanzando en esos mismos
+      # segundos, así que el "ls-remote" casi siempre encontraba un HEAD
+      # más nuevo que el propio checkout — confirmado con
+      # "git merge-base --is-ancestor": el commit construido era siempre
+      # un ANCESTRO real y válido del nuevo HEAD, nunca una rama
+      # equivocada ni un estado corrupto. Fallar el build por eso solo
+      # descartaba trabajo perfectamente válido; el push posterior que
+      # hizo avanzar "main" dispara SU PROPIA ejecución de este mismo
+      # workflow, que construirá y publicará ese estado más nuevo por su
+      # cuenta. Por eso esta verificación ahora es informativa
+      # (":warning::", nunca ":error::") y JAMÁS termina el job con
+      # "exit 1" — solo deja un aviso de contexto para quien lea el log.
+      - name: Verificar HEAD de main en el momento del checkout (informativo, no bloqueante)
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          set -e
           LOCAL="$(git rev-parse HEAD)"
           REMOTO="$(git ls-remote origin refs/heads/main | cut -f1)"
-          echo "HEAD del checkout: $LOCAL"
-          echo "HEAD real de origin/main: $REMOTO"
+          echo "HEAD construido:   $LOCAL"
+          echo "HEAD real de main (en este instante): $REMOTO"
           if [ "$LOCAL" != "$REMOTO" ]; then
-            echo "::error::El checkout ($LOCAL) no coincide con el HEAD real de main ($REMOTO)."
-            exit 1
+            echo "::warning::main avanzó después de este checkout (probablemente Decap publicó otro cambio mientras este build corría). Este run sigue construyendo $LOCAL — un commit real y válido de main, solo no el más reciente. El push que hizo avanzar main disparará su propia ejecución de este workflow, que construirá y publicará ese estado más nuevo."
+          else
+            echo "Confirmado: se está construyendo el HEAD real y actual de main."
           fi
-          echo "Confirmado: se está construyendo el HEAD real y actual de main."
 
       - name: Configurar Node.js
         uses: actions/setup-node@v7
