@@ -1,0 +1,72 @@
+{
+  "amenidades": [
+    "gimnasio",
+    "piscina",
+    "elevadores",
+    "planta-electrica",
+    "coworking",
+    "rooftop",
+    "lobby",
+    "area-social"
+  ],
+  "tituloEn": "1 AND 2-BEDROOM APARTMENTS 2 MINUTES FROM THE METRO — FROM $150,000",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 150000
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/img_3731.jpg"
+      },
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/img_3730.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/img_3729.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/img_3728.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/img_3726.jpg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 1,
+    "banos": 2
+  },
+  "mostrarEnHome": false,
+  "descripcion": "Apartamentos en un edificio residencial ubicado en Santo Tomás, a pasos de la Cinta Costera y el Parque Urracá, en el corazón de la ciudad de Panamá.\n\nOpciones disponibles desde $150,000, con modelos de 41.5 a 72 m², de 1 y 2 recámaras.\n\nCuenta con piscina en el rooftop, gimnasio, área de co-working, lounge social y área de scooter.\n\nA solo 2 minutos de la estación de metro de Santo Tomás, cerca de Calle Uruguay y a minutos de los principales hospitales y universidades de la ciudad.\n\nConsulta con MAKOM disponibilidad, precios y opciones según tu presupuesto.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "sector": "Av. Balboa"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "Apartments in a residential building located in Santo Tomás, steps from the Cinta Costera and Parque Urracá, in the heart of Panama City.\n\nOptions available from $150,000, with models from 41.5 to 72 m², 1 and 2 bedrooms.\n\nFeatures a rooftop pool, gym, co-working area, social lounge and scooter area.\n\nJust 2 minutes from the Santo Tomás metro station, close to Calle Uruguay and minutes from the city's main hospitals and universities.\n\nAsk MAKOM about availability, pricing and options that fit your budget.",
+  "operacion": "venta",
+  "ubicacionPublica": "Ciudad de Panamá — a 2 minutos del metro y cerca de la Cinta Costera y el Parque Urracá.",
+  "titulo": "APARTAMENTOS DE 1 Y 2 RECÁMARAS A DOS MINUTOS DEL METRO — DESDE $150,000",
+  "fechaEntrega": "futura",
+  "detalles": [
+    "vista-ciudad"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
