@@ -67,6 +67,10 @@
     { "valor": "venta", "etiqueta": "Venta", "etiquetaEn": "For Sale" },
     { "valor": "alquiler", "etiqueta": "Alquiler", "etiquetaEn": "For Rent" }
   ],
+  "fechasEntrega": [
+    { "valor": "inmediata", "etiqueta": "Inmediata", "etiquetaEn": "Immediate" },
+    { "valor": "futura", "etiqueta": "Futura", "etiquetaEn": "Future" }
+  ],
   "categoriasGenerales": [
     { "valor": "residencial", "etiqueta": "Residencial", "etiquetaEn": "Residential" },
     { "valor": "comercial", "etiqueta": "Comercial", "etiquetaEn": "Commercial" },

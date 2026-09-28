@@ -80,6 +80,13 @@ collections:
           - { label: "Venta", value: "venta" }
           - { label: "Alquiler", value: "alquiler" }
 
+      - label: "Fecha de entrega"
+        name: "fechaEntrega"
+        widget: "select"
+        options:
+          - { label: "Inmediata", value: "inmediata" }
+          - { label: "Futura", value: "futura" }
+
       - label: "Tipo de propiedad"
         name: "tipo"
         widget: "select"
@@ -286,12 +293,12 @@ collections:
             widget: "list"
             required: false
             min: 3
-            max: 5
+            max: 6
             collapsed: true
             summary: "{{fields.archivo}}"
             label_singular: "Fotografía"
             hint: >
-              Suba entre 3 y 5 fotografías. Arrastre para reordenar; la
+              Suba entre 3 y 6 fotografías. Arrastre para reordenar; la
               primera se usa como portada salvo que marque otra distinta.
               Si por error pulsa "Añadir Fotografía" y queda un elemento
               sin archivo, use el ícono de la papelera de ese elemento

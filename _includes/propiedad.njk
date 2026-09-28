@@ -132,6 +132,9 @@
         <div class="ficha-propiedad__badges">
           <span class="property-card__type">{{ operacionEtiqueta }}</span>
           <span class="property-card__category">{{ (propiedad.categoriaGeneral | etiquetaEn(propiedadesConfig.categoriasGenerales)) if esEn else (propiedad.categoriaGeneral | capitalize) }}</span>
+          {% if propiedad.fechaEntrega %}
+            <span class="property-card__category">{{ (propiedad.fechaEntrega | etiquetaEn(propiedadesConfig.fechasEntrega)) if esEn else (propiedad.fechaEntrega | etiqueta(propiedadesConfig.fechasEntrega)) }}</span>
+          {% endif %}
           {% if propiedad.estado == "reservada" %}
             <span class="ficha-propiedad__estado-tag">{{ "Reserved" if esEn else "Reservada" }}</span>
           {% endif %}
