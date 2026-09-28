@@ -16,8 +16,16 @@
 {% set urlAlternoEn = "https://makomgrp.com/en/insights/" + perspectiva.slug + "/" %}
 {% set langSwitchUrl = urlAlternoEs if esEn else urlAlternoEn %}
 {% set esIndexablePerspectiva = perspectiva | esIndexable %}
-{% set tituloBase = (perspectiva.seo.titulo if not esEn else (perspectiva.seo.tituloEn or perspectiva.seo.titulo)) or (tituloMostrado + " | MAKOM CAPITAL GROUP") %}
-{% set tituloSeo = tituloBase | resumenSeo(60) %}
+{#
+  SEO Block 4E — misma arquitectura que _includes/propiedad.njk y
+  _includes/proyecto.njk ("Alternativa A"): fallback automático
+  únicamente "tituloMostrado + | MAKOM", sin truncado rígido. Override
+  manual ("seo.titulo"/"seo.tituloEn") se usa tal cual, sin truncar, y
+  sin fallback cruzado entre idiomas — una ficha EN sin "seo.tituloEn"
+  nunca cae al "seo.titulo" en español (el mismo bug que causó el
+  artículo de Turismo roto en el Block 1).
+#}
+{% set tituloSeo = (perspectiva.seo.titulo if not esEn else perspectiva.seo.tituloEn) or (tituloMostrado + " | MAKOM") %}
 {% set descripcionSeoBase = (perspectiva.seo.descripcion if not esEn else (perspectiva.seo.descripcionEn or perspectiva.seo.descripcion)) %}
 {% set descripcionSeo = descripcionSeoBase or (extractoMostrado | resumenSeo(155)) %}
 {% set imagenAbsoluta = ("https://makomgrp.com" + perspectiva.imagenPortada) if perspectiva.imagenPortada else null %}
