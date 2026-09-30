@@ -1,0 +1,76 @@
+{
+  "amenidades": [
+    "piscina",
+    "lobby",
+    "gimnasio",
+    "garita-seguridad",
+    "planta-electrica-total",
+    "area-social",
+    "elevadores"
+  ],
+  "ubicacionPublicaEn": "Obarrio, Panama City",
+  "tituloEn": "1 TO 3 BEDROOM APARTMENTS — FROM $223,000 IN OBARRIO",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 223000
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/20260422_005_aura_58.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/20260422_158_aura_58.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/20260422_491_aura_58.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/20260422_533_aura_58.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/piscina-frontal.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/img_3726.jpg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 1,
+    "banos": 1,
+    "estacionamientos": 1,
+    "metrajeTotal": 84
+  },
+  "mostrarEnHome": false,
+  "descripcion": "Proyecto residencial en Obarrio, a pasos de la Calle 59, con unidades disponibles desde **$223,000**. Metraje desde 79 m² hasta 186 m², con opciones de 1 a 3 recámaras y hasta 2.5 baños, todas con balcón y algunas con despensa y den. El edificio cuenta con **cine privado**, **área de co-working**, piscina, gimnasio y lounge. Ubicado en el corazón de Obarrio, a pasos de Sortis, SOHO Mall y de la estación MetroPlus. ¿Quieres conocer disponibilidad y precios actuales? Contáctanos y te mostramos las opciones disponibles.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "sector": "Obarrio",
+    "direccionInterna": "Calle 59, Obarrio, Ciudad de Panamá"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "Residential project in Obarrio, steps from Calle 59, with units available from **$223,000**. Sizes from 79 m² to 186 m², with 1 to 3 bedroom options and up to 2.5 bathrooms, all with a balcony and some with a pantry and den. The building features a **private cinema**, **co-working area**, pool, gym and lounge. Located in the heart of Obarrio, steps from Sortis, SOHO Mall and the MetroPlus station. Want to know current availability and pricing? Contact us and we will show you the available options.",
+  "operacion": "venta",
+  "ubicacionPublica": "Obarrio, Ciudad de Panamá",
+  "titulo": "APARTAMENTOS DE 1 A 3 RECÁMARAS — DESDE $223,000 EN OBARRIO",
+  "fechaEntrega": "inmediata",
+  "seo": {
+    "noIndex": false
+  }
+}
