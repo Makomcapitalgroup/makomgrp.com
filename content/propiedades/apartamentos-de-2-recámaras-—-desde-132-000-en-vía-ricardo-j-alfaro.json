@@ -1,0 +1,82 @@
+{
+  "amenidades": [
+    "piscina",
+    "gimnasio",
+    "seguridad-24-7",
+    "lobby",
+    "elevadores",
+    "planta-electrica",
+    "area-social",
+    "cancha-deportiva",
+    "coworking",
+    "parque-infantil"
+  ],
+  "tituloEn": "2-BEDROOM APARTMENTS — FROM $132,000 ON VÍA RICARDO J. ALFARO",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 132000
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/captura-de-pantalla-2026-10-02-a-la-s-1.13.14 p. m..png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/captura-de-pantalla-2026-10-02-a-la-s-2.07.01 p. m..png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/bpp_4649.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/greenwood-10.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/greenwood-17.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/greenwood-4.jpg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 2,
+    "banos": 2,
+    "estacionamientos": 1
+  },
+  "mostrarEnHome": false,
+  "descripcion": "Proyecto residencial en construcción sobre Vía Ricardo J. Alfaro, con entrada por Residencial El Bosque. Apartamentos de **2 recámaras y 2 baños**, desde **47 m²** hasta **65 m²** (este último con opción de ampliar a una 3ª recámara), **desde $132,000**.\n\nEl complejo incluye piscina, gimnasio equipado, cancha deportiva múltiple, sky garden y sky lounge, además de un centro comercial propio con restaurantes, farmacia y guardería.\n\nUbicado cerca de la Universidad USMA, con acceso directo al Corredor Norte y cerca de Centennial Mall y Altaplaza Mall.\n\nConsulta con MAKOM disponibilidad, planos y precios actualizados.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "corregimiento": "",
+    "sector": "Ricardo J. Alfaro Avenue",
+    "direccionInterna": "Ricardo J. Alfaro Avenue"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "Residential development under construction on Vía Ricardo J. Alfaro, with access through Residencial El Bosque. **2-bedroom, 2-bathroom** apartments, from **47 m²** up to **65 m²** (the latter with the option to add a 3rd bedroom), **from $132,000**.\n\nThe complex includes a pool, a fully equipped gym, a multi-sport court, sky garden and sky lounge, plus its own shopping center with restaurants, a pharmacy, and a daycare.\n\nLocated near Universidad USMA, with direct access to Corredor Norte and close to Centennial Mall and Altaplaza Mall.\n\nAsk MAKOM about availability, floor plans, and current pricing.",
+  "operacion": "venta",
+  "ubicacionPublica": "Ricardo J. Alfaro Avenue",
+  "titulo": "APARTAMENTOS DE 2 RECÁMARAS — DESDE $132,000 EN VÍA RICARDO J. ALFARO",
+  "fechaEntrega": "inmediata",
+  "detalles": [
+    "cocina-cerrada",
+    "vista-ciudad"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
