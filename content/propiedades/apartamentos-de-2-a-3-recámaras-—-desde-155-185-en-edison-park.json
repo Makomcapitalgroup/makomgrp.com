@@ -1,0 +1,80 @@
+{
+  "amenidades": [
+    "piscina",
+    "lobby",
+    "elevadores",
+    "planta-electrica",
+    "coworking",
+    "cancha-deportiva",
+    "estacionamientos-visitas"
+  ],
+  "tituloEn": "2 TO 3-BEDROOM APARTMENTS — FROM $155,185 IN EN EDISON PARK",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 155185
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/captura-de-pantalla-2026-10-03-a-la-s-10.25.09 a. m..png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/edison-gardens-bpp_3324.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/edison-gardens-bpp_3304.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/edison-gardens-bpp_3337.jpg"
+      },
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/edison-gardens-bpp_3301.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/k1e9zjbu.jpeg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 2,
+    "banos": 2,
+    "estacionamientos": 1,
+    "metrajeTotal": ""
+  },
+  "mostrarEnHome": true,
+  "ordenHome": 1,
+  "descripcion": "Proyecto residencial en pleno corazón de la ciudad, con acceso directo a Vía Ricardo J. Alfaro, Vía Transístmica y Vía El Paical, cerca de El Cangrejo. Apartamentos de **2 recámaras desde $155,185** (47 m²), opciones de 2 recámaras con den, 3 recámaras desde 89 m², y Penthouses tipo loft de doble altura de hasta 221 m².\n\nEl proyecto ofrece aqua deck, roof garden, sports bar, life center, sport center con canchas de baloncesto y fútbol, kids club, game lab, coworking y su propio centro comercial en planta baja.\n\nUbicado cerca de Oxford School, el Colegio Alemán y el Parque Metropolitano, con fácil acceso a universidades y centros comerciales.\n\nConsulta con MAKOM disponibilidad, planos y precios actuales según el tamaño que buscas.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "sector": "Edison Park "
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "Residential project in the heart of the city, with direct access to Vía Ricardo J. Alfaro, Vía Transístmica, and Vía El Paical, near El Cangrejo. **2-bedroom apartments from $155,185** (47 m²), with options including 2-bedroom units with a den, 3-bedroom units from 89 m², and double-height loft-style penthouses up to 221 m².\n\nThe project offers an aqua deck, roof garden, sports bar, life center, sport center with basketball and soccer courts, kids club, game lab, coworking space, and its own shopping plaza on the ground floor.\n\nLocated near Oxford School, Colegio Alemán, and Parque Metropolitano, with easy access to universities and shopping centers.\n\nAsk MAKOM about availability, floor plans, and current pricing for the size you're looking for.",
+  "operacion": "venta",
+  "ubicacionPublica": "Edison Park ",
+  "titulo": "APARTAMENTOS DE 2 A 3 RECÁMARAS — DESDE $155,185 EN EDISON PARK",
+  "fechaEntrega": "futura",
+  "detalles": [
+    "sala-familiar",
+    "lavanderia",
+    "vista-ciudad"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
