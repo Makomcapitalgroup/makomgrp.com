@@ -1,0 +1,82 @@
+{
+  "amenidades": [
+    "piscina",
+    "gimnasio",
+    "seguridad-24-7",
+    "garita-seguridad",
+    "area-social",
+    "parque-infantil",
+    "bbq",
+    "cancha-deportiva",
+    "coworking"
+  ],
+  "tituloEn": "3-BEDROOM HOMES — FROM $355,000 IN GREEN CITY",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 355000
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/bpp_4404.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/bpp_4450.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/bpp_4462.jpg"
+      },
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/bpp_4429.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/90_18_aura_e_amenidades_emplazamiento.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/aura-casa.jpg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 3,
+    "banos": 3.5,
+    "estacionamientos": 2,
+    "metrajeTotal": 152
+  },
+  "mostrarEnHome": false,
+  "descripcion": "Casas en una comunidad residencial ecológica en **Panamá Norte**, a 20 minutos del centro de la ciudad y a 15 minutos del Aeropuerto de Tocumen.\n\n**Casas de 2 niveles con 3 recámaras y 3.5 baños desde $355,000**, de 152 m² en adelante, con 2 estacionamientos, cuarto de empleada y lotes desde 142.5 m².\n\n**Amenidades:** casa club, piscinas, cancha de pádel, coworking y senderos junto al río.\n\n**Ubicación:** cerca de Brisas del Golf, con supermercados, colegios y hospital, y acceso por Vía Panamá Norte y Corredor Norte.\n\nConsulta con tu asesor MAKOM disponibilidad, planos y precios actualizados.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "sector": "Panamá Norte"
+  },
+  "tipo": "casa",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "Homes in an eco-friendly residential community in **Panama Norte**, 20 minutes from downtown Panama City and 15 minutes from Tocumen Airport.\n\n**Two-level homes with 3 bedrooms and 3.5 bathrooms from $355,000**, starting at 152 m², with 2 parking spaces, a maid's room and lots from 142.5 m².\n\n**Amenities:** clubhouse, pools, padel court, coworking and riverside trails.\n\n**Location:** near Brisas del Golf, with supermarkets, schools and a hospital, and access via Vía Panamá Norte and Corredor Norte.\n\nAsk your MAKOM advisor about availability, floor plans and updated prices.",
+  "operacion": "venta",
+  "ubicacionPublica": "Green City, Panama City",
+  "titulo": "CASAS DE 3 RECÁMARAS — DESDE $355,000 EN GREEN CITY",
+  "fechaEntrega": "inmediata",
+  "detalles": [
+    "terraza",
+    "jardin",
+    "cocina-abierta",
+    "lavanderia"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
