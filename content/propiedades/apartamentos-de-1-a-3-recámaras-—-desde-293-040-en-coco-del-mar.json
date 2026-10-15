@@ -1,0 +1,77 @@
+{
+  "amenidades": [
+    "piscina",
+    "lobby",
+    "gimnasio",
+    "planta-electrica",
+    "coworking",
+    "parque-infantil",
+    "rooftop",
+    "bbq"
+  ],
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 293040
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/a19_n07-24_apart-b_1_v1.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/a19_n00-lobby-cafe_lowres.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/a19_n00-exterior-1_v1.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/a19_fachada-closeup_2_v1.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/captura-de-pantalla-2026-10-13-a-la-s-12.17.59 p. m..png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/captura-de-pantalla-2026-10-13-a-la-s-12.09.15 p. m..png"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 1,
+    "banos": 1,
+    "estacionamientos": 1
+  },
+  "mostrarEnHome": true,
+  "descripcion": "**Apartamentos de 1, 2 y 3 recámaras en Coco del Mar**, entre el Parque Omar y la Bahía de Panamá, en un proyecto de 26 niveles con 104 apartamentos.\n\n**Datos principales:** desde $293,040 · desde 74 m² · 1 recámara y 1 baño · balcón en todas las unidades. También hay opciones de 2 recámaras (95 a 104 m²), 3 recámaras (138 m²) y una tipología de 210 m² con cuarto de servicio.\n\n**Amenidades:** piscina, gimnasio, coworking, salón de niños y área de mascotas.\n\n**Ubicación:** Coco del Mar, junto al Parque Omar y la Bahía de Panamá.\n\nConsulta con MAKOM disponibilidad, planos y precios actualizados.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "sector": "Coco del Mar"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "**1, 2 and 3 bedroom apartments in Coco del Mar**, between Parque Omar and Panama Bay, in a 26-story project with 104 apartments.\n\n**Key details:** from $293,040 · from 74 m² · 1 bedroom and 1 bathroom · balcony in every unit. Also available: 2 bedrooms (95 to 104 m²), 3 bedrooms (138 m²) and a 210 m² type with maid's quarters.\n\n**Amenities:** pool, gym, coworking, kids' room and pet area.\n\n**Location:** Coco del Mar, next to Parque Omar and Panama Bay.\n\nAsk MAKOM about availability, floor plans and current prices.",
+  "operacion": "venta",
+  "ubicacionPublica": "Coco del Mar, Ciudad de Panamá",
+  "titulo": "APARTAMENTOS DE 1 A 3 RECÁMARAS — DESDE $293,040 EN COCO DEL MAR",
+  "fechaEntrega": "futura",
+  "detalles": [
+    "vista-ciudad",
+    "vista-parque"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
