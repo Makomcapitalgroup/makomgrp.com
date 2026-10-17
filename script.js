@@ -373,6 +373,97 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /* ============================================================
+     7b. ENVÍO SEGURO DEL FORMULARIO (RR-01b) — funciones auxiliares de la sección 8.
+     - request_id ESTABLE por envío lógico: se mantiene en los reintentos y se renueva si cambian los datos, tras un éxito o tras un rechazo por validación.
+       Solo se conserva en memoria (nunca en almacenamiento persistente) junto con una huella hash de los campos, no los datos.
+     - Éxito solo con respuesta 2xx y {ok:true}. 400 ⇒ error de validación, sin reintento. 503/502/504/408/429, retryable, fallo de red, tiempo agotado o
+       respuesta ilegible ⇒ UN reintento automático tras Retry-After (1–6 s) con el mismo request_id: el servidor es idempotente, no duplica.
+  ============================================================ */
+  function makomRequestUuid() {
+    var c = (typeof window !== 'undefined' && window.crypto) || (typeof globalThis !== 'undefined' && globalThis.crypto) || null;
+    if (c && typeof c.randomUUID === 'function') return c.randomUUID();
+    var b = new Array(16), i;
+    if (c && typeof c.getRandomValues === 'function') {
+      var a = new Uint8Array(16); c.getRandomValues(a);
+      for (i = 0; i < 16; i++) b[i] = a[i];
+    } else {
+      for (i = 0; i < 16; i++) b[i] = Math.floor(Math.random() * 256);
+    }
+    b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+    var h = [];
+    for (i = 0; i < 16; i++) h.push((b[i] + 0x100).toString(16).slice(1));
+    return h.slice(0, 4).join('') + '-' + h.slice(4, 6).join('') + '-' + h.slice(6, 8).join('') + '-' + h.slice(8, 10).join('') + '-' + h.slice(10).join('');
+  }
+
+  function makomFingerprint(values) {
+    var s = values.join('␟'), h1 = 0x811c9dc5, h2 = 0x01000193, i, ch;
+    for (i = 0; i < s.length; i++) {
+      ch = s.charCodeAt(i);
+      h1 ^= ch; h1 = (h1 * 16777619) >>> 0;
+      h2 = ((h2 << 5) - h2 + ch) >>> 0;
+    }
+    return h1.toString(16) + '.' + h2.toString(16) + '.' + s.length;
+  }
+
+  function makomRequestIdTracker(uuidFn) {
+    var id = null, fp = null;
+    return {
+      forFingerprint: function (nextFp) {
+        if (!id || fp !== nextFp) { id = uuidFn(); fp = nextFp; }
+        return id;
+      },
+      current: function () { return id; },
+      reset: function () { id = null; fp = null; }
+    };
+  }
+
+  function makomPostLead(fetchFn, endpoint, payload, sleepFn, opts) {
+    var timeoutMs = (opts && opts.timeoutMs) || 30000;
+    var setT = (opts && opts.setTimeout) || (typeof setTimeout === 'function' ? setTimeout : null);
+    var clearT = (opts && opts.clearTimeout) || (typeof clearTimeout === 'function' ? clearTimeout : null);
+
+    function attempt() {
+      var controller = (typeof AbortController === 'function') ? new AbortController() : null;
+      var timer = null, timedOut = false;
+      var init = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) };
+      if (controller) {
+        init.signal = controller.signal;
+        if (setT) timer = setT(function () { timedOut = true; controller.abort(); }, timeoutMs);
+      }
+      function done() { if (timer && clearT) clearT(timer); }
+      return fetchFn(endpoint, init).then(function (response) {
+        return response.json().catch(function () { return null; }).then(function (data) {
+          done();
+          var status = response.status;
+          if (response.ok && data && data.ok === true) return { ok: true };
+          if (status === 400) return { ok: false, kind: 'validation' };
+          // Reintentable: 503/502/504 (servidor o pasarela no disponibles), 408/429, retryable=true, y respuesta ILEGIBLE (cuerpo truncado o no JSON) con 2xx o 5xx:
+          // el servidor pudo haber guardado el lead sin que lo sepamos; reintentar con el mismo request_id es seguro (idempotente) y confirma el resultado.
+          var unreadable = !data || typeof data !== 'object';
+          if (status === 503 || status === 502 || status === 504 || status === 408 || status === 429 || (data && data.retryable === true) || (unreadable && (response.ok || status >= 500))) {
+            var header = response.headers && response.headers.get && response.headers.get('Retry-After');
+            var wait = Number(header) || (data && Number(data.retry_after_seconds)) || 3;
+            return { ok: false, kind: 'retryable', waitMs: Math.min(Math.max(wait, 1), 6) * 1000 };
+          }
+          return { ok: false, kind: 'error' };
+        });
+      }, function () {
+        done();
+        // Fallo de red, tiempo agotado o respuesta perdida: la solicitud pudo o no llegar; el request_id estable evita duplicar.
+        return { ok: false, kind: 'retryable', waitMs: timedOut ? 1000 : 3000 };
+      });
+    }
+
+    return attempt().then(function (first) {
+      if (first.ok || first.kind !== 'retryable') return first.ok ? first : { ok: false, kind: first.kind };
+      return sleepFn(first.waitMs).then(attempt).then(function (second) {
+        return second.ok ? second : { ok: false, kind: second.kind === 'validation' ? 'validation' : second.kind === 'error' ? 'error' : 'retryable' };
+      });
+    });
+  }
+
+
+  /* ============================================================
      8. FORM SUBMIT — POSTs to MAKOM CRM's public lead intake
      (Fase 18B). mailto: is no longer the submission mechanism —
      it stays visible only as one of the direct contact options
@@ -385,12 +476,26 @@ document.addEventListener('DOMContentLoaded', function () {
     if (formErrorBanner) formErrorBanner.setAttribute('aria-hidden', 'true');
   }
 
+  var formErrorBannerText = formErrorBanner ? formErrorBanner.querySelector('.contact-form__banner-text') : null;
+  var formErrorBannerGeneric = formErrorBannerText ? formErrorBannerText.textContent : '';
+
+  function setFormErrorBannerKind(transient) {
+    if (!formErrorBannerText) return;
+    var english = (document.documentElement.lang || '').toLowerCase().indexOf('en') === 0;
+    formErrorBannerText.textContent = transient
+      ? (english
+          ? "We couldn't register your request right now. Your details are still in the form \u2014 please try again in a few seconds."
+          : 'No pudimos registrar su solicitud en este momento. Sus datos siguen en el formulario: intente nuevamente en unos segundos.')
+      : formErrorBannerGeneric;
+  }
+
   function showFormErrorBanner() {
     if (formErrorBanner) formErrorBanner.setAttribute('aria-hidden', 'false');
   }
 
   if (contactForm) {
     var formSubmitInFlight = false;
+    var requestIdTracker = makomRequestIdTracker(makomRequestUuid);
 
     contactForm.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -444,7 +549,10 @@ document.addEventListener('DOMContentLoaded', function () {
       var servicioValor = servicioSelect ? servicioSelect.value : '';
       var servicioTexto = servicioSelect ? servicioSelect.options[servicioSelect.selectedIndex].text : '';
       var websiteField = document.getElementById('field-website');
-      var requestId = metaEventId();
+      // request_id ESTABLE por envío lógico (RR-01b): se reutiliza en los reintentos mientras no cambie lo que el visitante escribió, de modo que el
+      // servidor (idempotente) devuelva el mismo lead en vez de duplicarlo si un intento previo sí se guardó y su respuesta se perdió. Cambian los
+      // datos, o termina el envío con éxito / rechazo de validación ⇒ se genera uno nuevo. En memoria únicamente: solo una huella hash, sin datos.
+      var requestId = requestIdTracker.forFingerprint(makomFingerprint([nombre, emailRemitente, telefono, servicioValor]));
 
       // Captura de UTM/atribución (Fase 18B, sección 12): leídos de la URL
       // actual y de document.referrer en el momento del envío — esta página
@@ -472,21 +580,21 @@ document.addEventListener('DOMContentLoaded', function () {
         request_id: requestId
       };
 
-      fetch(PUBLIC_LEAD_INTAKE_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-        .then(function (response) {
-          if (!response.ok) {
-            throw new Error('public-lead-intake respondió ' + response.status);
+      makomPostLead(
+        function (url, init) { return fetch(url, init); },
+        PUBLIC_LEAD_INTAKE_ENDPOINT,
+        payload,
+        function (ms) { return new Promise(function (resolve) { setTimeout(resolve, ms); }); }
+      )
+        .then(function (result) {
+          if (!result.ok) {
+            // Rechazo por validación: ese request_id nunca se registró; si el visitante corrige y reenvía, será un envío nuevo.
+            if (result.kind === 'validation') requestIdTracker.reset();
+            var failure = new Error('public-lead-intake: ' + result.kind);
+            failure.kind = result.kind;
+            throw failure;
           }
-          return response.json();
-        })
-        .then(function (data) {
-          if (!data || data.ok !== true) {
-            throw new Error('public-lead-intake respondió sin ok:true');
-          }
+          requestIdTracker.reset(); // éxito confirmado: el siguiente envío es otro envío lógico.
 
           // Fase 18B, sección 15: el tracking de conversión SOLO se dispara
           // tras confirmar el éxito real del backend — nunca antes, y nunca
@@ -525,9 +633,11 @@ document.addEventListener('DOMContentLoaded', function () {
           mostrarExito();
           restaurarBoton();
         })
-        .catch(function () {
+        .catch(function (err) {
           // Conservar los datos introducidos para reintento — nunca limpiar
-          // el formulario en un error real.
+          // el formulario en un error real. Un fallo TRANSITORIO del servidor (persistió tras el reintento automático) se explica distinto del
+          // genérico, en el idioma de la página, y NUNCA se muestra como éxito.
+          setFormErrorBannerKind(err && err.kind === 'retryable');
           showFormErrorBanner();
           restaurarBoton();
         });
