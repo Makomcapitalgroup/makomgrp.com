@@ -80,5 +80,28 @@
   "estadosPublicos": [
     { "valor": "disponible", "etiqueta": "Disponible", "etiquetaEn": "Available" },
     { "valor": "reservada", "etiqueta": "Reservada", "etiquetaEn": "Reserved" }
+  ],
+  "regiones": [
+    { "valor": "ciudad-de-panama", "etiqueta": "Ciudad de Panamá", "etiquetaEn": "Panama City" },
+    { "valor": "panama-oeste", "etiqueta": "Panamá Oeste", "etiquetaEn": "West Panama" }
+  ],
+  "zonas": [
+    { "valor": "albrook", "region": "ciudad-de-panama", "etiqueta": "Albrook", "etiquetaEn": "Albrook" },
+    { "valor": "amador", "region": "ciudad-de-panama", "etiqueta": "Amador", "etiquetaEn": "Amador" },
+    { "valor": "bella-vista", "region": "ciudad-de-panama", "etiqueta": "Bella Vista", "etiquetaEn": "Bella Vista" },
+    { "valor": "betania", "region": "ciudad-de-panama", "etiqueta": "Betania", "etiquetaEn": "Betania" },
+    { "valor": "coco-del-mar", "region": "ciudad-de-panama", "etiqueta": "Coco del Mar", "etiquetaEn": "Coco del Mar" },
+    { "valor": "condado-del-rey", "region": "ciudad-de-panama", "etiqueta": "Condado del Rey", "etiquetaEn": "Condado del Rey" },
+    { "valor": "edison-park", "region": "ciudad-de-panama", "etiqueta": "Edison Park", "etiquetaEn": "Edison Park" },
+    { "valor": "el-cangrejo", "region": "ciudad-de-panama", "etiqueta": "El Cangrejo", "etiquetaEn": "El Cangrejo" },
+    { "valor": "green-city", "region": "ciudad-de-panama", "etiqueta": "Green City", "etiquetaEn": "Green City" },
+    { "valor": "los-angeles", "region": "ciudad-de-panama", "etiqueta": "Los Ángeles", "etiquetaEn": "Los Ángeles" },
+    { "valor": "obarrio", "region": "ciudad-de-panama", "etiqueta": "Obarrio", "etiquetaEn": "Obarrio" },
+    { "valor": "tumba-muerto", "region": "ciudad-de-panama", "etiqueta": "Tumba Muerto", "etiquetaEn": "Tumba Muerto" },
+    { "valor": "via-espana", "region": "ciudad-de-panama", "etiqueta": "Vía España", "etiquetaEn": "Vía España" },
+    { "valor": "ciudad-de-panama-general", "region": "ciudad-de-panama", "etiqueta": "Otras zonas de Ciudad de Panamá", "etiquetaEn": "Other areas of Panama City" },
+    { "valor": "arraijan", "region": "panama-oeste", "etiqueta": "Arraiján", "etiquetaEn": "Arraiján" },
+    { "valor": "la-chorrera", "region": "panama-oeste", "etiqueta": "La Chorrera", "etiquetaEn": "La Chorrera" },
+    { "valor": "capira", "region": "panama-oeste", "etiqueta": "Capira", "etiquetaEn": "Capira" }
   ]
 }

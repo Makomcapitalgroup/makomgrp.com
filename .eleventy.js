@@ -4,6 +4,7 @@ const { execSync } = require("child_process");
 const yaml = require("js-yaml");
 const { eleventyImageTransformPlugin } = require("@11ty/eleventy-img");
 const Image = require("@11ty/eleventy-img").default;
+const { validarZonas } = require("./scripts/verificar-zonas");
 
 // Milestone 9: fecha real de última modificación de un archivo, tomada
 // del historial de git (fecha del último commit que lo tocó) — nunca
@@ -344,6 +345,7 @@ module.exports = function (eleventyConfig) {
   // en vez de una solución más compleja.
   eleventyConfig.on("eleventy.before", () => {
     validarConfigCmsContraFuenteCentral(__dirname);
+    validarZonas(__dirname);
     validarReferenciasMakom(__dirname);
   });
 

@@ -197,6 +197,35 @@ collections:
         required: false
         hint: "Se usa en /en/. Si se deja vacía, la ficha en inglés muestra la Ubicación pública en español mientras se traduce."
 
+      # Zona para el buscador (filtro "Ubicación"). Las opciones se
+      # derivan de _data/propiedadesConfig.json (claves "regiones" y
+      # "zonas"); el build verifica que ambas listas coincidan (ver
+      # scripts/verificar-zonas.js). Si se agrega o cambia una zona, hay
+      # que actualizar los dos archivos a la vez.
+      - label: "Zona (para el buscador)"
+        name: "zona"
+        widget: "select"
+        required: false
+        hint: "Solo sirve para el filtro de ubicación del buscador. No cambia lo que se muestra en la ficha. Elíjala únicamente si la 'Ubicación pública' lo indica claramente; si hay duda, déjela vacía. No la deduzca de la ubicación administrativa interna."
+        options:
+          - { label: "Ciudad de Panamá › Albrook", value: "albrook" }
+          - { label: "Ciudad de Panamá › Amador", value: "amador" }
+          - { label: "Ciudad de Panamá › Bella Vista", value: "bella-vista" }
+          - { label: "Ciudad de Panamá › Betania", value: "betania" }
+          - { label: "Ciudad de Panamá › Coco del Mar", value: "coco-del-mar" }
+          - { label: "Ciudad de Panamá › Condado del Rey", value: "condado-del-rey" }
+          - { label: "Ciudad de Panamá › Edison Park", value: "edison-park" }
+          - { label: "Ciudad de Panamá › El Cangrejo", value: "el-cangrejo" }
+          - { label: "Ciudad de Panamá › Green City", value: "green-city" }
+          - { label: "Ciudad de Panamá › Los Ángeles", value: "los-angeles" }
+          - { label: "Ciudad de Panamá › Obarrio", value: "obarrio" }
+          - { label: "Ciudad de Panamá › Tumba Muerto", value: "tumba-muerto" }
+          - { label: "Ciudad de Panamá › Vía España", value: "via-espana" }
+          - { label: "Ciudad de Panamá › Otras zonas de Ciudad de Panamá", value: "ciudad-de-panama-general" }
+          - { label: "Panamá Oeste › Arraiján", value: "arraijan" }
+          - { label: "Panamá Oeste › La Chorrera", value: "la-chorrera" }
+          - { label: "Panamá Oeste › Capira", value: "capira" }
+
       # ---------------------------------------------------------
       # 4. DETALLES DE LA PROPIEDAD
       # ---------------------------------------------------------
