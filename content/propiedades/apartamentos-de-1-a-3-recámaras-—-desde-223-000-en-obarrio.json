@@ -72,5 +72,6 @@
   "fechaEntrega": "inmediata",
   "seo": {
     "noIndex": false
-  }
+  },
+  "zona": "obarrio"
 }

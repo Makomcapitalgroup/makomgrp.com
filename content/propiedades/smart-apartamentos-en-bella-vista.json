@@ -69,5 +69,6 @@
   "fechaEntrega": "futura",
   "seo": {
     "noIndex": false
-  }
+  },
+  "zona": "bella-vista"
 }
