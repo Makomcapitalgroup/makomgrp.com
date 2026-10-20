@@ -1693,6 +1693,179 @@ a.division-card__cta {
   border-bottom-color: var(--color-negro);
 }
 
+/* Buscador del catálogo (motor de filtrado en script.js, sección 6).
+   Va debajo de las pestañas; se mantiene sobrio y de una sola línea de
+   controles en pantallas medianas y grandes. */
+.prop-controles {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.prop-buscador {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.prop-buscador[hidden],
+.prop-chips[hidden],
+.prop-buscador__limpiar[hidden],
+.catalogo-sin-resultados[hidden] {
+  display: none;
+}
+
+.prop-buscador__campos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.prop-buscador__campo {
+  min-width: 0;
+}
+
+.prop-buscador__label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-negro-60);
+}
+
+.prop-buscador__select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 40px 10px 14px;
+  font-size: 14px;
+  font-weight: var(--font-weight-light);
+  color: var(--color-negro);
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%230A0A0A' stroke-width='1.2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 10px 6px;
+  border: 1px solid var(--color-arena-40);
+  border-radius: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+.prop-buscador__select:hover:not(:disabled) {
+  border-color: var(--color-negro-40);
+}
+
+.prop-buscador__select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.prop-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.prop-chip {
+  min-height: 36px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.02em;
+  color: var(--color-negro);
+  background-color: var(--color-arena-15);
+  border: 1px solid var(--color-arena-40);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+.prop-chip:hover {
+  border-color: var(--color-terracota);
+}
+
+.prop-buscador__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 24px;
+  /* Altura del enlace "Limpiar filtros": evita que el contenido de
+     abajo se mueva cuando ese enlace aparece o desaparece. */
+  min-height: 44px;
+}
+
+.prop-buscador__contador {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--font-weight-light);
+  color: var(--color-negro-70);
+}
+
+.prop-buscador__limpiar {
+  min-height: 44px;
+  padding: 0 4px;
+  font-size: 13px;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-terracota);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.prop-buscador__limpiar:hover {
+  color: var(--color-terracota-dark);
+}
+
+@media (min-width: 640px) {
+  .prop-buscador__campos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Estado de espera inicial (solo si la URL trae filtros; lo pone el
+   script en línea de catalogo.njk y lo libera el motor de script.js al
+   pintar, o el evento load si ese archivo no llega a ejecutarse). La
+   rejilla se oculta SIN quitarle el espacio, y la fila de chips ya
+   ocupa su altura: así no hay destello de tarjetas ni salto. Sin
+   JavaScript estas clases nunca existen. */
+.catalogo-filtrando .propiedades__grid {
+  visibility: hidden;
+}
+
+.catalogo-con-chips .prop-chips[hidden] {
+  display: flex;
+  visibility: hidden;
+  min-height: 36px;
+}
+
+/* Sin resultados al filtrar (distinto de .catalogo-vacio, que es el
+   estado de "no hay propiedades públicas en absoluto"). */
+.catalogo-sin-resultados {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding-block: 48px;
+  border-top: 1px solid var(--color-arena-20);
+  text-align: center;
+}
+
+.catalogo-sin-resultados__texto {
+  max-width: 520px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: var(--font-weight-light);
+  color: var(--color-negro-70);
+}
+
 /* Property cards */
 .propiedades__grid {
   display: grid;

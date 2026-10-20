@@ -203,66 +203,460 @@ document.addEventListener('DOMContentLoaded', function () {
   }, 300);
 
   /* ============================================================
-     6. PROPERTY FILTERS
+     6. PROPERTY FILTERS — motor único de filtrado del catálogo
+     Las pestañas (Todos / Venta / Alquiler / Comercial / Residencial)
+     y los selectores (tipo, ubicación, presupuesto máximo) escriben
+     sobre UN solo estado, y ese estado es lo único que decide qué
+     tarjetas se ven. El estado vive en la URL (?op=&cat=&tipo=&region=
+     &zona=&max=) para poder recargar, compartir y usar atrás/adelante.
+     Solo se leen datos públicos que el build dejó en el DOM
+     (data-op, data-cat, data-tipo, data-zona, data-precio): nunca hay
+     ubicación interna ni direcciones. Regla de las pestañas: una sola
+     pestaña activa a la vez, igual que antes — "Venta"/"Alquiler"
+     fijan la operación y "Comercial"/"Residencial" la categoría (son
+     excluyentes entre sí); tipo, ubicación y presupuesto se combinan
+     con cualquiera de ellas mediante AND, salvo que el tipo no
+     pertenezca a la categoría elegida (en ese caso manda el tipo).
   ============================================================ */
-  var filterTabs = document.querySelectorAll('.filter-tab');
-  var propertyCards = document.querySelectorAll('.property-card');
+  (function () {
+    var form = document.getElementById('prop-buscador');
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('.filter-tab'));
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.propiedades__grid .property-card'));
+    // Estado de espera inicial: el script en línea de catalogo.njk marca
+    // <html> con estas clases cuando la URL trae filtros, para que no se
+    // vean las 23 tarjetas ni se mueva el contenido mientras este motor
+    // carga. Aquí se liberan en cuanto el motor pinta (o si no puede
+    // arrancar); si este archivo no llega a ejecutarse, el propio script
+    // en línea las libera en el evento load.
+    function liberarEspera() {
+      document.documentElement.classList.remove('catalogo-filtrando', 'catalogo-con-chips');
+    }
+    if (!form || tabs.length === 0 || cards.length === 0) {
+      liberarEspera();
+      return;
+    }
 
-  filterTabs.forEach(function (tab) {
-    tab.addEventListener('click', function () {
-      var filter = this.getAttribute('data-filter');
+    var isEn = (document.documentElement.lang || '').toLowerCase().indexOf('en') === 0;
+    var TXT = isEn ? {
+      noLimit: 'No limit', upTo: 'Up to', perMonth: '/ month', chooseOp: 'Choose For Sale or For Rent first',
+      type: 'Type', location: 'Location', budget: 'Budget', remove: 'Remove filter',
+      one: 'property', many: 'properties', of: 'of', noStock: '(no listings)'
+    } : {
+      noLimit: 'Sin límite', upTo: 'Hasta', perMonth: '/ mes', chooseOp: 'Elija Venta o Alquiler primero',
+      type: 'Tipo', location: 'Ubicación', budget: 'Presupuesto', remove: 'Quitar filtro',
+      one: 'propiedad', many: 'propiedades', of: 'de', noStock: '(sin propiedades publicadas)'
+    };
 
-      // Update tab active states
-      filterTabs.forEach(function (t) {
-        t.classList.remove('filter-tab--active');
-        t.setAttribute('aria-selected', 'false');
+    var selTipo = document.getElementById('f-tipo');
+    var selUbic = document.getElementById('f-ubicacion');
+    var selMax = document.getElementById('f-max');
+    var chipsEl = document.getElementById('f-chips');
+    var counterEl = document.getElementById('f-contador');
+    var clearBtn = document.getElementById('f-limpiar');
+    var emptyEl = document.getElementById('f-sin-resultados');
+    var emptyClearBtn = document.getElementById('f-sin-resultados-limpiar');
+    var KNOWN = ['op', 'cat', 'tipo', 'region', 'zona', 'max'];
+    var has = function (obj, key) { return Object.prototype.hasOwnProperty.call(obj, key); };
+
+    // ----- Catálogo derivado de lo que renderizó el build -----
+    var OPS = [];
+    var CATS = [];
+    tabs.forEach(function (t) {
+      var f = t.getAttribute('data-filter');
+      if (f === 'venta' || f === 'alquiler') OPS.push(f);
+      if (f === 'comercial' || f === 'residencial') CATS.push(f);
+    });
+
+    // Tipos VÁLIDOS = catálogo completo del build (no solo los que hoy
+    // tienen propiedades). TIPOS[v] es la lista de categorías de sus
+    // propiedades, o null si el tipo existe en el catálogo pero no tiene
+    // inventario: su categoría es desconocida y NO se inventa, así que
+    // no puede contradecir a ninguna categoría (el resultado será cero).
+    var TIPOS = {};
+    var TIPO_LABEL = {};
+    Array.prototype.slice.call(selTipo.options).forEach(function (o) {
+      if (o.value) {
+        TIPOS[o.value] = (o.getAttribute('data-cats') || '').split(' ');
+        TIPO_LABEL[o.value] = o.text;
+      }
+    });
+    var catalogoTipos = null;
+    try { catalogoTipos = JSON.parse(form.getAttribute('data-tipos') || 'null'); } catch (err) { catalogoTipos = null; }
+    if (catalogoTipos && catalogoTipos.length) {
+      catalogoTipos.forEach(function (t) {
+        TIPO_LABEL[t.v] = t.l;
+        if (!has(TIPOS, t.v)) TIPOS[t.v] = null;
       });
-      this.classList.add('filter-tab--active');
-      this.setAttribute('aria-selected', 'true');
+    }
 
+    function tipoCompatible(tipo, cat) {
+      return !cat || TIPOS[tipo] === null || TIPOS[tipo].indexOf(cat) !== -1;
+    }
+
+    // Ubicaciones VÁLIDAS = el catálogo completo que dejó el build (con
+    // etiquetas del idioma de la página), no solo las que hoy tienen
+    // propiedades. Una zona válida sin inventario es un filtro legítimo
+    // (cero resultados); un identificador que no está en el catálogo se
+    // ignora. Si el atributo faltara, se cae a lo que lista el selector.
+    var REGIONES = {};
+    var ZONAS = {};
+    var UBIC_LABEL = {};
+    var catalogo = null;
+    try { catalogo = JSON.parse(form.getAttribute('data-ubicaciones') || 'null'); } catch (err) { catalogo = null; }
+    if (catalogo && catalogo.length) {
+      catalogo.forEach(function (u) {
+        UBIC_LABEL[u.t + ':' + u.v] = u.l;
+        if (u.t === 'region') REGIONES[u.v] = true;
+        if (u.t === 'zona') ZONAS[u.v] = u.r;
+      });
+    } else {
+      Array.prototype.slice.call(selUbic.options).forEach(function (o) {
+        var v = o.value.split(':');
+        if (v[0] === 'region') REGIONES[v[1]] = true;
+        if (v[0] === 'zona') ZONAS[v[1]] = o.getAttribute('data-region');
+        if (o.value) UBIC_LABEL[o.value] = o.text.replace(/\s+—.*$/, '');
+      });
+    }
+
+    function presetsDe(op) {
+      var raw = selMax.getAttribute('data-presupuestos-' + op) || '';
+      return raw ? raw.split(',').map(Number) : [];
+    }
+
+    function regionDe(zona) {
+      return zona && has(ZONAS, zona) ? ZONAS[zona] : '';
+    }
+
+    // ----- Estado y URL -----
+    function emptyState() {
+      return { op: '', cat: '', tipo: '', region: '', zona: '', max: 0 };
+    }
+
+    // Lee y NORMALIZA el estado desde una query string: ignora
+    // parámetros desconocidos o inválidos y resuelve contradicciones.
+    function parseState(search) {
+      var p = new URLSearchParams(search);
+      var s = emptyState();
+      var op = p.get('op');
+      if (op && OPS.indexOf(op) !== -1) s.op = op;
+      var cat = p.get('cat');
+      if (cat && CATS.indexOf(cat) !== -1 && !s.op) s.cat = cat;
+      var tipo = p.get('tipo');
+      if (tipo && has(TIPOS, tipo)) s.tipo = tipo;
+      if (s.cat && s.tipo && !tipoCompatible(s.tipo, s.cat)) s.cat = '';
+      var zona = p.get('zona');
+      var region = p.get('region');
+      if (zona && has(ZONAS, zona)) {
+        s.zona = zona;
+      } else if (region && has(REGIONES, region)) {
+        s.region = region;
+      }
+      var max = p.get('max');
+      if (s.op && max && /^\d+$/.test(max)) {
+        var n = parseInt(max, 10);
+        if (presetsDe(s.op).indexOf(n) !== -1) s.max = n;
+      }
+      return s;
+    }
+
+    // Construye la query string conservando cualquier parámetro ajeno
+    // (por ejemplo utm_*, que el formulario de contacto envía al CRM).
+    function buildSearch(state, baseSearch) {
+      var p = new URLSearchParams(baseSearch);
+      KNOWN.forEach(function (k) { p.delete(k); });
+      if (state.op) p.set('op', state.op);
+      if (state.cat) p.set('cat', state.cat);
+      if (state.tipo) p.set('tipo', state.tipo);
+      if (state.region) p.set('region', state.region);
+      if (state.zona) p.set('zona', state.zona);
+      if (state.max) p.set('max', String(state.max));
+      var q = p.toString();
+      return q ? '?' + q : '';
+    }
+
+    function hasFilters(s) {
+      return !!(s.op || s.cat || s.tipo || s.region || s.zona || s.max);
+    }
+
+    // Cadena para el evento Search: solo parámetros públicos del filtro.
+    function trackString(s) {
+      return buildSearch(s, '').replace(/^\?/, '') || 'all';
+    }
+
+    function matches(card, s) {
+      if (s.op && card.getAttribute('data-op') !== s.op) return false;
+      if (s.cat && card.getAttribute('data-cat') !== s.cat) return false;
+      if (s.tipo && card.getAttribute('data-tipo') !== s.tipo) return false;
+      var zona = card.getAttribute('data-zona') || '';
+      if (s.zona && zona !== s.zona) return false;
+      if (s.region && regionDe(zona) !== s.region) return false;
+      if (s.max) {
+        var precio = card.getAttribute('data-precio');
+        if (!precio || Number(precio) > s.max) return false;
+      }
+      return true;
+    }
+
+    function formatMoney(n) {
+      return '$' + n.toLocaleString('en-US');
+    }
+
+    function budgetLabel(op, n) {
+      return TXT.upTo + ' ' + formatMoney(n) + (op === 'alquiler' ? ' ' + TXT.perMonth : '');
+    }
+
+    // ----- Render -----
+    var renderedOp = null;
+
+    function renderBudget(s) {
+      if (renderedOp !== s.op) {
+        selMax.innerHTML = '';
+        if (!s.op) {
+          selMax.appendChild(new Option(TXT.chooseOp, ''));
+          selMax.disabled = true;
+        } else {
+          selMax.appendChild(new Option(TXT.noLimit, ''));
+          presetsDe(s.op).forEach(function (n) {
+            selMax.appendChild(new Option(budgetLabel(s.op, n), String(n)));
+          });
+          selMax.disabled = false;
+        }
+        renderedOp = s.op;
+      }
+      selMax.value = s.max ? String(s.max) : '';
+    }
+
+    // Los selectores solo listan opciones con propiedades. Si el filtro
+    // activo es un valor válido SIN inventario (una zona, una región o
+    // un tipo del catálogo), se añade una opción temporal para que el
+    // control refleje el filtro activo; se retira al cambiar de valor.
+    function renderTemporal(select, wanted, label) {
+      var tmp = select.querySelector('option[data-temporal]');
+      if (tmp && tmp.value !== wanted) {
+        tmp.parentNode.removeChild(tmp);
+        tmp = null;
+      }
+      if (wanted && !tmp) {
+        var listed = Array.prototype.slice.call(select.options).some(function (o) { return o.value === wanted; });
+        if (!listed) {
+          var op = new Option(label + ' ' + TXT.noStock, wanted);
+          op.setAttribute('data-temporal', '1');
+          select.appendChild(op);
+        }
+      }
+      select.value = wanted;
+    }
+
+    function renderLocation(s) {
+      var wanted = s.zona ? 'zona:' + s.zona : s.region ? 'region:' + s.region : '';
+      renderTemporal(selUbic, wanted, wanted ? UBIC_LABEL[wanted] : '');
+    }
+
+    function renderChips(s) {
+      var items = [];
+      if (s.tipo) {
+        items.push({ key: 'tipo', label: TXT.type + ': ' + TIPO_LABEL[s.tipo] });
+      }
+      if (s.region || s.zona) {
+        items.push({ key: 'ubicacion', label: TXT.location + ': ' + UBIC_LABEL[s.zona ? 'zona:' + s.zona : 'region:' + s.region] });
+      }
+      if (s.max) {
+        items.push({ key: 'max', label: TXT.budget + ': ' + budgetLabel(s.op, s.max) });
+      }
+      chipsEl.innerHTML = '';
+      items.forEach(function (it) {
+        var li = document.createElement('li');
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'prop-chip';
+        b.setAttribute('data-quitar', it.key);
+        b.setAttribute('aria-label', TXT.remove + ': ' + it.label);
+        b.appendChild(document.createTextNode(it.label + ' '));
+        var x = document.createElement('span');
+        x.setAttribute('aria-hidden', 'true');
+        x.textContent = '×';
+        b.appendChild(x);
+        li.appendChild(b);
+        chipsEl.appendChild(li);
+      });
+      chipsEl.hidden = items.length === 0;
+    }
+
+    function render(s) {
+      // Pestañas: una sola activa (categoría > operación > Todos).
+      var activa = s.cat || s.op || 'all';
+      tabs.forEach(function (t) {
+        var on = t.getAttribute('data-filter') === activa;
+        t.classList.toggle('filter-tab--active', on);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+
+      // Tipos: con una categoría activa solo se ofrecen los compatibles.
+      Array.prototype.slice.call(selTipo.options).forEach(function (o) {
+        if (!o.value) return;
+        var ok = tipoCompatible(o.value, s.cat);
+        o.disabled = !ok;
+        o.hidden = !ok;
+      });
+      renderTemporal(selTipo, s.tipo, s.tipo ? TIPO_LABEL[s.tipo] : '');
+      renderLocation(s);
+      renderBudget(s);
+
+      var visibles = 0;
+      cards.forEach(function (card) {
+        var show = matches(card, s);
+        card.classList.toggle('is-hidden', !show);
+        if (show) visibles++;
+      });
+
+      renderChips(s);
+      var active = hasFilters(s);
+      var noun = (active ? cards.length : visibles) === 1 ? TXT.one : TXT.many;
+      counterEl.textContent = active
+        ? visibles + ' ' + TXT.of + ' ' + cards.length + ' ' + (cards.length === 1 ? TXT.one : TXT.many)
+        : visibles + ' ' + noun;
+      clearBtn.hidden = !active;
+      emptyEl.hidden = visibles > 0;
+      form.hidden = false;
+      liberarEspera();
+    }
+
+    // ----- Cambios del usuario -----
+    var state = parseState(window.location.search);
+
+    function track(cadena) {
       if (typeof window.makomTrack === 'function') {
         window.makomTrack('Search', null, {
-          search_string: filter,
+          search_string: cadena,
           content_category: 'property_filter'
         });
       }
+    }
 
-      // Filter cards
-      propertyCards.forEach(function (card) {
-        var types = card.getAttribute('data-type') || '';
-        if (filter === 'all' || types.indexOf(filter) !== -1) {
-          card.classList.remove('is-hidden');
-          card.style.display = '';
-        } else {
-          card.classList.add('is-hidden');
-          card.style.display = 'none';
+    // Aplica un nuevo estado por acción del usuario: actualiza la URL
+    // (una entrada de historial si cambió), repinta y mide UNA vez.
+    function commit(next, cadena) {
+      var nuevaBusqueda = buildSearch(next, window.location.search);
+      if (nuevaBusqueda !== window.location.search) {
+        window.history.pushState(null, '', window.location.pathname + nuevaBusqueda + window.location.hash);
+      }
+      state = next;
+      render(state);
+      track(cadena);
+    }
+
+    function copy(s) {
+      return { op: s.op, cat: s.cat, tipo: s.tipo, region: s.region, zona: s.zona, max: s.max };
+    }
+
+    function presupuestoValido(s) {
+      if (!s.op || !s.max) return 0;
+      return presetsDe(s.op).indexOf(s.max) !== -1 ? s.max : 0;
+    }
+
+    function irATab(filter) {
+      var next = copy(state);
+      if (filter === 'all') {
+        next.op = ''; next.cat = ''; next.max = 0;
+      } else if (filter === 'venta' || filter === 'alquiler') {
+        next.op = filter; next.cat = '';
+        next.max = presupuestoValido(next);
+      } else {
+        next.cat = filter; next.op = ''; next.max = 0;
+        if (next.tipo && !tipoCompatible(next.tipo, filter)) next.tipo = '';
+      }
+      commit(next, filter);
+    }
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        irATab(this.getAttribute('data-filter'));
+      });
+
+      // Keyboard support for filter tabs (arrow keys)
+      tab.addEventListener('keydown', function (e) {
+        var idx = tabs.indexOf(this);
+        var next = null;
+
+        if (e.key === 'ArrowRight') {
+          next = tabs[(idx + 1) % tabs.length];
+        } else if (e.key === 'ArrowLeft') {
+          next = tabs[(idx - 1 + tabs.length) % tabs.length];
+        } else if (e.key === 'Home') {
+          next = tabs[0];
+        } else if (e.key === 'End') {
+          next = tabs[tabs.length - 1];
+        }
+
+        if (next) {
+          e.preventDefault();
+          next.focus();
+          next.click();
         }
       });
     });
 
-    // Keyboard support for filter tabs (arrow keys)
-    tab.addEventListener('keydown', function (e) {
-      var tabs = Array.from(filterTabs);
-      var idx = tabs.indexOf(this);
-      var next = null;
-
-      if (e.key === 'ArrowRight') {
-        next = tabs[(idx + 1) % tabs.length];
-      } else if (e.key === 'ArrowLeft') {
-        next = tabs[(idx - 1 + tabs.length) % tabs.length];
-      } else if (e.key === 'Home') {
-        next = tabs[0];
-      } else if (e.key === 'End') {
-        next = tabs[tabs.length - 1];
-      }
-
-      if (next) {
-        e.preventDefault();
-        next.focus();
-        next.click();
-      }
+    selTipo.addEventListener('change', function () {
+      var next = copy(state);
+      next.tipo = selTipo.value;
+      if (next.tipo && next.cat && !tipoCompatible(next.tipo, next.cat)) next.cat = '';
+      commit(next, trackString(next));
     });
-  });
+
+    selUbic.addEventListener('change', function () {
+      var next = copy(state);
+      var v = selUbic.value.split(':');
+      next.region = v[0] === 'region' ? v[1] : '';
+      next.zona = v[0] === 'zona' ? v[1] : '';
+      commit(next, trackString(next));
+    });
+
+    selMax.addEventListener('change', function () {
+      var next = copy(state);
+      next.max = selMax.value ? parseInt(selMax.value, 10) : 0;
+      commit(next, trackString(next));
+    });
+
+    function limpiar() {
+      commit(emptyState(), 'all');
+    }
+    clearBtn.addEventListener('click', limpiar);
+    emptyClearBtn.addEventListener('click', function () {
+      limpiar();
+      var activa = tabs.filter(function (t) { return t.classList.contains('filter-tab--active'); })[0];
+      if (activa) activa.focus();
+    });
+
+    chipsEl.addEventListener('click', function (e) {
+      var btn = e.target.closest ? e.target.closest('[data-quitar]') : null;
+      if (!btn) return;
+      var key = btn.getAttribute('data-quitar');
+      var next = copy(state);
+      var destino = selTipo;
+      if (key === 'tipo') { next.tipo = ''; destino = selTipo; }
+      if (key === 'ubicacion') { next.region = ''; next.zona = ''; destino = selUbic; }
+      if (key === 'max') { next.max = 0; destino = selMax; }
+      commit(next, trackString(next));
+      destino.focus();
+    });
+
+    form.addEventListener('submit', function (e) { e.preventDefault(); });
+
+    // Atrás / adelante: se relee la URL; no se mide (no es una búsqueda nueva).
+    window.addEventListener('popstate', function () {
+      state = parseState(window.location.search);
+      render(state);
+    });
+
+    // Carga inicial (incluye URLs compartidas): se aplica el estado de
+    // la URL sin medir y, si traía algo inválido o contradictorio, se
+    // corrige la URL sin crear una entrada de historial.
+    render(state);
+    var normalizada = buildSearch(state, window.location.search);
+    if (normalizada !== window.location.search) {
+      window.history.replaceState(null, '', window.location.pathname + normalizada + window.location.hash);
+    }
+  })();
 
   /* ============================================================
      7. FORM VALIDATION

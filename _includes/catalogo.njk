@@ -65,6 +65,48 @@
       </div>
 
       {% if publicas.length > 0 %}
+      {#
+        Buscador del catálogo — motor único de filtrado (script.js,
+        sección 6). Todo lo que ofrece la interfaz se deriva aquí, en el
+        build, de datos PÚBLICOS: operacion, tipo, categoriaGeneral,
+        zona, precio.monto y el catálogo de _data/propiedadesConfig.json.
+        Nunca se lee ubicacionInterna. Una zona o un tipo solo aparece
+        como opción si al menos una propiedad pública lo usa, así que al
+        asignar "zona" desde el CMS y reconstruir, el selector la
+        reconoce sin tocar código.
+      #}
+      {%- set zonasUsadas = [] -%}
+      {%- set tiposUsados = [] -%}
+      {%- for p in publicas -%}
+        {%- if p.zona and zonasUsadas.indexOf(p.zona) == -1 -%}{%- set _z = zonasUsadas.push(p.zona) -%}{%- endif -%}
+        {%- if p.tipo and tiposUsados.indexOf(p.tipo) == -1 -%}{%- set _t = tiposUsados.push(p.tipo) -%}{%- endif -%}
+      {%- endfor -%}
+      {#
+        Catálogo COMPLETO de ubicaciones válidas (regiones y zonas), con
+        etiquetas del idioma de la página. A diferencia del selector, que
+        solo lista zonas con propiedades, esto permite al motor aceptar
+        una zona válida aunque hoy no tenga inventario (cero resultados)
+        y distinguirla de un identificador inexistente (se ignora).
+      #}
+      {%- set ubicacionesCatalogo = [] -%}
+      {%- for r in propiedadesConfig.regiones -%}
+        {%- set _ur = ubicacionesCatalogo.push({ t: "region", v: r.valor, l: ((r.etiquetaEn or r.etiqueta) if esEn else r.etiqueta) }) -%}
+      {%- endfor -%}
+      {%- for z in propiedadesConfig.zonas -%}
+        {%- set _uz = ubicacionesCatalogo.push({ t: "zona", v: z.valor, r: z.region, l: ((z.etiquetaEn or z.etiqueta) if esEn else z.etiqueta) }) -%}
+      {%- endfor -%}
+      {#
+        Catálogo COMPLETO de tipos de propiedad (etiquetas del idioma de
+        la página): igual que con las zonas, un tipo válido sin
+        propiedades es un filtro legítimo con cero resultados.
+      #}
+      {%- set tiposCatalogo = [] -%}
+      {%- for t in propiedadesConfig.tipos -%}
+        {%- set _ut = tiposCatalogo.push({ v: t.valor, l: ((t.etiquetaEn or t.etiqueta) if esEn else t.etiqueta) }) -%}
+      {%- endfor -%}
+      {%- set presupuestosVenta = "100000,150000,200000,300000" -%}
+      {%- set presupuestosAlquiler = "1500,3000,7500" -%}
+      <div class="prop-controles">
       <div class="prop-filters" role="tablist" aria-label="{{ 'Filter properties' if esEn else 'Filtrar propiedades' }}">
         <button class="filter-tab filter-tab--active" role="tab" aria-selected="true" data-filter="all">{{ "All" if esEn else "Todos" }}</button>
         {% if filtrosDisp.venta %}<button class="filter-tab" role="tab" aria-selected="false" data-filter="venta">{{ "For Sale" if esEn else "Venta" }}</button>{% endif %}
@@ -73,13 +115,110 @@
         {% if filtrosDisp.residencial %}<button class="filter-tab" role="tab" aria-selected="false" data-filter="residencial">{{ "Residential" if esEn else "Residencial" }}</button>{% endif %}
       </div>
 
-      <div class="propiedades__grid" role="list" aria-live="polite" aria-label="{{ 'Property listings' if esEn else 'Listado de propiedades' }}">
+      <form class="prop-buscador" id="prop-buscador" role="search" aria-label="{{ 'Refine your search' if esEn else 'Afinar la búsqueda' }}" novalidate data-ubicaciones="{{ ubicacionesCatalogo | dump }}" data-tipos="{{ tiposCatalogo | dump }}" hidden>
+        <div class="prop-buscador__campos">
+          <div class="prop-buscador__campo">
+            <label class="prop-buscador__label" for="f-tipo">{{ "Property type" if esEn else "Tipo de propiedad" }}</label>
+            <select class="prop-buscador__select" id="f-tipo">
+              <option value="">{{ "All types" if esEn else "Todos los tipos" }}</option>
+              {%- for t in propiedadesConfig.tipos %}
+              {%- if tiposUsados.indexOf(t.valor) != -1 %}
+              {%- set catsTipo = [] %}
+              {%- for p in publicas %}{% if p.tipo == t.valor and catsTipo.indexOf(p.categoriaGeneral) == -1 %}{% set _c = catsTipo.push(p.categoriaGeneral) %}{% endif %}{% endfor %}
+              <option value="{{ t.valor }}" data-cats="{{ catsTipo | join(' ') }}">{{ (t.etiquetaEn or t.etiqueta) if esEn else t.etiqueta }}</option>
+              {%- endif %}
+              {%- endfor %}
+            </select>
+          </div>
+          <div class="prop-buscador__campo">
+            <label class="prop-buscador__label" for="f-ubicacion">{{ "Location" if esEn else "Ubicación" }}</label>
+            <select class="prop-buscador__select" id="f-ubicacion">
+              <option value="">{{ "All locations" if esEn else "Todas las ubicaciones" }}</option>
+              {%- for r in propiedadesConfig.regiones %}
+              {%- set zonasRegion = [] %}
+              {%- for z in propiedadesConfig.zonas %}{% if z.region == r.valor and zonasUsadas.indexOf(z.valor) != -1 %}{% set _x = zonasRegion.push(z) %}{% endif %}{% endfor %}
+              {%- if zonasRegion.length > 0 %}
+              {%- set etiquetaRegion = (r.etiquetaEn or r.etiqueta) if esEn else r.etiqueta %}
+              <optgroup label="{{ etiquetaRegion }}">
+                <option value="region:{{ r.valor }}">{{ etiquetaRegion }} — {{ "all areas" if esEn else "todas las zonas" }}</option>
+                {%- for z in zonasRegion %}
+                <option value="zona:{{ z.valor }}" data-region="{{ r.valor }}">{{ (z.etiquetaEn or z.etiqueta) if esEn else z.etiqueta }}</option>
+                {%- endfor %}
+              </optgroup>
+              {%- endif %}
+              {%- endfor %}
+            </select>
+          </div>
+          <div class="prop-buscador__campo">
+            <label class="prop-buscador__label" for="f-max">{{ "Maximum budget" if esEn else "Presupuesto máximo" }}</label>
+            <select class="prop-buscador__select" id="f-max" aria-describedby="f-max-ayuda" data-presupuestos-venta="{{ presupuestosVenta }}" data-presupuestos-alquiler="{{ presupuestosAlquiler }}" disabled>
+              <option value="">{{ "Choose For Sale or For Rent first" if esEn else "Elija Venta o Alquiler primero" }}</option>
+            </select>
+            <span class="sr-only" id="f-max-ayuda">{{ "The budget options depend on the selected transaction type." if esEn else "Las opciones de presupuesto dependen de la operación seleccionada." }}</span>
+          </div>
+        </div>
+        <ul class="prop-chips" id="f-chips" aria-label="{{ 'Active filters' if esEn else 'Filtros activos' }}" hidden></ul>
+        <div class="prop-buscador__meta">
+          <p class="prop-buscador__contador" id="f-contador" role="status" aria-live="polite"></p>
+          <button type="button" class="prop-buscador__limpiar" id="f-limpiar" hidden>{{ "Clear filters" if esEn else "Limpiar filtros" }}</button>
+        </div>
+      </form>
+      {#
+        Script en línea, sin dependencias: se ejecuta mientras el HTML se
+        analiza, antes del primer pintado, y adelanta lo que no puede
+        esperar a script.js (que carga diferido). (1) Muestra el buscador
+        (sin JavaScript permanece oculto, igual que antes). (2) Marca la
+        pestaña de la URL (?op= / ?cat=) para que "Todos" no se vea
+        activo un instante. (3) Si la URL trae algún parámetro del
+        filtro, pone en <html> el estado de espera: la rejilla se oculta
+        sin quitarle su espacio (no se ven las 23 tarjetas ni se mueve el
+        contenido) y se reserva la fila de chips. NO filtra nada: solo
+        comprueba si existen los nombres de parámetro; el motor de
+        script.js sigue siendo la única fuente de verdad y es quien
+        libera ese estado al pintar. Si script.js no llega a ejecutarse
+        (red, error), el evento load —que ocurre después de que el
+        script diferido terminó o falló— lo libera aquí y el catálogo
+        completo queda visible. Sin JavaScript este bloque no corre y no
+        se oculta nada.
+      #}
+      <script>
+        (function () {
+          try {
+            var f = document.getElementById('prop-buscador');
+            if (f) f.hidden = false;
+            var h = document.documentElement;
+            if (/[?&](op|cat|tipo|region|zona|max)=/.test(location.search)) {
+              h.classList.add('catalogo-filtrando');
+              if (/[?&](tipo|region|zona|max)=/.test(location.search)) h.classList.add('catalogo-con-chips');
+              window.addEventListener('load', function () {
+                h.classList.remove('catalogo-filtrando', 'catalogo-con-chips');
+              });
+            }
+            var p = new URLSearchParams(location.search);
+            var o = p.get('op');
+            var c = p.get('cat');
+            var k = (o === 'venta' || o === 'alquiler') ? o : ((c === 'comercial' || c === 'residencial') ? c : null);
+            var t = k && document.querySelector('.filter-tab[data-filter="' + k + '"]');
+            if (!t) return;
+            var a = document.querySelectorAll('.filter-tab--active');
+            for (var i = 0; i < a.length; i++) {
+              a[i].classList.remove('filter-tab--active');
+              a[i].setAttribute('aria-selected', 'false');
+            }
+            t.classList.add('filter-tab--active');
+            t.setAttribute('aria-selected', 'true');
+          } catch (e) {}
+        })();
+      </script>
+      </div>
+
+      <div class="propiedades__grid" role="list" aria-label="{{ 'Property listings' if esEn else 'Listado de propiedades' }}">
         {% for p in publicas %}
         {% set portada = p.fotografias.galeria | portadaDe %}
         {% set specs = p.detallesCuantitativos | specsTexto(lang) %}
         {% set tituloP = (p.tituloEn or p.titulo) if esEn else p.titulo %}
         {% set ubicacionP = (p.ubicacionPublicaEn or p.ubicacionPublica) if esEn else p.ubicacionPublica %}
-        <article class="property-card" data-type="{{ p.operacion }} {{ p.categoriaGeneral }}" role="listitem" aria-labelledby="cat-{{ p.slug }}-name">
+        <article class="property-card" data-op="{{ p.operacion }}" data-cat="{{ p.categoriaGeneral }}" data-tipo="{{ p.tipo }}"{% if p.zona %} data-zona="{{ p.zona }}"{% endif %}{% if p.precio and p.precio.monto %} data-precio="{{ p.precio.monto }}"{% endif %} role="listitem" aria-labelledby="cat-{{ p.slug }}-name">
           <div class="property-card__image">
             {% if portada %}
               <img src="{{ portada.archivo }}" alt="{{ portada.alt or tituloP }}" loading="lazy" />
@@ -105,6 +244,11 @@
           </div>
         </article>
         {% endfor %}
+      </div>
+
+      <div class="catalogo-sin-resultados" id="f-sin-resultados" hidden>
+        <p class="catalogo-sin-resultados__texto">{{ "No properties match these filters. Try widening your search or clearing the filters." if esEn else "Ninguna propiedad coincide con estos filtros. Pruebe ampliar la búsqueda o limpiar los filtros." }}</p>
+        <button type="button" class="btn btn--outline" id="f-sin-resultados-limpiar">{{ "Clear filters" if esEn else "Limpiar filtros" }}</button>
       </div>
       {% else %}
       <div class="catalogo-vacio" data-reveal>
