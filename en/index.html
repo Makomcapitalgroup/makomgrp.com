@@ -175,6 +175,47 @@
         <a href="#propiedades" class="link--arrow">Search properties</a>
       </div>
     </div>
+    <div class="hero__search hero-search" id="hero-search" data-catalogo="/en/properties/">
+      <!-- Móvil: enlace al catálogo que script.js convierte en botón que abre el panel. Si JavaScript falla, sigue siendo un enlace válido al catálogo. -->
+      <a href="/en/properties/" class="hero-search__trigger" id="hero-search-trigger" aria-haspopup="dialog" aria-controls="hero-search-panel" aria-expanded="false">Search properties</a>
+      <div class="hero-search__panel" id="hero-search-panel">
+        <div class="hero-search__panel-head">
+          <h2 class="hero-search__panel-title" id="hero-search-title">Search properties</h2>
+          <button type="button" class="hero-search__close" id="hero-search-close" aria-label="Close search"><span aria-hidden="true">×</span></button>
+        </div>
+        <!-- Sin JavaScript el formulario envía por GET al catálogo (sin filtros, salvo la operación). Con JavaScript, script.js arma la URL solo con los parámetros elegidos. Las opciones de tipo, ubicación y presupuesto se leen del propio catálogo (no se duplican aquí). -->
+        <form class="hero-search__form" id="hero-search-form" action="/en/properties/" method="get" role="search" aria-label="Search properties">
+          <div class="hero-search__field">
+            <label class="hero-search__label" for="hero-search-op">Transaction</label>
+            <select class="hero-search__select" id="hero-search-op" name="op">
+              <option value="">Buy or rent</option>
+              <option value="venta">Buy</option>
+              <option value="alquiler">Rent</option>
+            </select>
+          </div>
+          <div class="hero-search__field">
+            <label class="hero-search__label" for="hero-search-tipo">Type</label>
+            <select class="hero-search__select" id="hero-search-tipo" disabled>
+              <option value="">All types</option>
+            </select>
+          </div>
+          <div class="hero-search__field">
+            <label class="hero-search__label" for="hero-search-ubicacion">Location</label>
+            <select class="hero-search__select" id="hero-search-ubicacion" disabled>
+              <option value="">All locations</option>
+            </select>
+          </div>
+          <div class="hero-search__field">
+            <label class="hero-search__label" for="hero-search-max">Maximum price</label>
+            <select class="hero-search__select" id="hero-search-max" disabled>
+              <option value="">Choose transaction</option>
+            </select>
+          </div>
+          <button type="submit" class="hero-search__submit">Search</button>
+        </form>
+        <a href="/en/properties/" class="hero-search__advanced" id="hero-search-advanced">Advanced search</a>
+      </div>
+    </div>
     <div class="hero__scroll-indicator" aria-hidden="true">
       <span class="hero__scroll-line"></span>
       <span class="hero__scroll-label">Scroll</span>

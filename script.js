@@ -1619,6 +1619,294 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /* ============================================================
+     19. BUSCADOR DEL HERO (Home ES/EN)
+     La barra solo ARMA UNA URL hacia el catálogo (?op=&tipo=&region=
+     &zona=&max=); el motor de filtrado vive únicamente en el catálogo
+     (sección 6). Las opciones de tipo, ubicación y presupuesto se leen
+     de la propia página del catálogo (en el idioma de la Home), así que
+     no se duplican datos aquí. Móvil: un enlace "Buscar propiedades"
+     se convierte en botón que abre un panel accesible; si JavaScript
+     falla, sigue siendo un enlace válido al catálogo.
+  ============================================================ */
+  (function () {
+    var root = document.getElementById('hero-search');
+    var form = document.getElementById('hero-search-form');
+    if (!root || !form) return;
+
+    var isEn = (document.documentElement.lang || '').toLowerCase().indexOf('en') === 0;
+    var catalogPath = root.getAttribute('data-catalogo') || (isEn ? '/en/properties/' : '/propiedades/');
+    var TXT = isEn ? {
+      noLimit: 'No limit', upTo: 'Up to', perMonth: '/ month', chooseOp: 'Choose transaction', unavailable: 'No limit', loading: 'Loading…'
+    } : {
+      noLimit: 'Sin límite', upTo: 'Hasta', perMonth: '/ mes', chooseOp: 'Elija operación', unavailable: 'Sin límite', loading: 'Cargando…'
+    };
+
+    var selOp = document.getElementById('hero-search-op');
+    var selTipo = document.getElementById('hero-search-tipo');
+    var selUbic = document.getElementById('hero-search-ubicacion');
+    var selMax = document.getElementById('hero-search-max');
+    var trigger = document.getElementById('hero-search-trigger');
+    var panel = document.getElementById('hero-search-panel');
+    var closeBtn = document.getElementById('hero-search-close');
+    var advanced = document.getElementById('hero-search-advanced');
+    // Mismo corte que el CSS: por debajo de 1024px el buscador es el botón
+    // compacto + panel (móvil y tablet); desde 1024px es la barra.
+    var mobileQuery = window.matchMedia('(max-width: 1023px)');
+
+    var presets = { venta: [], alquiler: [] };
+    // idle | loading | ready | failed. Es el único guardián de la carga:
+    // el catálogo se pide UNA vez por vida de la página, aunque varias
+    // señales de intención lleguen a la vez (y no se reintenta si falla).
+    var catalogState = 'idle';
+
+    // ----- Parámetros de atribución: se conservan al pasar al catálogo -----
+    function attributionParams() {
+      var out = new URLSearchParams();
+      new URLSearchParams(window.location.search).forEach(function (value, key) {
+        if (/^utm_/i.test(key) || /^(fbclid|gclid|gbraid|wbraid|ttclid|msclkid|dclid)$/i.test(key)) {
+          out.set(key, value);
+        }
+      });
+      return out;
+    }
+
+    function withAttribution(params) {
+      var attr = attributionParams();
+      attr.forEach(function (value, key) { params.set(key, value); });
+      var q = params.toString();
+      return catalogPath + (q ? '?' + q : '');
+    }
+
+    // Los enlaces "Búsqueda avanzada" y "Buscar propiedades" (móvil) llevan
+    // al catálogo completo, con la atribución de la visita si existe.
+    var plainHref = withAttribution(new URLSearchParams());
+    if (advanced) advanced.setAttribute('href', plainHref);
+    if (trigger) trigger.setAttribute('href', plainHref);
+
+    // ----- Opciones tomadas del catálogo -----
+    function renderMax() {
+      var op = selOp.value;
+      var previous = selMax.value;
+      selMax.innerHTML = '';
+      if (catalogState === 'failed') {
+        selMax.appendChild(new Option(TXT.unavailable, ''));
+        selMax.disabled = true;
+        return;
+      }
+      if (!op) {
+        selMax.appendChild(new Option(TXT.chooseOp, ''));
+        selMax.disabled = true;
+        return;
+      }
+      if (catalogState !== 'ready' || !presets[op] || presets[op].length === 0) {
+        // Operación ya elegida pero las opciones aún no llegaron: se
+        // conserva la operación y, al terminar la carga, se repinta.
+        selMax.appendChild(new Option(catalogState === 'ready' ? TXT.chooseOp : TXT.loading, ''));
+        selMax.disabled = true;
+        return;
+      }
+      selMax.appendChild(new Option(TXT.noLimit, ''));
+      presets[op].forEach(function (n) {
+        var label = TXT.upTo + ' $' + n.toLocaleString('en-US') + (op === 'alquiler' ? ' ' + TXT.perMonth : '');
+        selMax.appendChild(new Option(label, String(n)));
+      });
+      selMax.disabled = false;
+      // Solo se conserva el presupuesto si sigue siendo válido para la operación.
+      if (previous && presets[op].indexOf(Number(previous)) !== -1) selMax.value = previous;
+    }
+
+    function fillOptions(doc) {
+      var cTipo = doc.getElementById('f-tipo');
+      var cUbic = doc.getElementById('f-ubicacion');
+      var cMax = doc.getElementById('f-max');
+      if (!cTipo || !cUbic || !cMax) throw new Error('catalog markup');
+
+      Array.prototype.slice.call(cTipo.options).forEach(function (o) {
+        if (o.value) selTipo.appendChild(new Option(o.text, o.value));
+      });
+
+      Array.prototype.slice.call(cUbic.children).forEach(function (node) {
+        if (node.tagName === 'OPTGROUP') {
+          var group = document.createElement('optgroup');
+          group.label = node.label;
+          Array.prototype.slice.call(node.children).forEach(function (o) {
+            group.appendChild(new Option(o.text, o.value));
+          });
+          selUbic.appendChild(group);
+        }
+      });
+
+      ['venta', 'alquiler'].forEach(function (op) {
+        var raw = cMax.getAttribute('data-presupuestos-' + op) || '';
+        presets[op] = raw ? raw.split(',').map(Number).filter(function (n) { return n > 0; }) : [];
+      });
+
+      // Solo se ofrecen las operaciones que el catálogo tiene disponibles.
+      var available = {};
+      Array.prototype.slice.call(doc.querySelectorAll('.filter-tab')).forEach(function (t) {
+        available[t.getAttribute('data-filter')] = true;
+      });
+      ['venta', 'alquiler'].forEach(function (op) {
+        if (!available[op]) {
+          var opt = selOp.querySelector('option[value="' + op + '"]');
+          if (opt) opt.parentNode.removeChild(opt);
+        }
+      });
+    }
+
+    function loadCatalogOptions() {
+      if (catalogState !== 'idle') return;
+      catalogState = 'loading';
+      fetch(catalogPath, { credentials: 'same-origin' })
+        .then(function (r) {
+          if (!r.ok) throw new Error('catalog ' + r.status);
+          return r.text();
+        })
+        .then(function (html) {
+          fillOptions(new DOMParser().parseFromString(html, 'text/html'));
+          selTipo.disabled = false;
+          selUbic.disabled = false;
+          catalogState = 'ready';
+          renderMax();
+        })
+        .catch(function () {
+          // El formulario sigue sirviendo para ir al catálogo con la operación.
+          catalogState = 'failed';
+          renderMax();
+        });
+    }
+
+    // Carga perezosa: no se descarga nada al abrir la Home. El catálogo se
+    // pide cuando hay intención real de usar el buscador: hover (escritorio),
+    // foco de teclado, toque o clic sobre la barra, interacción con la
+    // operación o apertura del panel móvil (más abajo). Cualquiera de esas
+    // señales llama a loadCatalogOptions, que solo actúa la primera vez.
+    ['pointerenter', 'pointerdown', 'touchstart', 'focusin'].forEach(function (type) {
+      root.addEventListener(type, loadCatalogOptions, { passive: true });
+    });
+
+    selOp.addEventListener('change', function () {
+      loadCatalogOptions();
+      renderMax();
+    });
+
+    // ----- Envío: URL solo con los parámetros elegidos -----
+    function buildHref() {
+      var params = new URLSearchParams();
+      if (selOp.value) params.set('op', selOp.value);
+      if (selTipo.value) params.set('tipo', selTipo.value);
+      var loc = selUbic.value.split(':');
+      if (loc[0] === 'zona' && loc[1]) params.set('zona', loc[1]);
+      else if (loc[0] === 'region' && loc[1]) params.set('region', loc[1]);
+      if (selOp.value && selMax.value) params.set('max', selMax.value);
+      var filterQuery = params.toString();
+      return { href: withAttribution(params), filterQuery: filterQuery };
+    }
+
+    // Evita que un doble clic o un Enter repetido envíe dos veces (dos
+    // mediciones y dos navegaciones). Se rearma al volver con Atrás
+    // (la página puede restaurarse desde la caché de ida y vuelta).
+    var sending = false;
+    window.addEventListener('pageshow', function () { sending = false; });
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (sending) return;
+      sending = true;
+      var target = buildHref();
+      // Una sola medición por envío (no por cambiar selectores). Usa fetch
+      // con keepalive, así que sobrevive a la navegación.
+      if (typeof window.makomTrack === 'function') {
+        window.makomTrack('Search', null, {
+          search_string: target.filterQuery || 'all',
+          content_category: 'property_search_hero'
+        });
+      }
+      window.location.assign(target.href);
+    });
+
+    // ----- Panel móvil accesible -----
+    if (!trigger || !panel || !closeBtn) return;
+    var isOpen = false;
+
+    function focusables() {
+      return Array.prototype.slice.call(panel.querySelectorAll('a[href], button, select, input')).filter(function (el) {
+        return !el.disabled && el.offsetParent !== null;
+      });
+    }
+
+    function openPanel() {
+      if (isOpen) return;
+      isOpen = true;
+      root.classList.add('is-open');
+      document.documentElement.classList.add('hero-search-lock');
+      panel.setAttribute('role', 'dialog');
+      panel.setAttribute('aria-modal', 'true');
+      panel.setAttribute('aria-labelledby', 'hero-search-title');
+      trigger.setAttribute('aria-expanded', 'true');
+      loadCatalogOptions();
+      selOp.focus();
+    }
+
+    function closePanel(restoreFocus) {
+      if (!isOpen) return;
+      isOpen = false;
+      root.classList.remove('is-open');
+      document.documentElement.classList.remove('hero-search-lock');
+      panel.removeAttribute('role');
+      panel.removeAttribute('aria-modal');
+      panel.removeAttribute('aria-labelledby');
+      trigger.setAttribute('aria-expanded', 'false');
+      // El foco vuelve siempre al botón que abrió el panel (algunos
+      // navegadores no enfocan un enlace al hacer clic, así que no se
+      // puede confiar en document.activeElement al abrir).
+      if (restoreFocus !== false) trigger.focus();
+    }
+
+    trigger.addEventListener('click', function (e) {
+      if (!mobileQuery.matches) return; // en tablet/desktop el enlace no se muestra
+      e.preventDefault();
+      openPanel();
+    });
+
+    closeBtn.addEventListener('click', function () { closePanel(true); });
+
+    document.addEventListener('keydown', function (e) {
+      if (!isOpen) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closePanel(true);
+        return;
+      }
+      if (e.key === 'Tab') {
+        var items = focusables();
+        if (items.length === 0) return;
+        var first = items[0];
+        var last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        } else if (!panel.contains(document.activeElement)) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    });
+
+    // Si la ventana pasa a tablet/desktop con el panel abierto, se cierra
+    // sin mover el foco (el botón deja de mostrarse).
+    function onViewportChange() {
+      if (!mobileQuery.matches) closePanel(false);
+    }
+    if (mobileQuery.addEventListener) mobileQuery.addEventListener('change', onViewportChange);
+    else if (mobileQuery.addListener) mobileQuery.addListener(onViewportChange);
+    window.addEventListener('resize', onViewportChange);
+  })();
+
+  /* ============================================================
      18. META PIXEL + CONVERSIONS API
      Pixel (navegador) y CAPI (Worker) comparten event_id para
      que Meta deduplique. El token nunca vive en el cliente.
