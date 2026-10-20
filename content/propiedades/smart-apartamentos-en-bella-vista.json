@@ -1,0 +1,73 @@
+{
+  "amenidades": [
+    "gimnasio",
+    "cerradura-digital",
+    "area-social",
+    "coworking",
+    "estacionamientos-techados"
+  ],
+  "tituloEn": "SMART APARTMENTS IN BELLA VISTA",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 165550
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/aptta1.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/aptta-2.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/aptta-3.jpg"
+      },
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/aptta-4.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/aptta-5.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/aptta-6.jpg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 1,
+    "banos": 1,
+    "estacionamientos": 1,
+    "metrajeInterno": 43
+  },
+  "mostrarEnHome": false,
+  "descripcion": "Apartamentos de 1 y 2 recámaras, de 43 a 60 m², en pleno Bella Vista.\n\nTodos cuentan con balcón, domotización y un puesto de estacionamiento. Según el modelo, tendrás recámara flex o estudio, segundo baño, lavandería y walk-in closet.\n\nUna torre pet friendly con 15 amenidades: rooftop con piscina, gimnasio, coworking, sky lounge y área de parrillas, además de lobby, concierge y smart lockers.\n\nTodo a pocos minutos caminando: farmacias a 2 min, metro y supermercado a 3, Hospital Nacional y Parque Urracá a 4, Cinta Costera a 5.\n\nEscríbenos y agenda tu visita.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "corregimiento": "",
+    "sector": "Bella Vista"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "1 and 2-bedroom apartments, from 43 to 60 m², in the heart of Bella Vista.\n\nEvery unit includes a balcony, smart-home automation and one parking space. Depending on the model, you get a flex bedroom or study, a second bathroom, laundry area and walk-in closet.\n\nA pet-friendly tower with 15 amenities: rooftop pool, gym, coworking, sky lounge and grill area, plus lobby, concierge and smart lockers.\n\nEverything within a short walk: pharmacies 2 min, metro and supermarket 3, Hospital Nacional and Parque Urracá 4, Cinta Costera 5.\n\nMessage us and schedule your visit.",
+  "operacion": "venta",
+  "ubicacionPublica": "Bella Vista",
+  "titulo": "SMART APARTAMENTOS EN BELLA VISTA",
+  "fechaEntrega": "futura",
+  "seo": {
+    "noIndex": false
+  }
+}
