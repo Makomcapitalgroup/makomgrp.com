@@ -60,6 +60,12 @@
   --container-max: 1280px;
   --header-height: 72px;
   --radius: 0;
+  /* Sistema de radios (solo botones, desplegables del buscador y su contenedor;
+     tarjetas, fotografías y campos de formulario siguen cuadrados). */
+  --radius-btn: 10px;
+  --radius-field: 10px;
+  --radius-glass: 22px;
+  --radius-panel: 14px;
 
   /* Shadows */
   --shadow-card: 0 4px 24px 0 rgba(10,10,10,0.08);
@@ -307,6 +313,7 @@ textarea {
 }
 
 .header__nav-link--cta {
+  border-radius: var(--radius-btn);
   margin-left: 8px;
   padding: 8px 18px;
   border: 1px solid rgba(245,242,238,0.40);
@@ -944,19 +951,30 @@ body.hero--loaded .hero__subheadline {
 }
 
 /* 11b. BUSCADOR DEL HERO
-   Barra de cristal oscuro sobre el skyline que envía al catálogo
-   (script.js, sección 19). Tablet/desktop: barra en la fila inferior del
-   Hero. Móvil: botón compacto que abre un panel. Todo el estado de
-   filtrado vive en el catálogo; aquí solo se arma la URL. */
+   Contenedor de cristal oscuro con cuatro desplegables independientes,
+   botón Buscar contenido y enlace "Búsqueda avanzada" integrado
+   (script.js, sección 19). Desktop: barra en la fila inferior del Hero.
+   < 1024px: botón compacto que abre un panel con el mismo lenguaje
+   visual. Todo el estado de filtrado vive en el catálogo; aquí solo se
+   arma la URL. */
 .hero {
-  /* Altura reservada para la fila del buscador (tablet y desktop). */
-  --hs-row: 116px;
+  /* Altura reservada para la fila del buscador (desktop). */
+  --hs-row: 124px;
   --hs-left: 64px;
   /* Zona libre a la derecha: el botón flotante (24px + ancho + 16px)
      nunca queda debajo de un control del buscador. */
   --hs-right: 240px;
-  --hs-glass: rgba(10, 10, 10, 0.68);
-  --hs-line: rgba(245, 242, 238, 0.16);
+  /* Botón compacto (móvil/tablet): cristal oscuro sobre la fotografía */
+  --hs-glass: rgba(12, 12, 12, 0.58);
+  /* Contenedor de escritorio: cristal "gris humo". El relleno es solo un
+     velo claro y translúcido: lo que se ve detrás lo aporta el desenfoque
+     (backdrop-filter), no un fondo oscuro. */
+  --hs-pane-tint: rgba(120, 124, 136, 0.085);
+  --hs-pane-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0.025) 45%, rgba(255, 255, 255, 0.045) 100%);
+  --hs-line: rgba(255, 255, 255, 0.24);
+  --hs-field-line: rgba(255, 255, 255, 0.36);
+  --hs-field-bg: rgba(8, 8, 12, 0.30);
+  --hs-link: #E8876A;
 }
 
 .hero__search {
@@ -974,15 +992,16 @@ body.hero--loaded .hero__subheadline {
   align-items: center;
   gap: 10px;
   min-height: 48px;
-  padding: 0 20px;
+  padding: 0 22px;
   font-size: 14px;
   font-weight: var(--font-weight-regular);
   letter-spacing: 0.02em;
   color: var(--color-blanco);
   background-color: var(--hs-glass);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   border: 1px solid rgba(245, 242, 238, 0.30);
+  border-radius: var(--radius-btn);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
   text-decoration: none;
   transition: border-color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
@@ -1046,7 +1065,8 @@ html.hero-search-lock {
   font-size: 28px;
   line-height: 1;
   color: var(--color-blanco);
-  border: 1px solid var(--hs-line);
+  border: 1px solid var(--hs-field-line);
+  border-radius: var(--radius-btn);
   background: transparent;
   cursor: pointer;
 }
@@ -1065,31 +1085,58 @@ html.hero-search-lock {
 .hero-search__label {
   display: block;
   margin-bottom: 6px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: var(--font-weight-regular);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(245, 242, 238, 0.85);
+  letter-spacing: 0.01em;
+  color: rgba(245, 242, 238, 0.88);
 }
 
+/* Desplegable: borde fino, esquinas redondeadas, icono a la izquierda y
+   flecha a la derecha (dos fondos SVG; el icono cambia por campo). */
 .hero-search__select {
+  --hs-icon: none;
   width: 100%;
-  min-height: 48px;
-  padding: 10px 40px 10px 14px;
+  min-height: 50px;
+  padding: 10px 40px 10px 44px;
   font-size: 15px;
   font-weight: var(--font-weight-light);
   color: var(--color-blanco);
-  background-color: transparent;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23F5F2EE' stroke-width='1.2'/%3E%3C/svg%3E");
+  background-color: var(--hs-field-bg);
+  background-image:
+    var(--hs-icon),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23F5F2EE' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 14px center;
-  background-size: 10px 6px;
-  border: 1px solid rgba(245, 242, 238, 0.28);
-  border-radius: 0;
+  background-position: left 14px center, right 14px center;
+  background-size: 18px 18px, 10px 6px;
+  border: 1px solid var(--hs-field-line);
+  border-radius: var(--radius-field);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
   -webkit-appearance: none;
   appearance: none;
   text-overflow: ellipsis;
   cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
+}
+
+.hero-search__select:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.62);
+  background-color: rgba(8, 8, 12, 0.38);
+}
+
+#hero-search-op {
+  --hs-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18' fill='none' stroke='%23F5F2EE' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='5.8' cy='12.2' r='3.2'/%3E%3Cpath d='M8.2 9.8L15.5 2.5M12.6 5.4l2.1 2.1M10.8 7.2l1.6 1.6'/%3E%3C/svg%3E");
+}
+
+#hero-search-tipo {
+  --hs-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18' fill='none' stroke='%23F5F2EE' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 8.4L9 2.6l7 5.8M3.8 7.2V15.4h10.4V7.2M7.4 15.4v-4.6h3.2v4.6'/%3E%3C/svg%3E");
+}
+
+#hero-search-ubicacion {
+  --hs-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18' fill='none' stroke='%23F5F2EE' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 16.4s5.2-4.7 5.2-8.9a5.2 5.2 0 10-10.4 0c0 4.2 5.2 8.9 5.2 8.9z'/%3E%3Ccircle cx='9' cy='7.5' r='1.9'/%3E%3C/svg%3E");
+}
+
+#hero-search-max {
+  --hs-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18' fill='none' stroke='%23F5F2EE' stroke-width='1.2' stroke-linecap='round'%3E%3Cpath d='M3 15.5v-4M6.5 15.5V8M10 15.5v-5.5M13.5 15.5v-11'/%3E%3C/svg%3E");
 }
 
 .hero-search__select option,
@@ -1104,17 +1151,31 @@ html.hero-search-lock {
 }
 
 .hero-search__submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   min-height: 52px;
-  padding: 0 28px;
+  padding: 0 26px;
   font-size: 13px;
   font-weight: var(--font-weight-medium);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-blanco);
   background-color: var(--color-terracota);
   border: 1px solid var(--color-terracota);
+  border-radius: var(--radius-btn);
+  box-shadow: 0 6px 18px rgba(181, 71, 42, 0.28);
   cursor: pointer;
   transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+
+.hero-search__submit::before {
+  content: "";
+  flex: none;
+  width: 16px;
+  height: 16px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23F5F2EE' stroke-width='1.4'%3E%3Ccircle cx='6.8' cy='6.8' r='4.8'/%3E%3Cpath d='M10.4 10.4L14.5 14.5' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 
 .hero-search__submit:hover {
@@ -1126,13 +1187,22 @@ html.hero-search-lock {
   align-self: center;
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   min-height: 44px;
   font-size: 13px;
-  letter-spacing: 0.02em;
-  color: rgba(245, 242, 238, 0.92);
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
+  letter-spacing: 0.01em;
+  color: var(--hs-link);
   text-decoration: underline;
   text-underline-offset: 3px;
+  white-space: nowrap;
+}
+
+.hero-search__advanced::after {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 10px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 10' fill='none' stroke='%23E8876A' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1l4 4-4 4'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 
 .hero-search__advanced:hover {
@@ -1154,11 +1224,11 @@ html.hero-search-lock {
 /* ----- Puntos de corte, definidos por el ESPACIO disponible -----
    < 1024px  Botón compacto "Buscar propiedades" + panel (móvil y tablet:
              el mismo botón y el mismo panel; no hay un segundo panel).
-   1024–1239 Barra en dos filas: bloque de 2×2 campos + botón Buscar a la
-             derecha. Con la zona del botón flotante reservada, la barra
-             mide entre 720 y 936px: una sola fila recortaría los valores.
-   ≥ 1240px  Barra de una sola fila (el diseño aprobado de 1440px). Con
-             960px de ancho caben 4 campos de ~212px + el botón. */
+   1024–1239 Contenedor con dos filas de campos (2×2) y el botón Buscar a
+             la derecha. Con la zona del botón flotante reservada, la
+             barra mide entre 720 y 936px: una sola fila recortaría los
+             valores.
+   ≥ 1240px  Contenedor de una sola fila (el diseño aprobado de 1440px). */
 
 /* Tablet (768–1023): el botón compacto ocupa la fila inferior del Hero y
    libera el skyline; el símbolo decorativo queda encima, sin competir. */
@@ -1182,17 +1252,17 @@ html.hero-search-lock {
   }
 }
 
-/* ----- Escritorio (≥1024): barra; dos filas por defecto ----- */
+/* ----- Escritorio (≥1024): contenedor de cristal; dos filas por defecto ----- */
 @media (min-width: 1024px) {
   .hero {
     grid-template-rows: 1fr var(--hs-row);
-    --hs-row: 156px;
+    --hs-row: 168px;
     --hs-left: 64px;
   }
 
   .hero__search {
     grid-column: 1 / -1;
-    width: min(960px, calc(100% - var(--hs-left) - var(--hs-right)));
+    width: min(1120px, calc(100% - var(--hs-left) - var(--hs-right)));
     margin: 0 0 20px var(--hs-left);
   }
 
@@ -1200,82 +1270,105 @@ html.hero-search-lock {
     display: none;
   }
 
-  .hero-search__panel {
-    display: block;
-  }
-
   .hero-search__panel-head {
     display: none;
   }
 
+  /* El panel es el contenedor de cristal: contiene el formulario y el
+     enlace "Búsqueda avanzada" (esquina inferior derecha). */
+  .hero-search__panel {
+    position: relative;
+    display: block;
+    padding: 14px 18px;
+    isolation: isolate;
+    background-color: var(--hs-pane-tint);
+    background-image: var(--hs-pane-sheen);
+    -webkit-backdrop-filter: blur(11px) saturate(1.55) brightness(1.08);
+    backdrop-filter: blur(11px) saturate(1.55) brightness(1.08);
+    border: 1px solid var(--hs-line);
+    border-radius: var(--radius-glass);
+    box-shadow:
+      0 22px 56px rgba(0, 0, 0, 0.34),
+      0 2px 8px rgba(0, 0, 0, 0.20),
+      inset 0 1px 0 rgba(255, 255, 255, 0.38),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.10),
+      inset 0 0 28px rgba(255, 255, 255, 0.05);
+  }
+
+  /* Reflejo: un brillo suave y estático en la esquina superior izquierda y
+     un borde interior que "atrapa" la luz. Sin JavaScript ni animación. */
+  .hero-search__panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+      radial-gradient(120% 90% at 8% -20%, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0) 55%),
+      linear-gradient(115deg, rgba(255, 255, 255, 0) 55%, rgba(255, 235, 215, 0.07) 100%);
+  }
+
   .hero-search__form {
     display: grid;
-    /* Bloque de 2×2 campos y, a la derecha, el botón Buscar a toda la altura */
+    /* 2×2 campos y, a la derecha, el botón Buscar */
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
-    gap: 0;
-    background-color: var(--hs-glass);
-    -webkit-backdrop-filter: blur(14px) saturate(1.15);
-    backdrop-filter: blur(14px) saturate(1.15);
-    border: 1px solid var(--hs-line);
-    box-shadow: 0 10px 36px rgba(0, 0, 0, 0.38);
+    gap: 8px 10px;
+    align-items: end;
   }
 
   .hero-search__field {
     min-width: 0;
-    padding: 6px 16px 5px;
-    border-right: 1px solid var(--hs-line);
-  }
-
-  .hero-search__field:nth-child(-n + 2) {
-    border-bottom: 1px solid var(--hs-line);
   }
 
   .hero-search__label {
-    margin-bottom: 1px;
-    font-size: 10px;
-    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+    padding-left: 2px;
+    font-size: 12px;
+    line-height: 14px;
+    color: rgba(255, 255, 255, 0.94);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
   }
 
   .hero-search__select {
-    min-height: 28px;
-    padding: 3px 22px 3px 0;
+    min-height: 40px;
+    padding: 6px 30px 6px 38px;
     font-size: 14px;
-    border: 0;
-    background-position: right 2px center;
+    background-position: left 12px center, right 12px center;
+    background-size: 16px 16px, 10px 6px;
   }
 
   .hero-search__submit {
     grid-column: 3;
-    grid-row: 1 / span 2;
-    min-height: 0;
-    padding: 0 34px;
+    grid-row: 1;
+    align-self: start;
+    min-height: 44px;
+    padding: 0 22px;
+    margin-left: 6px;
   }
 
+  /* Enlace en la esquina inferior derecha del contenedor, bajo Buscar */
   .hero-search__advanced {
-    align-self: flex-start;
-    min-height: 24px;
-    margin-top: 6px;
+    position: absolute;
+    right: 18px;
+    bottom: 12px;
+    min-height: 20px;
     font-size: 12px;
   }
 
   @media (max-height: 800px) {
     .hero {
-      --hs-row: 144px;
+      --hs-row: 154px;
     }
 
     .hero__search {
-      margin-bottom: 10px;
-    }
-
-    .hero-search__advanced {
-      min-height: 20px;
-      margin-top: 4px;
+      margin-bottom: 12px;
     }
   }
 }
 
 /* 1024–1239 con poca altura (p. ej. 1024×768): contenido algo más compacto
-   para que entre la barra de dos filas sin pegarse a "Ver propiedades". */
+   para que entre el contenedor de dos filas sin pegarse a "Ver propiedades". */
 @media (min-width: 1024px) and (max-width: 1239.98px) and (max-height: 800px) {
   .hero__content {
     padding-top: calc(var(--header-height) + 6px);
@@ -1289,61 +1382,117 @@ html.hero-search-lock {
 /* ----- Escritorio ancho (≥1240): una sola fila, diseño de 1440px ----- */
 @media (min-width: 1240px) {
   .hero {
-    --hs-row: 116px;
+    --hs-row: 118px;
   }
 
   .hero__search {
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
 
+  .hero-search__panel {
+    padding: 18px 26px;
+  }
+
+  /* Anchos proporcionales al contenido: "Todas las ubicaciones" es el valor
+     más largo y, con 4 columnas iguales, se recortaba a 1240px. */
   .hero-search__form {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
-  }
-
-  .hero-search__field,
-  .hero-search__field:nth-child(-n + 2) {
-    padding: 10px 16px 8px;
-    border-bottom: 0;
-    border-right: 1px solid var(--hs-line);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.96fr) minmax(0, 1.09fr) minmax(0, 1.06fr) auto;
+    gap: 0 10px;
   }
 
   .hero-search__label {
-    margin-bottom: 2px;
+    margin-bottom: 6px;
   }
 
   .hero-search__select {
-    min-height: 32px;
-    padding: 4px 22px 4px 0;
+    min-height: 46px;
+    padding: 6px 24px 6px 33px;
+    font-size: 13px;
+    background-position: left 10px center, right 10px center;
   }
 
   .hero-search__submit {
     grid-column: auto;
     grid-row: auto;
-    padding: 0 30px;
+    min-height: 46px;
+    margin-left: 6px;
+    padding: 0 20px;
+  }
+
+  .hero-search__advanced {
+    right: 30px;
+    bottom: 18px;
   }
 
   @media (max-height: 800px) {
     .hero {
-      --hs-row: 104px;
+      --hs-row: 110px;
+    }
+
+    .hero-search__panel {
+      padding: 13px 22px;
+    }
+
+    .hero-search__advanced {
+      right: 26px;
+      bottom: 13px;
     }
 
     .hero__search {
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
   }
 }
 
+/* Desde 1366px sobra ancho: campos con el aire de la referencia */
+@media (min-width: 1366px) {
+  .hero-search__select {
+    padding: 6px 28px 6px 36px;
+    font-size: 14px;
+    background-position: left 12px center, right 12px center;
+  }
+}
+
+/* Pantallas altas (≥960px de alto): el Hero tiene holgura y el contenedor
+   recupera el aire de la referencia. */
+@media (min-width: 1240px) and (min-height: 960px) {
+  .hero {
+    --hs-row: 156px;
+  }
+
+  .hero__search {
+    margin-bottom: 28px;
+  }
+
+  .hero-search__panel {
+    padding: 26px 30px;
+  }
+
+  .hero-search__form {
+    gap: 0 14px;
+  }
+
+  .hero-search__select,
+  .hero-search__submit {
+    min-height: 50px;
+  }
+
+  .hero-search__advanced {
+    right: 32px;
+    bottom: 26px;
+  }
+}
+
 /* Entrada suave del buscador (solo si el usuario no pide menos movimiento).
-   Se anima el formulario y el botón, no el contenedor: un contenedor con
-   opacidad o transform rompería el panel fijo del móvil. */
+   En móvil se anima el botón, no el contenedor: un contenedor con opacidad
+   o transform rompería el panel fijo. En escritorio el panel no es fijo. */
 @media (prefers-reduced-motion: no-preference) {
   .hero-search__trigger {
     animation: heroSearchIn 700ms var(--ease-out) 900ms backwards;
   }
 
   @media (min-width: 1024px) {
-    .hero-search__form,
-    .hero-search__advanced {
+    .hero-search__panel {
       animation: heroSearchIn 700ms var(--ease-out) 900ms backwards;
     }
   }
@@ -1356,9 +1505,13 @@ html.hero-search-lock {
 
 /* Sin soporte de backdrop-filter: fondo más opaco para conservar legibilidad */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .hero-search__trigger,
-  .hero-search__form {
+  .hero-search__trigger {
     background-color: rgba(10, 10, 10, 0.86);
+  }
+
+  /* Escritorio: gris humo algo más opaco (sin desenfoque no se ve la foto) */
+  .hero-search__panel {
+    background-color: rgba(58, 58, 64, 0.86);
   }
 }
 
@@ -2143,6 +2296,7 @@ a.division-card__cta {
 }
 
 .filter-tab {
+  border-radius: var(--radius-btn) var(--radius-btn) 0 0;
   font-size: 13px;
   font-weight: var(--font-weight-light);
   letter-spacing: 0.02em;
@@ -2257,6 +2411,7 @@ a.division-card__cta {
 }
 
 .prop-chip {
+  border-radius: var(--radius-btn);
   min-height: 36px;
   padding: 6px 12px;
   font-size: 12px;
@@ -3265,6 +3420,7 @@ a.article-card__cta {
 
 /* Primary button */
 .btn--primary {
+  border-radius: var(--radius-btn);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3292,6 +3448,7 @@ a.article-card__cta {
 
 /* Outline button */
 .btn--outline {
+  border-radius: var(--radius-btn);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3317,6 +3474,7 @@ a.article-card__cta {
 
 /* Submit button */
 .btn--submit {
+  border-radius: var(--radius-btn);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3509,6 +3667,7 @@ a.article-card__cta {
 }
 
 .floating-contact__button {
+  border-radius: var(--radius-btn);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3563,6 +3722,7 @@ a.article-card__cta {
 }
 
 .floating-contact__panel {
+  border-radius: var(--radius-panel);
   position: absolute;
   right: 0;
   bottom: calc(100% + 12px);
@@ -3601,6 +3761,7 @@ a.article-card__cta {
 }
 
 .floating-contact__option {
+  border-radius: var(--radius-btn);
   display: flex;
   align-items: center;
   font-size: 14px;
@@ -4124,6 +4285,7 @@ a.article-card__cta {
 .lightbox__cerrar,
 .lightbox__anterior,
 .lightbox__siguiente {
+  border-radius: var(--radius-btn);
   position: absolute;
   display: flex;
   align-items: center;
