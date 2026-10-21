@@ -1,0 +1,85 @@
+{
+  "amenidades": [
+    "piscina",
+    "gimnasio",
+    "lobby",
+    "rooftop",
+    "planta-electrica",
+    "estacionamientos-visitas",
+    "parque-infantil",
+    "bbq"
+  ],
+  "tituloEn": "APARTAMENTOS DE 2 Y 3 RECÁMARAS — DESDE $213,365 EN EL CANGREJO",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 213365
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/luxor-1.jpg"
+      },
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/luxor-3.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/luxor-2.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/luxor-4.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/luxor-ni-os.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/luxor-pis.jpg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 2,
+    "banos": 2,
+    "estacionamientos": 1,
+    "metrajeInterno": 63.75,
+    "metrajeTotal": "",
+    "anoConstruccion": 2028
+  },
+  "mostrarEnHome": false,
+  "descripcion": "Apartamentos de 2 y 3 recámaras en una torre de 47 pisos en El Cangrejo, con Sky 360° en la cima.\n\n**Desde $213,365:** 63.75 m², 2 recámaras, 2 baños, balcón y estacionamiento. También hay opciones de 3 recámaras de 100 a 136 m².\n\nAmenidades destacadas: **piscina, spa, cine privado, cancha de pádel y coworking**, además de estación de lavado para mascotas.\n\nEn pleno El Cangrejo, entre cafés, cultura y calles arboladas.\n\n¿Quieres conocer disponibilidad y precios actuales? Contáctanos y un asesor de MAKOM te muestra las opciones disponibles.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "sector": "El Cangrejo"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "2 and 3-bedroom apartments in a 47-story tower in El Cangrejo, crowned by a 360° Sky level.\n\n**From $213,365:** 63.75 m², 2 bedrooms, 2 bathrooms, balcony and parking. 3-bedroom options are also available, from 100 to 136 m².\n\nFeatured amenities: **pool, spa, private cinema, padel court and coworking**, plus a pet wash station.\n\nIn the heart of El Cangrejo, among cafés, culture and tree-lined streets.\n\nWant current availability and pricing? Contact us and a MAKOM advisor will show you the available options.",
+  "operacion": "venta",
+  "ubicacionPublica": "El Cangrejo",
+  "titulo": "APARTAMENTOS DE 2 Y 3 RECÁMARAS — DESDE $213,365 EN EL CANGREJO",
+  "fechaEntrega": "futura",
+  "detalles": [
+    "lavanderia",
+    "balcon",
+    "terraza",
+    "walk-in-closet",
+    "vista-ciudad",
+    "piso-alto"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
