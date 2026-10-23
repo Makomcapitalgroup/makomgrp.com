@@ -104,6 +104,17 @@
       {%- for t in propiedadesConfig.tipos -%}
         {%- set _ut = tiposCatalogo.push({ v: t.valor, l: ((t.etiquetaEn or t.etiqueta) if esEn else t.etiqueta) }) -%}
       {%- endfor -%}
+      {#
+        Presupuesto máximo: UNA sola lista, siempre habilitada y válida
+        en cualquier pestaña (se compara con data-precio sin mirar la
+        operación). Va en data-presupuestos y la lee el motor de
+        script.js (sección 6).
+        presupuestosVenta / presupuestosAlquiler NO los usa el catálogo:
+        son el contrato con el buscador del Home (script.js, sección 19,
+        los lee de este marcado). Se mantienen tal cual para que el Home
+        se comporte exactamente igual.
+      #}
+      {%- set presupuestosCatalogo = "1500,2000,15000,100000,125000,150000,175000,200000,250000,300000,400000" -%}
       {%- set presupuestosVenta = "100000,150000,200000,300000" -%}
       {%- set presupuestosAlquiler = "1500,3000,7500" -%}
       <div class="prop-controles">
@@ -151,10 +162,9 @@
           </div>
           <div class="prop-buscador__campo">
             <label class="prop-buscador__label" for="f-max">{{ "Maximum budget" if esEn else "Presupuesto máximo" }}</label>
-            <select class="prop-buscador__select" id="f-max" aria-describedby="f-max-ayuda" data-presupuestos-venta="{{ presupuestosVenta }}" data-presupuestos-alquiler="{{ presupuestosAlquiler }}" disabled>
-              <option value="">{{ "Choose For Sale or For Rent first" if esEn else "Elija Venta o Alquiler primero" }}</option>
+            <select class="prop-buscador__select" id="f-max" data-presupuestos="{{ presupuestosCatalogo }}" data-presupuestos-venta="{{ presupuestosVenta }}" data-presupuestos-alquiler="{{ presupuestosAlquiler }}">
+              <option value="">{{ "No limit" if esEn else "Sin límite" }}</option>
             </select>
-            <span class="sr-only" id="f-max-ayuda">{{ "The budget options depend on the selected transaction type." if esEn else "Las opciones de presupuesto dependen de la operación seleccionada." }}</span>
           </div>
         </div>
         <ul class="prop-chips" id="f-chips" aria-label="{{ 'Active filters' if esEn else 'Filtros activos' }}" hidden></ul>

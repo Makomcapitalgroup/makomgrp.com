@@ -217,6 +217,9 @@ document.addEventListener('DOMContentLoaded', function () {
      excluyentes entre sí); tipo, ubicación y presupuesto se combinan
      con cualquiera de ellas mediante AND, salvo que el tipo no
      pertenezca a la categoría elegida (en ese caso manda el tipo).
+     El presupuesto máximo es independiente: siempre está disponible,
+     no depende de la pestaña ni de la operación, y se conserva al
+     cambiar de pestaña (solo se compara con data-precio).
   ============================================================ */
   (function () {
     var form = document.getElementById('prop-buscador');
@@ -238,11 +241,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var isEn = (document.documentElement.lang || '').toLowerCase().indexOf('en') === 0;
     var TXT = isEn ? {
-      noLimit: 'No limit', upTo: 'Up to', perMonth: '/ month', chooseOp: 'Choose For Sale or For Rent first',
+      noLimit: 'No limit', upTo: 'Up to', perMonth: '/ month',
       type: 'Type', location: 'Location', budget: 'Budget', remove: 'Remove filter',
       one: 'property', many: 'properties', of: 'of', noStock: '(no listings)'
     } : {
-      noLimit: 'Sin límite', upTo: 'Hasta', perMonth: '/ mes', chooseOp: 'Elija Venta o Alquiler primero',
+      noLimit: 'Sin límite', upTo: 'Hasta', perMonth: '/ mes',
       type: 'Tipo', location: 'Ubicación', budget: 'Presupuesto', remove: 'Quitar filtro',
       one: 'propiedad', many: 'propiedades', of: 'de', noStock: '(sin propiedades publicadas)'
     };
@@ -318,10 +321,21 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
-    function presetsDe(op) {
-      var raw = selMax.getAttribute('data-presupuestos-' + op) || '';
-      return raw ? raw.split(',').map(Number) : [];
-    }
+    // Presupuestos ofrecidos: UNA lista para todas las pestañas
+    // (data-presupuestos). Si el atributo faltara, se cae a la unión de
+    // las listas por operación que el Home también lee.
+    var BUDGETS = [];
+    (function () {
+      var raw = selMax.getAttribute('data-presupuestos');
+      if (!raw) {
+        raw = (selMax.getAttribute('data-presupuestos-venta') || '') + ',' + (selMax.getAttribute('data-presupuestos-alquiler') || '');
+      }
+      raw.split(',').forEach(function (v) {
+        var n = parseInt(v, 10);
+        if (n > 0 && BUDGETS.indexOf(n) === -1) BUDGETS.push(n);
+      });
+      BUDGETS.sort(function (a, b) { return a - b; });
+    })();
 
     function regionDe(zona) {
       return zona && has(ZONAS, zona) ? ZONAS[zona] : '';
@@ -351,10 +365,14 @@ document.addEventListener('DOMContentLoaded', function () {
       } else if (region && has(REGIONES, region)) {
         s.region = region;
       }
+      // El presupuesto no depende de la operación. Vale cualquier entero
+      // positivo razonable (también los de enlaces antiguos que ya no
+      // están en la lista, p. ej. 7500): se muestra como opción
+      // temporal. Se rechaza lo no numérico, decimal, negativo o cero.
       var max = p.get('max');
-      if (s.op && max && /^\d+$/.test(max)) {
+      if (max && /^\d{1,9}$/.test(max)) {
         var n = parseInt(max, 10);
-        if (presetsDe(s.op).indexOf(n) !== -1) s.max = n;
+        if (n > 0) s.max = n;
       }
       return s;
     }
@@ -406,23 +424,31 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ----- Render -----
-    var renderedOp = null;
+    var renderedBudgetKey = null;
 
+    // El selector de presupuesto está siempre habilitado. Las opciones
+    // solo se reconstruyen cuando cambia lo que muestran: el sufijo
+    // "/ mes" (únicamente con la pestaña Alquiler) o la opción temporal
+    // de un valor válido que no está en la lista (p. ej. ?max=7500).
     function renderBudget(s) {
-      if (renderedOp !== s.op) {
-        selMax.innerHTML = '';
-        if (!s.op) {
-          selMax.appendChild(new Option(TXT.chooseOp, ''));
-          selMax.disabled = true;
-        } else {
-          selMax.appendChild(new Option(TXT.noLimit, ''));
-          presetsDe(s.op).forEach(function (n) {
-            selMax.appendChild(new Option(budgetLabel(s.op, n), String(n)));
-          });
-          selMax.disabled = false;
+      var extra = s.max && BUDGETS.indexOf(s.max) === -1 ? s.max : 0;
+      var key = (s.op === 'alquiler' ? 'r' : 'v') + ':' + extra;
+      if (renderedBudgetKey !== key) {
+        var list = BUDGETS.slice();
+        if (extra) {
+          list.push(extra);
+          list.sort(function (a, b) { return a - b; });
         }
-        renderedOp = s.op;
+        selMax.innerHTML = '';
+        selMax.appendChild(new Option(TXT.noLimit, ''));
+        list.forEach(function (n) {
+          var o = new Option(budgetLabel(s.op, n), String(n));
+          if (n === extra) o.setAttribute('data-temporal', '1');
+          selMax.appendChild(o);
+        });
+        renderedBudgetKey = key;
       }
+      selMax.disabled = false;
       selMax.value = s.max ? String(s.max) : '';
     }
 
@@ -549,20 +575,16 @@ document.addEventListener('DOMContentLoaded', function () {
       return { op: s.op, cat: s.cat, tipo: s.tipo, region: s.region, zona: s.zona, max: s.max };
     }
 
-    function presupuestoValido(s) {
-      if (!s.op || !s.max) return 0;
-      return presetsDe(s.op).indexOf(s.max) !== -1 ? s.max : 0;
-    }
-
     function irATab(filter) {
       var next = copy(state);
+      // Tipo, ubicación y presupuesto se conservan al cambiar de pestaña;
+      // solo se descarta el tipo que no pertenece a la categoría elegida.
       if (filter === 'all') {
-        next.op = ''; next.cat = ''; next.max = 0;
+        next.op = ''; next.cat = '';
       } else if (filter === 'venta' || filter === 'alquiler') {
         next.op = filter; next.cat = '';
-        next.max = presupuestoValido(next);
       } else {
-        next.cat = filter; next.op = ''; next.max = 0;
+        next.cat = filter; next.op = '';
         if (next.tipo && !tipoCompatible(next.tipo, filter)) next.tipo = '';
       }
       commit(next, filter);
