@@ -3,31 +3,6 @@
    Production stylesheet for the corporate Home page
    ============================================================= */
 
-@font-face {
-  font-family: 'Suisse Intl';
-  src: url('./fonts/SuisseIntl-Light.woff2') format('woff2'),
-       url('./fonts/SuisseIntl-Light.woff') format('woff');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Suisse Intl';
-  src: url('./fonts/SuisseIntl-Regular.woff2') format('woff2'),
-       url('./fonts/SuisseIntl-Regular.woff') format('woff');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Suisse Intl';
-  src: url('./fonts/SuisseIntl-Medium.woff2') format('woff2'),
-       url('./fonts/SuisseIntl-Medium.woff') format('woff');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
 /* 2. DESIGN TOKENS
    ============================================================= */
 :root {
@@ -51,7 +26,7 @@
   --color-success: #2D6A4F;
 
   /* Typography */
-  --font-primary: 'Suisse Intl', 'Helvetica Neue', 'Inter', Helvetica, Arial, sans-serif;
+  --font-primary: 'Helvetica Neue', 'Inter', Helvetica, Arial, sans-serif;
   --font-weight-light: 300;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
