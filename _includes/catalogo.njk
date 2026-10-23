@@ -118,12 +118,31 @@
       {%- set presupuestosVenta = "100000,150000,200000,300000" -%}
       {%- set presupuestosAlquiler = "1500,3000,7500" -%}
       <div class="prop-controles">
-      <div class="prop-filters" role="tablist" aria-label="{{ 'Filter properties' if esEn else 'Filtrar propiedades' }}">
-        <button class="filter-tab filter-tab--active" role="tab" aria-selected="true" data-filter="all">{{ "All" if esEn else "Todos" }}</button>
-        {% if filtrosDisp.venta %}<button class="filter-tab" role="tab" aria-selected="false" data-filter="venta">{{ "For Sale" if esEn else "Venta" }}</button>{% endif %}
-        {% if filtrosDisp.alquiler %}<button class="filter-tab" role="tab" aria-selected="false" data-filter="alquiler">{{ "For Rent" if esEn else "Alquiler" }}</button>{% endif %}
-        {% if filtrosDisp.comercial %}<button class="filter-tab" role="tab" aria-selected="false" data-filter="comercial">{{ "Commercial" if esEn else "Comercial" }}</button>{% endif %}
-        {% if filtrosDisp.residencial %}<button class="filter-tab" role="tab" aria-selected="false" data-filter="residencial">{{ "Residential" if esEn else "Residencial" }}</button>{% endif %}
+      {#
+        Dos grupos independientes de selección única (role="radiogroup"):
+        Operación (Todos / Venta / Alquiler) y Categoría (Todas /
+        Residencial / Comercial). Se combinan con AND en script.js
+        (sección 6). El grupo Operación conserva .filter-tab y
+        data-filter="venta|alquiler": el buscador del Home lee esas
+        pestañas de este marcado para saber qué operaciones ofrecer.
+        La categoría usa data-categoria. Solo existe una opción además
+        de "Todos"/"Todas" si hay inventario que la respalde.
+      #}
+      <div class="prop-filters">
+        {% if filtrosDisp.venta or filtrosDisp.alquiler %}
+        <div class="prop-filters__grupo" role="radiogroup" aria-label="{{ 'Transaction' if esEn else 'Operación' }}">
+          <button type="button" class="filter-tab filter-tab--active" role="radio" aria-checked="true" tabindex="0" data-filter="all">{{ "All" if esEn else "Todos" }}</button>
+          {% if filtrosDisp.venta %}<button type="button" class="filter-tab" role="radio" aria-checked="false" tabindex="-1" data-filter="venta">{{ "For Sale" if esEn else "Venta" }}</button>{% endif %}
+          {% if filtrosDisp.alquiler %}<button type="button" class="filter-tab" role="radio" aria-checked="false" tabindex="-1" data-filter="alquiler">{{ "For Rent" if esEn else "Alquiler" }}</button>{% endif %}
+        </div>
+        {% endif %}
+        {% if filtrosDisp.residencial or filtrosDisp.comercial %}
+        <div class="prop-filters__grupo" role="radiogroup" aria-label="{{ 'Category' if esEn else 'Categoría' }}">
+          <button type="button" class="filter-tab filter-tab--active" role="radio" aria-checked="true" tabindex="0" data-categoria="all">{{ "All" if esEn else "Todas" }}</button>
+          {% if filtrosDisp.residencial %}<button type="button" class="filter-tab" role="radio" aria-checked="false" tabindex="-1" data-categoria="residencial">{{ "Residential" if esEn else "Residencial" }}</button>{% endif %}
+          {% if filtrosDisp.comercial %}<button type="button" class="filter-tab" role="radio" aria-checked="false" tabindex="-1" data-categoria="comercial">{{ "Commercial" if esEn else "Comercial" }}</button>{% endif %}
+        </div>
+        {% endif %}
       </div>
 
       <form class="prop-buscador" id="prop-buscador" role="search" aria-label="{{ 'Refine your search' if esEn else 'Afinar la búsqueda' }}" novalidate data-ubicaciones="{{ ubicacionesCatalogo | dump }}" data-tipos="{{ tiposCatalogo | dump }}" hidden>
@@ -178,7 +197,7 @@
         analiza, antes del primer pintado, y adelanta lo que no puede
         esperar a script.js (que carga diferido). (1) Muestra el buscador
         (sin JavaScript permanece oculto, igual que antes). (2) Marca la
-        pestaña de la URL (?op= / ?cat=) para que "Todos" no se vea
+        opción de cada grupo (?op= / ?cat=) para que "Todos"/"Todas" no se vean
         activo un instante. (3) Si la URL trae algún parámetro del
         filtro, pone en <html> el estado de espera: la rejilla se oculta
         sin quitarle su espacio (no se ven las 23 tarjetas ni se mueve el
@@ -207,16 +226,22 @@
             var p = new URLSearchParams(location.search);
             var o = p.get('op');
             var c = p.get('cat');
-            var k = (o === 'venta' || o === 'alquiler') ? o : ((c === 'comercial' || c === 'residencial') ? c : null);
-            var t = k && document.querySelector('.filter-tab[data-filter="' + k + '"]');
-            if (!t) return;
-            var a = document.querySelectorAll('.filter-tab--active');
-            for (var i = 0; i < a.length; i++) {
-              a[i].classList.remove('filter-tab--active');
-              a[i].setAttribute('aria-selected', 'false');
-            }
-            t.classList.add('filter-tab--active');
-            t.setAttribute('aria-selected', 'true');
+            // Un grupo por dimensión: marca la opción de la URL en cada uno
+            // (si el valor no existe, queda "Todos"/"Todas" como en el HTML).
+            [['data-filter', (o === 'venta' || o === 'alquiler') ? o : null],
+             ['data-categoria', (c === 'comercial' || c === 'residencial') ? c : null]].forEach(function (g) {
+              var t = g[1] && document.querySelector('.filter-tab[' + g[0] + '="' + g[1] + '"]');
+              if (!t) return;
+              var grupo = t.parentNode.querySelectorAll('.filter-tab');
+              for (var i = 0; i < grupo.length; i++) {
+                grupo[i].classList.remove('filter-tab--active');
+                grupo[i].setAttribute('aria-checked', 'false');
+                grupo[i].tabIndex = -1;
+              }
+              t.classList.add('filter-tab--active');
+              t.setAttribute('aria-checked', 'true');
+              t.tabIndex = 0;
+            });
           } catch (e) {}
         })();
       </script>

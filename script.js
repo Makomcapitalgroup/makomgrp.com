@@ -204,26 +204,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ============================================================
      6. PROPERTY FILTERS — motor único de filtrado del catálogo
-     Las pestañas (Todos / Venta / Alquiler / Comercial / Residencial)
-     y los selectores (tipo, ubicación, presupuesto máximo) escriben
-     sobre UN solo estado, y ese estado es lo único que decide qué
+     Dos grupos de selección única (Operación: Todos / Venta / Alquiler;
+     Categoría: Todas / Residencial / Comercial) y los selectores (tipo,
+     ubicación, presupuesto máximo) escriben sobre UN solo estado, y ese estado es lo único que decide qué
      tarjetas se ven. El estado vive en la URL (?op=&cat=&tipo=&region=
      &zona=&max=) para poder recargar, compartir y usar atrás/adelante.
      Solo se leen datos públicos que el build dejó en el DOM
      (data-op, data-cat, data-tipo, data-zona, data-precio): nunca hay
-     ubicación interna ni direcciones. Regla de las pestañas: una sola
-     pestaña activa a la vez, igual que antes — "Venta"/"Alquiler"
-     fijan la operación y "Comercial"/"Residencial" la categoría (son
-     excluyentes entre sí); tipo, ubicación y presupuesto se combinan
-     con cualquiera de ellas mediante AND, salvo que el tipo no
-     pertenezca a la categoría elegida (en ese caso manda el tipo).
+     ubicación interna ni direcciones. Regla de los grupos: "Venta" /
+     "Alquiler" fijan la operación y "Residencial" / "Comercial" la
+     categoría; son dimensiones independientes (cada grupo permite una
+     sola opción, "Todos"/"Todas" = sin filtro) y se combinan entre sí,
+     y con tipo, ubicación y presupuesto, mediante AND. Excepción: si
+     el tipo no pertenece a la categoría elegida, manda el tipo.
      El presupuesto máximo es independiente: siempre está disponible,
      no depende de la pestaña ni de la operación, y se conserva al
      cambiar de pestaña (solo se compara con data-precio).
   ============================================================ */
   (function () {
     var form = document.getElementById('prop-buscador');
-    var tabs = Array.prototype.slice.call(document.querySelectorAll('.filter-tab'));
+    // Dos grupos de selección única (role="radiogroup"). Operación conserva
+    // .filter-tab + data-filter (contrato que también lee el buscador del
+    // Home); Categoría usa data-categoria.
+    var opTabs = Array.prototype.slice.call(document.querySelectorAll('.filter-tab[data-filter]'));
+    var catTabs = Array.prototype.slice.call(document.querySelectorAll('.filter-tab[data-categoria]'));
     var cards = Array.prototype.slice.call(document.querySelectorAll('.propiedades__grid .property-card'));
     // Estado de espera inicial: el script en línea de catalogo.njk marca
     // <html> con estas clases cuando la URL trae filtros, para que no se
@@ -234,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function liberarEspera() {
       document.documentElement.classList.remove('catalogo-filtrando', 'catalogo-con-chips');
     }
-    if (!form || tabs.length === 0 || cards.length === 0) {
+    if (!form || cards.length === 0) {
       liberarEspera();
       return;
     }
@@ -264,9 +268,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // ----- Catálogo derivado de lo que renderizó el build -----
     var OPS = [];
     var CATS = [];
-    tabs.forEach(function (t) {
+    opTabs.forEach(function (t) {
       var f = t.getAttribute('data-filter');
       if (f === 'venta' || f === 'alquiler') OPS.push(f);
+    });
+    catTabs.forEach(function (t) {
+      var f = t.getAttribute('data-categoria');
       if (f === 'comercial' || f === 'residencial') CATS.push(f);
     });
 
@@ -354,7 +361,7 @@ document.addEventListener('DOMContentLoaded', function () {
       var op = p.get('op');
       if (op && OPS.indexOf(op) !== -1) s.op = op;
       var cat = p.get('cat');
-      if (cat && CATS.indexOf(cat) !== -1 && !s.op) s.cat = cat;
+      if (cat && CATS.indexOf(cat) !== -1) s.cat = cat;
       var tipo = p.get('tipo');
       if (tipo && has(TIPOS, tipo)) s.tipo = tipo;
       if (s.cat && s.tipo && !tipoCompatible(s.tipo, s.cat)) s.cat = '';
@@ -509,13 +516,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function render(s) {
-      // Pestañas: una sola activa (categoría > operación > Todos).
-      var activa = s.cat || s.op || 'all';
-      tabs.forEach(function (t) {
-        var on = t.getAttribute('data-filter') === activa;
-        t.classList.toggle('filter-tab--active', on);
-        t.setAttribute('aria-selected', on ? 'true' : 'false');
-      });
+      // Grupos Operación y Categoría: una opción activa en cada uno
+      // ("all" = sin filtro). Patrón radiogroup: aria-checked y tabindex
+      // itinerante (solo la opción activa entra en el orden de tabulación).
+      function marcarGrupo(grupo, atributo, activa) {
+        grupo.forEach(function (t) {
+          var on = t.getAttribute(atributo) === activa;
+          t.classList.toggle('filter-tab--active', on);
+          t.setAttribute('aria-checked', on ? 'true' : 'false');
+          t.tabIndex = on ? 0 : -1;
+        });
+      }
+      marcarGrupo(opTabs, 'data-filter', s.op || 'all');
+      marcarGrupo(catTabs, 'data-categoria', s.cat || 'all');
 
       // Tipos: con una categoría activa solo se ofrecen los compatibles.
       Array.prototype.slice.call(selTipo.options).forEach(function (o) {
@@ -575,48 +588,55 @@ document.addEventListener('DOMContentLoaded', function () {
       return { op: s.op, cat: s.cat, tipo: s.tipo, region: s.region, zona: s.zona, max: s.max };
     }
 
-    function irATab(filter) {
+    // Operación y categoría son independientes: cambiar una no toca la otra.
+    // Tipo, ubicación y presupuesto se conservan; solo se descarta el tipo
+    // que no pertenece a la categoría elegida. La cadena de analítica es
+    // la de siempre: el nombre de la opción pulsada ('all' = "Todos"/"Todas").
+    function irAOperacion(valor) {
       var next = copy(state);
-      // Tipo, ubicación y presupuesto se conservan al cambiar de pestaña;
-      // solo se descarta el tipo que no pertenece a la categoría elegida.
-      if (filter === 'all') {
-        next.op = ''; next.cat = '';
-      } else if (filter === 'venta' || filter === 'alquiler') {
-        next.op = filter; next.cat = '';
-      } else {
-        next.cat = filter; next.op = '';
-        if (next.tipo && !tipoCompatible(next.tipo, filter)) next.tipo = '';
-      }
-      commit(next, filter);
+      next.op = valor === 'venta' || valor === 'alquiler' ? valor : '';
+      commit(next, valor);
     }
 
-    tabs.forEach(function (tab) {
-      tab.addEventListener('click', function () {
-        irATab(this.getAttribute('data-filter'));
+    function irACategoria(valor) {
+      var next = copy(state);
+      next.cat = valor === 'comercial' || valor === 'residencial' ? valor : '';
+      if (next.tipo && next.cat && !tipoCompatible(next.tipo, next.cat)) next.tipo = '';
+      commit(next, valor);
+    }
+
+    function enlazarGrupo(grupo, atributo, ir) {
+      grupo.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          ir(this.getAttribute(atributo));
+        });
+
+        // Teclado (patrón radiogroup): las flechas, Inicio y Fin mueven el
+        // foco Y la selección dentro de ESTE grupo, nunca al otro.
+        tab.addEventListener('keydown', function (e) {
+          var idx = grupo.indexOf(this);
+          var next = null;
+
+          if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+            next = grupo[(idx + 1) % grupo.length];
+          } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            next = grupo[(idx - 1 + grupo.length) % grupo.length];
+          } else if (e.key === 'Home') {
+            next = grupo[0];
+          } else if (e.key === 'End') {
+            next = grupo[grupo.length - 1];
+          }
+
+          if (next) {
+            e.preventDefault();
+            next.focus();
+            next.click();
+          }
+        });
       });
-
-      // Keyboard support for filter tabs (arrow keys)
-      tab.addEventListener('keydown', function (e) {
-        var idx = tabs.indexOf(this);
-        var next = null;
-
-        if (e.key === 'ArrowRight') {
-          next = tabs[(idx + 1) % tabs.length];
-        } else if (e.key === 'ArrowLeft') {
-          next = tabs[(idx - 1 + tabs.length) % tabs.length];
-        } else if (e.key === 'Home') {
-          next = tabs[0];
-        } else if (e.key === 'End') {
-          next = tabs[tabs.length - 1];
-        }
-
-        if (next) {
-          e.preventDefault();
-          next.focus();
-          next.click();
-        }
-      });
-    });
+    }
+    enlazarGrupo(opTabs, 'data-filter', irAOperacion);
+    enlazarGrupo(catTabs, 'data-categoria', irACategoria);
 
     selTipo.addEventListener('change', function () {
       var next = copy(state);
@@ -645,7 +665,7 @@ document.addEventListener('DOMContentLoaded', function () {
     clearBtn.addEventListener('click', limpiar);
     emptyClearBtn.addEventListener('click', function () {
       limpiar();
-      var activa = tabs.filter(function (t) { return t.classList.contains('filter-tab--active'); })[0];
+      var activa = opTabs.filter(function (t) { return t.classList.contains('filter-tab--active'); })[0];
       if (activa) activa.focus();
     });
 
