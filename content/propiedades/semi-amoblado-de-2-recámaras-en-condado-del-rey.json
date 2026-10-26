@@ -1,0 +1,84 @@
+{
+  "amenidades": [
+    "piscina",
+    "gimnasio",
+    "lobby",
+    "cerradura-digital",
+    "area-social",
+    "coworking",
+    "parque-infantil",
+    "rooftop",
+    "pet-friendly",
+    "bbq"
+  ],
+  "tituloEn": "SEMI-FURNISHED 2-BEDROOM IN CONDADO DEL REY — $1,150/MONTH",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 1150,
+    "periodicidad": "mensual"
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/02be1c8a-3e41-45da-9a8f-0c36b8cf4e94.png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/ae5a2976-dfe3-4d09-868b-241fc4c86267.png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/cc7272cf-36a2-4066-994a-8197c2b54737.png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/88db0a94-5f24-4850-bef0-ffba8d477d0c.png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/cc7272cf-36a2-4066-994a-8197c2b54737.png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/f4b243de-fbb3-4e95-a9f0-d180e0c04a01.png"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 2,
+    "banos": 2,
+    "estacionamientos": 1,
+    "piso": "9"
+  },
+  "mostrarEnHome": true,
+  "descripcion": "**Apartamento semiamoblado en alquiler** en PH Mi Condado, Condado del Rey, con excelente distribución y espacios cómodos.\n\n**2 recámaras y 2 baños**, sala, amplia cocina y área de lavandería. Canon de **$1,150 mensuales**.\n\n**Incluye:** muebles de sala, nevera, estufa, horno, extractor de grasa y centro de lavado.\n\nDentro de la comunidad hay plaza comercial con mini súper, restaurante, panadería, clínica y gimnasio. Las universidades quedan a 3 y 5 minutos.\n\n¿Quieres conocerlo? Escríbenos y coordinamos una visita.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "corregimiento": "",
+    "sector": "Condado del Rey",
+    "edificioPH": "PH MI CONDADO"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "",
+  "operacion": "alquiler",
+  "ubicacionPublica": "CONDADO DEL REY ",
+  "titulo": "SEMI-AMOBLADO DE 2 RECÁMARAS EN CONDADO DEL REY",
+  "fechaEntrega": "inmediata",
+  "detalles": [
+    "lavanderia",
+    "balcon"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
