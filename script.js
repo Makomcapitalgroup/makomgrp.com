@@ -1323,6 +1323,69 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /* ============================================================
+     13c. FICHAS CON GALERÍA ↔ BOTÓN FLOTANTE
+     En escritorio (≈1024–1440 px) la foto principal de la ficha, que ocupa
+     todo el ancho del contenido, llega hasta bajo la esquina inferior
+     derecha de la primera pantalla; ahí el flotante recibiría los clics
+     destinados a la foto. Mientras la foto principal solapa la huella del
+     flotante, éste se aparta (mismo mecanismo y estados que en la Home:
+     oculto = visibility:hidden + inert + aria-hidden) y reaparece en cuanto
+     el scroll deja libre esa esquina. Donde no hay solapamiento (móvil,
+     tablet y pantallas anchas) no cambia nada.
+  ============================================================ */
+  var galeriaPrincipal = document.querySelector('.galeria-ficha__principal');
+
+  if (galeriaPrincipal && !heroContact && floatingContact && floatingToggle && floatingPanel) {
+    var galeriaFloatingHidden = false;
+    var galeriaSyncPending = false;
+
+    // La huella se calcula desde right/bottom (no desde getBoundingClientRect)
+    // para que no influya el desplazamiento de 8 px del estado oculto.
+    function floatingOverlapsGallery() {
+      var cs = getComputedStyle(floatingContact);
+      var right = document.documentElement.clientWidth - parseFloat(cs.right);
+      var bottom = document.documentElement.clientHeight - parseFloat(cs.bottom);
+      var left = right - floatingToggle.offsetWidth;
+      var top = bottom - floatingToggle.offsetHeight;
+      var g = galeriaPrincipal.getBoundingClientRect();
+      return g.width > 0 && g.left < right && g.right > left && g.top < bottom && g.bottom > top;
+    }
+
+    function setFloatingForGallery(hide) {
+      if (hide === galeriaFloatingHidden) return;
+      galeriaFloatingHidden = hide;
+      if (hide) {
+        closeFloatingPanel();
+        floatingContact.setAttribute('data-defer', 'galeria');
+        floatingContact.classList.remove('is-active');
+        floatingContact.setAttribute('aria-hidden', 'true');
+        floatingContact.setAttribute('inert', '');
+      } else {
+        floatingContact.removeAttribute('inert');
+        floatingContact.setAttribute('aria-hidden', 'false');
+        floatingContact.classList.add('is-active');
+      }
+    }
+
+    function syncFloatingWithGallery() {
+      galeriaSyncPending = false;
+      setFloatingForGallery(floatingOverlapsGallery());
+    }
+
+    function requestFloatingSync() {
+      if (galeriaSyncPending) return;
+      galeriaSyncPending = true;
+      window.requestAnimationFrame(syncFloatingWithGallery);
+    }
+
+    window.addEventListener('scroll', requestFloatingSync, { passive: true });
+    window.addEventListener('resize', requestFloatingSync);
+    window.addEventListener('load', requestFloatingSync);
+    window.addEventListener('pageshow', requestFloatingSync);
+    syncFloatingWithGallery();
+  }
+
+  /* ============================================================
      14. HERO PARALLAX — movimiento muy sutil del skyline al hacer
      scroll, rAF-throttled (igual que la sección 1). Se desactiva
      por completo si el usuario prefiere menos movimiento.
