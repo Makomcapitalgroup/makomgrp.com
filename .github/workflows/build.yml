@@ -50,6 +50,28 @@ name: Build y Deploy (Eleventy → GitHub Pages)
 # ahora también checkoutea "ref: main" explícitamente, igual que
 # "build" — ambos jobs siempre operan sobre el HEAD real de main en el
 # momento en que cada uno corre, nunca sobre un SHA de evento congelado.
+#
+# CORRECCIÓN (ejecución #325 — condición de carrera ENTRE los dos jobs):
+# lo anterior dejaba una ventana: "asignar-referencia" y "build" leían
+# dos fotos distintas de "main", tomadas con casi un minuto de
+# diferencia (cada checkout tardó ~45 s). Una propiedad publicada por
+# Decap dentro de esa ventana (con "PENDIENTE-ASIGNACION") no la veía el
+# asignador, pero sí el build, y la validación de Eleventy —correcta—
+# detenía el build. Ahora "asignar-referencia" publica como output el SHA
+# exacto que dejó verificado (el commit del bot si asignó algo; si no, el
+# commit que escaneó) y "build" construye EXACTAMENTE ese SHA, no la punta
+# de "main" en otro instante. Una propiedad que llegue después queda fuera
+# de ese build y la construye y publica su propia ejecución, que ya está
+# en cola (nunca se cancela ninguna).
+#
+# Orden de publicación: un build de SHA fijado nunca puede sobrescribir
+# una versión más reciente. El grupo de concurrencia "pages" ejecuta una
+# sola ejecución a la vez (cancel-in-progress: false) y el SHA se toma al
+# ARRANCAR la ejecución, no al dispararse: como "main" solo avanza, una
+# ejecución que arranca después siempre parte de un SHA igual o más
+# reciente, y su despliegue termina después que el de la anterior. No
+# depende de que la cola sea FIFO. Verificado sobre las últimas 80
+# ejecuciones a "main": ninguna solapada, ninguna fuera de orden.
 
 on:
   push:
@@ -109,6 +131,8 @@ jobs:
 
     outputs:
       did_commit: ${{ steps.asignar.outputs.did_commit }}
+      # SHA exacto que este job dejó verificado y que "build" debe construir.
+      sha: ${{ steps.asignar.outputs.sha }}
 
     steps:
       # persist-credentials es true por defecto en actions/checkout —
@@ -176,6 +200,20 @@ jobs:
           MAX_INTENTOS=5
           intento=1
 
+          # Publica como output el SHA exacto en que termina este job: el
+          # commit que acaba de crear (y publicar) el asignador, o, si no
+          # había nada pendiente, el commit que escaneó. Se valida antes de
+          # publicarlo: 40 hex y commit realmente existente.
+          publicar_sha() {
+            SHA_FINAL="$(git rev-parse --verify HEAD)"
+            if ! echo "$SHA_FINAL" | grep -qE '^[0-9a-f]{40}$' || ! git cat-file -e "${SHA_FINAL}^{commit}"; then
+              echo "::error::SHA final inválido o inexistente: '$SHA_FINAL'"
+              exit 1
+            fi
+            echo "sha=$SHA_FINAL" >> "$GITHUB_OUTPUT"
+            echo "SHA verificado por el asignador (el que construirá 'build'): $SHA_FINAL"
+          }
+
           while [ "$intento" -le "$MAX_INTENTOS" ]; do
             echo "--- Intento $intento de $MAX_INTENTOS ---"
             node scripts/asignar-referencia-makom.js
@@ -190,6 +228,7 @@ jobs:
             if [ -z "$CAMBIOS" ]; then
               echo "Sin referencias pendientes — nada que commitear."
               echo "did_commit=false" >> "$GITHUB_OUTPUT"
+              publicar_sha
               exit 0
             fi
 
@@ -224,6 +263,7 @@ jobs:
 
             if git push origin HEAD:main; then
               echo "did_commit=true" >> "$GITHUB_OUTPUT"
+              publicar_sha
               exit 0
             fi
 
@@ -276,18 +316,28 @@ jobs:
       #
       # Problema que esto resuelve: actions/checkout, sin "ref"
       # explícito, usa "la referencia o SHA de ese evento" — es decir,
-      # el commit que originalmente disparó ESTA ejecución. Si
-      # "asignar-referencia" acaba de hacer push de un commit nuevo,
-      # ese SHA original ya quedó desactualizado y seguiría conteniendo
-      # "PENDIENTE-ASIGNACION". Por eso, únicamente en push a main, se
-      # pide explícitamente "ref: main" — la rama, no un commit
-      # congelado — para obtener el HEAD real y actual en el momento
-      # en que este job se ejecuta.
-      - name: Checkout (push a main — HEAD actualizado tras el asignador)
+      # el commit que originalmente disparó ESTA ejecución, que puede
+      # seguir conteniendo "PENDIENTE-ASIGNACION" si el asignador acaba
+      # de publicar un commit nuevo. Y pedir "ref: main" (la rama) lee una
+      # foto distinta de la que revisó el asignador, lo que causó la
+      # ejecución #325. Por eso, únicamente en push a main, se construye
+      # EXACTAMENTE el SHA que "asignar-referencia" dejó verificado.
+      - name: Validar el SHA entregado por el asignador (push a main)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          SHA_ASIGNADOR: ${{ needs.asignar-referencia.outputs.sha }}
+        run: |
+          if ! echo "$SHA_ASIGNADOR" | grep -qE '^[0-9a-f]{40}$'; then
+            echo "::error::El asignador no entregó un SHA válido (vacío o con formato incorrecto): '$SHA_ASIGNADOR'. No se construye nada."
+            exit 1
+          fi
+          echo "SHA a construir (entregado por el asignador): $SHA_ASIGNADOR"
+
+      - name: Checkout (push a main — el SHA exacto verificado por el asignador)
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: actions/checkout@v7
         with:
-          ref: main
+          ref: ${{ needs.asignar-referencia.outputs.sha }}
 
       - name: Checkout (cualquier otro caso — sin cambios)
         if: "!(github.ref == 'refs/heads/main' && github.event_name == 'push')"
@@ -311,17 +361,29 @@ jobs:
       # cuenta. Por eso esta verificación ahora es informativa
       # (":warning::", nunca ":error::") y JAMÁS termina el job con
       # "exit 1" — solo deja un aviso de contexto para quien lea el log.
-      - name: Verificar HEAD de main en el momento del checkout (informativo, no bloqueante)
+      # Verificación BLOQUEANTE de que el checkout dejó exactamente el SHA
+      # entregado por el asignador y de que ese commit existe. Además, de
+      # forma solo informativa (nunca bloqueante), se indica si "main" ya
+      # avanzó: en ese caso el push que la hizo avanzar disparó su propia
+      # ejecución, que construirá y publicará el estado más nuevo.
+      - name: Verificar que se construye exactamente el SHA del asignador
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          SHA_ASIGNADOR: ${{ needs.asignar-referencia.outputs.sha }}
         run: |
           LOCAL="$(git rev-parse HEAD)"
+          echo "SHA del asignador: $SHA_ASIGNADOR"
+          echo "SHA construido:    $LOCAL"
+          if [ "$LOCAL" != "$SHA_ASIGNADOR" ]; then
+            echo "::error::El checkout no corresponde al SHA entregado por el asignador. No se construye."
+            exit 1
+          fi
+          git cat-file -e "${LOCAL}^{commit}"
+          echo "Confirmado: se construye exactamente el SHA verificado por el asignador."
           REMOTO="$(git ls-remote origin refs/heads/main | cut -f1)"
-          echo "HEAD construido:   $LOCAL"
-          echo "HEAD real de main (en este instante): $REMOTO"
+          echo "HEAD de main en este instante: $REMOTO"
           if [ "$LOCAL" != "$REMOTO" ]; then
-            echo "::warning::main avanzó después de este checkout (probablemente Decap publicó otro cambio mientras este build corría). Este run sigue construyendo $LOCAL — un commit real y válido de main, solo no el más reciente. El push que hizo avanzar main disparará su propia ejecución de este workflow, que construirá y publicará ese estado más nuevo."
-          else
-            echo "Confirmado: se está construyendo el HEAD real y actual de main."
+            echo "::notice::main avanzó después de la verificación del asignador (probablemente Decap publicó otro cambio). Este run construye $LOCAL, el commit verificado; el push que hizo avanzar main disparó su propia ejecución, que construirá y publicará ese estado más nuevo."
           fi
 
       - name: Configurar Node.js
