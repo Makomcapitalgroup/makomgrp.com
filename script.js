@@ -1332,8 +1332,12 @@ document.addEventListener('DOMContentLoaded', function () {
      oculto = visibility:hidden + inert + aria-hidden) y reaparece en cuanto
      el scroll deja libre esa esquina. Donde no hay solapamiento (móvil,
      tablet y pantallas anchas) no cambia nada.
+     Solo cuenta la galería interactiva: la foto principal es el disparador
+     [data-galeria-abrir="0"] dentro de [data-galeria], el mismo contrato que
+     usa el lightbox (sección 16). Una imagen de portada sin interacción
+     (p. ej. en Perspectivas) no tiene nada que proteger y no aparta el botón.
   ============================================================ */
-  var galeriaPrincipal = document.querySelector('.galeria-ficha__principal');
+  var galeriaPrincipal = document.querySelector('[data-galeria] [data-galeria-abrir="0"]');
 
   if (galeriaPrincipal && !heroContact && floatingContact && floatingToggle && floatingPanel) {
     var galeriaFloatingHidden = false;
