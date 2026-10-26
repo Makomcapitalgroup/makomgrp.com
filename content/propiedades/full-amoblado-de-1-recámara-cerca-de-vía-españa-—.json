@@ -1,0 +1,75 @@
+{
+  "amenidades": [
+    "gimnasio",
+    "piscina",
+    "garita-seguridad",
+    "elevadores",
+    "parque-infantil"
+  ],
+  "tituloEn": "FULLY FURNISHED 1-BEDROOM NEAR VÍA ESPAÑA — $950/MONTH",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 950,
+    "periodicidad": "mensual"
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/al-bota-.jpg"
+      },
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/al-bota-3.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/al-bota-4.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/al-bota-6.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/al-bota5.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/al-bota.jpg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 1,
+    "banos": 1.5,
+    "estacionamientos": 1
+  },
+  "mostrarEnHome": false,
+  "descripcion": "**Apartamento full amoblado en alquiler** en P.H. El Botánico, de 45 m² y con vista a la ciudad.\n\n**1 recámara, 2 baños y 1 estacionamiento.** Canon de **$950 mensuales**.\n\nEl edificio cuenta con **piscina, gimnasio y coworking**.\n\nCerca de Vía España, el Hospital Santo Tomás y el Hospital Nacional.\n\n¿Quieres conocerlo? Escríbenos y coordinamos una visita.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "sector": "Calle 42 Este, cerca de Vía España"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "**Fully furnished apartment for rent** in P.H. El Botánico, 45 m² with a city view.\n\n**1 bedroom, 2 bathrooms and 1 parking space.** Rent: **$950 per month**.\n\nThe building offers a **pool, gym and coworking space**.\n\nClose to Vía España, Hospital Santo Tomás and Hospital Nacional.\n\nWant to see it? Message us and we'll schedule a visit.",
+  "operacion": "alquiler",
+  "ubicacionPublica": "Cerca de Vía España, Ciudad de Panamá",
+  "titulo": "FULL AMOBLADO DE 1 RECÁMARA CERCA DE VÍA ESPAÑA — ",
+  "fechaEntrega": "inmediata",
+  "detalles": [
+    "amoblado"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
