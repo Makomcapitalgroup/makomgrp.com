@@ -158,12 +158,6 @@
     <div class="hero__visual" aria-hidden="true">
       <img class="hero__visual-photo" id="hero-visual-photo" src="/assets/hero/panama-skyline-night.jpg" alt="Nighttime skyline of Panama City, illuminated financial district — MAKOM CAPITAL GROUP" loading="eager" fetchpriority="high" />
       <div class="hero__visual-overlay"></div>
-      <div class="hero__visual-inner">
-        <span class="hero__visual-symbol">
-          <!-- Símbolo oficial El Centro MAKOM CAPITAL GROUP — versión negativa (sin fondo) -->
-          <img src="/assets/logos/makom-capital-group-symbol-negativo.svg" alt="" aria-hidden="true" />
-        </span>
-      </div>
     </div>
     <div class="hero__content">
       <hr class="hero__eyebrow-rule" aria-hidden="true" />
@@ -172,6 +166,17 @@
       <p class="hero__subheadline">With more than 26 years of experience, MAKOM CAPITAL GROUP brings together real estate brokerage, property management, and asset development under a single vision: supporting your property through its entire life cycle.</p>
       <div class="hero__actions">
         <a href="#propiedades" class="btn btn--primary">VIEW PROPERTIES</a>
+        <div class="hero-contact" id="hero-contact">
+          <button type="button" class="hero-contact__button" id="hero-contact-toggle" aria-expanded="false" aria-haspopup="true" aria-controls="hero-contact-panel" aria-label="Start a conversation with MAKOM CAPITAL GROUP">
+            <span class="hero-contact__label" aria-hidden="true">Start a conversation</span>
+          </button>
+          <div class="floating-contact__panel hero-contact__panel" id="hero-contact-panel" role="region" aria-label="Contact options" aria-hidden="true">
+            <p class="floating-contact__prompt">How would you like to reach us?</p>
+            <a href="https://wa.me/50763534377" class="floating-contact__option" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+            <a href="mailto:gerencia@makomgrp.com" class="floating-contact__option">Email</a>
+            <a href="#contacto" class="floating-contact__option" id="hero-contact-form-link">Form</a>
+          </div>
+        </div>
         <a href="#propiedades" class="link--arrow">Search properties</a>
       </div>
     </div>
@@ -769,7 +774,7 @@
 </footer>
 
 <!-- BOTÓN FLOTANTE DE CONTACTO -->
-<div class="floating-contact" id="floating-contact">
+<div class="floating-contact" id="floating-contact" data-defer="hero" aria-hidden="true" inert>
   <button type="button" class="floating-contact__button" id="floating-contact-toggle" aria-expanded="false" aria-haspopup="true" aria-controls="floating-contact-panel" aria-label="Start a conversation with MAKOM CAPITAL GROUP">
     <span class="floating-contact__label floating-contact__label--full" aria-hidden="true">Start a conversation</span>
     <span class="floating-contact__label floating-contact__label--short" aria-hidden="true">Contact</span>

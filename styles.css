@@ -685,39 +685,13 @@ body.hero--loaded .hero__visual {
        y profundidad — más un degradado amplio y suave hacia la columna de contenido para que la
        fotografía se sienta integrada al fondo, sin corte brusco entre ambos paneles */
     background:
+      /* Suelo oscuro local bajo el buscador: la fotografía se funde con el
+         negro hacia el borde inferior y el buscador no queda sobre luces
+         vivas ni pegado a un corte. */
+      linear-gradient(to top, rgba(10,10,10,0.55) 0%, rgba(10,10,10,0.22) 14%, rgba(10,10,10,0) 32%),
       linear-gradient(180deg, rgba(10,10,10,0.04) 0%, rgba(10,10,10,0.18) 100%),
       linear-gradient(to right, rgba(10,10,10,0) 40%, rgba(10,10,10,0.55) 75%, var(--color-negro) 100%);
   }
-}
-
-.hero__visual-inner {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  padding: 20px;
-}
-
-@media (min-width: 768px) {
-  .hero__visual-inner {
-    /* El símbolo queda sobre la fila del buscador, no debajo de él */
-    padding-bottom: calc(20px + var(--hs-row));
-  }
-}
-
-.hero__visual-symbol {
-  display: flex;
-  width: 48px;
-  height: 48px;
-  color: var(--color-blanco);
-  opacity: 0.35;
-}
-
-.hero__visual-symbol img {
-  width: 100%;
-  height: 100%;
 }
 
 /* Columna de contenido */
@@ -821,8 +795,8 @@ body.hero--loaded .hero__subheadline {
 
 .hero__actions {
   display: flex;
-  align-items: center;
-  gap: 32px;
+  align-items: stretch;
+  gap: 16px;
   flex-wrap: wrap;
   opacity: 0;
   transform: translateY(12px);
@@ -935,20 +909,22 @@ body.hero--loaded .hero__subheadline {
 .hero {
   /* Altura reservada para la fila del buscador (desktop). */
   --hs-row: 124px;
-  --hs-left: 64px;
-  /* Zona libre a la derecha: el botón flotante (24px + ancho + 16px)
-     nunca queda debajo de un control del buscador. */
-  --hs-right: 240px;
+  /* Margen lateral del contenido: el mismo que deja el header a ambos lados
+     del logotipo y la navegación (46px; desde 1280px, el margen de la rejilla
+     centrada de 1280px + 66px). El buscador de escritorio se centra dentro. */
+  --hs-gutter: max(46px, calc((100% - 1280px) / 2 + 66px));
+  --hs-max: 900px;
   /* Botón compacto (móvil/tablet): cristal oscuro sobre la fotografía */
-  --hs-glass: rgba(12, 12, 12, 0.58);
-  /* Contenedor de escritorio: cristal "gris humo". El relleno es solo un
-     velo claro y translúcido: lo que se ve detrás lo aporta el desenfoque
-     (backdrop-filter), no un fondo oscuro. */
-  --hs-pane-tint: rgba(120, 124, 136, 0.085);
-  --hs-pane-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0.025) 45%, rgba(255, 255, 255, 0.045) 100%);
-  --hs-line: rgba(255, 255, 255, 0.24);
-  --hs-field-line: rgba(255, 255, 255, 0.36);
-  --hs-field-bg: rgba(8, 8, 12, 0.30);
+  --hs-glass: rgba(10, 10, 10, 0.52);
+  /* Contenedor de escritorio: cristal oscuro que se funde con la fotografía
+     y con el fondo negro (casi negro, translúcido). La presencia la dan el
+     desenfoque suave, un reborde de luz que se desvanece hacia la derecha y
+     una sombra larga y difusa, no un fondo claro ni un borde marcado. */
+  --hs-pane-tint: rgba(10, 10, 10, 0.44);
+  --hs-pane-sheen: linear-gradient(180deg, rgba(245, 242, 238, 0.055) 0%, rgba(245, 242, 238, 0.012) 55%, rgba(245, 242, 238, 0.028) 100%);
+  --hs-line: rgba(245, 242, 238, 0.10);
+  --hs-field-line: rgba(245, 242, 238, 0.16);
+  --hs-field-bg: rgba(245, 242, 238, 0.06);
   --hs-link: #E8876A;
 }
 
@@ -973,11 +949,11 @@ body.hero--loaded .hero__subheadline {
   letter-spacing: 0.02em;
   color: var(--color-blanco);
   background-color: var(--hs-glass);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(245, 242, 238, 0.30);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  backdrop-filter: blur(14px) saturate(1.2);
+  border: 1px solid rgba(245, 242, 238, 0.16);
   border-radius: var(--radius-btn);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
+  box-shadow: 0 14px 30px -14px rgba(0, 0, 0, 0.7);
   text-decoration: none;
   transition: border-color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
 }
@@ -991,7 +967,7 @@ body.hero--loaded .hero__subheadline {
 }
 
 .hero-search__trigger:hover {
-  border-color: var(--color-terracota);
+  border-color: rgba(232, 135, 106, 0.7);
 }
 
 /* ----- Panel (móvil: oculto hasta abrirse) ----- */
@@ -1085,7 +1061,7 @@ html.hero-search-lock {
   background-size: 18px 18px, 10px 6px;
   border: 1px solid var(--hs-field-line);
   border-radius: var(--radius-field);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(245, 242, 238, 0.05);
   -webkit-appearance: none;
   appearance: none;
   text-overflow: ellipsis;
@@ -1094,8 +1070,8 @@ html.hero-search-lock {
 }
 
 .hero-search__select:hover:not(:disabled) {
-  border-color: rgba(255, 255, 255, 0.62);
-  background-color: rgba(8, 8, 12, 0.38);
+  border-color: rgba(245, 242, 238, 0.34);
+  background-color: rgba(245, 242, 238, 0.10);
 }
 
 #hero-search-op {
@@ -1138,11 +1114,12 @@ html.hero-search-lock {
   text-transform: uppercase;
   color: var(--color-blanco);
   background-color: var(--color-terracota);
-  border: 1px solid var(--color-terracota);
-  border-radius: var(--radius-btn);
-  box-shadow: 0 6px 18px rgba(181, 71, 42, 0.28);
+  background-image: linear-gradient(180deg, #BD4C2D 0%, #A83F25 100%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 12px;
+  box-shadow: 0 10px 22px -10px rgba(181, 71, 42, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.16);
   cursor: pointer;
-  transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+  transition: background-color var(--dur-fast) var(--ease), background-image var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
 
 .hero-search__submit::before {
@@ -1155,7 +1132,8 @@ html.hero-search-lock {
 
 .hero-search__submit:hover {
   background-color: var(--color-terracota-dark);
-  border-color: var(--color-terracota-dark);
+  background-image: linear-gradient(180deg, #B24629 0%, #9A3921 100%);
+  box-shadow: 0 12px 26px -10px rgba(181, 71, 42, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .hero-search__advanced {
@@ -1182,6 +1160,119 @@ html.hero-search-lock {
 
 .hero-search__advanced:hover {
   color: var(--color-blanco);
+}
+
+/* ----- "Iniciar conversación" dentro del Hero -----
+   Es la acción secundaria, junto a "Ver propiedades" (misma altura: la fila
+   los estira). Mientras está a la vista es el único control de contacto; al
+   salir de la vista, script.js lo sustituye por el botón flotante (ver
+   .floating-contact[data-defer]). Mismo diseño que el flotante: fondo
+   oscuro, borde terracota, icono de conversación. */
+.hero-contact {
+  position: relative;
+  display: flex;
+}
+
+.hero-contact__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 24px;
+  background-color: rgba(10, 10, 10, 0.80);
+  background-image: linear-gradient(rgba(181, 71, 42, 0), rgba(181, 71, 42, 0));
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: var(--color-blanco);
+  font-family: var(--font-primary);
+  font-size: 13px;
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  border: 1px solid var(--color-terracota);
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  transition: background-image var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+
+.hero-contact__button::before {
+  content: "";
+  flex: none;
+  width: 16px;
+  height: 16px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23F5F2EE' stroke-width='1.3' stroke-linejoin='round'%3E%3Cpath d='M2 3.2h12v7.6H7.4L4 13.6v-2.8H2z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.hero-contact__button:hover {
+  background-image: linear-gradient(rgba(181, 71, 42, 0.18), rgba(181, 71, 42, 0.18));
+}
+
+.hero-contact__button:focus-visible {
+  outline: 2px solid var(--color-blanco);
+  outline-offset: 2px;
+}
+
+/* El panel se abre hacia arriba, anclado a la izquierda del botón */
+.hero-contact__panel {
+  left: 0;
+  right: auto;
+  z-index: 5;
+}
+
+/* Sin JavaScript o sin IntersectionObserver: se conserva el flotante de siempre
+   y se retira el botón del Hero para no duplicar controles. */
+.hero-contact.is-off {
+  display: none;
+}
+
+.hero-contact__button {
+  flex: 1 1 auto;
+  min-height: 51px;
+}
+
+/* Móvil y tablet (< 1024px): no caben los dos botones en una línea sin
+   apretarlos; se apilan con el mismo ancho. El panel de contacto se ancla a
+   TODO el bloque de botones (no al segundo botón) y se abre por encima de él:
+   así solo cubre el párrafo (no interactivo) y nunca "Ver propiedades",
+   "Iniciar conversación" ni el botón de búsqueda. */
+@media (max-width: 1023.98px) {
+  .hero__actions {
+    position: relative;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    width: min(100%, 320px);
+  }
+
+  .hero-contact {
+    position: static;
+  }
+
+  .hero-contact .hero-contact__panel {
+    left: 0;
+    right: 0;
+    width: auto;
+  }
+}
+
+/* Teléfono: los dos botones apilados no deben empujar el Hero por encima de
+   la altura de la pantalla; se compactan un poco (siguen siendo ≥ 44px). */
+@media (max-width: 767.98px) {
+  .hero__content {
+    padding-bottom: 24px;
+  }
+
+  .hero__actions {
+    gap: 10px;
+  }
+
+  .hero__actions .btn--primary {
+    padding-block: 12px;
+  }
+
+  .hero-contact__button {
+    min-height: 47px;
+  }
 }
 
 /* Foco visible sobre fondo oscuro (el anillo terracota global se pierde) */
@@ -1215,7 +1306,7 @@ html.hero-search-lock {
 
   .hero__search {
     grid-column: 1 / -1;
-    margin: 0 0 32px 40px;
+    margin: 0 0 32px 46px;
   }
 }
 
@@ -1232,13 +1323,14 @@ html.hero-search-lock {
   .hero {
     grid-template-rows: 1fr var(--hs-row);
     --hs-row: 168px;
-    --hs-left: 64px;
   }
 
+  /* Centrado respecto al ancho total del Hero (no solo de la fotografía) */
   .hero__search {
     grid-column: 1 / -1;
-    width: min(1120px, calc(100% - var(--hs-left) - var(--hs-right)));
-    margin: 0 0 20px var(--hs-left);
+    justify-self: center;
+    width: min(var(--hs-max), calc(100% - 2 * var(--hs-gutter)));
+    margin: 0 0 20px;
   }
 
   .hero-search__trigger {
@@ -1254,34 +1346,33 @@ html.hero-search-lock {
   .hero-search__panel {
     position: relative;
     display: block;
-    padding: 14px 18px;
+    padding: 12px 16px;
     isolation: isolate;
     background-color: var(--hs-pane-tint);
     background-image: var(--hs-pane-sheen);
-    -webkit-backdrop-filter: blur(11px) saturate(1.55) brightness(1.08);
-    backdrop-filter: blur(11px) saturate(1.55) brightness(1.08);
-    border: 1px solid var(--hs-line);
-    border-radius: var(--radius-glass);
+    -webkit-backdrop-filter: blur(14px) saturate(1.25);
+    backdrop-filter: blur(14px) saturate(1.25);
+    border: 0;
+    border-radius: 20px;
     box-shadow:
-      0 22px 56px rgba(0, 0, 0, 0.34),
-      0 2px 8px rgba(0, 0, 0, 0.20),
-      inset 0 1px 0 rgba(255, 255, 255, 0.38),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.10),
-      inset 0 0 28px rgba(255, 255, 255, 0.05);
+      0 24px 48px -20px rgba(0, 0, 0, 0.65),
+      inset 0 1px 0 rgba(245, 242, 238, 0.07);
   }
 
-  /* Reflejo: un brillo suave y estático en la esquina superior izquierda y
-     un borde interior que "atrapa" la luz. Sin JavaScript ni animación. */
+  /* Reborde de luz de 1px: más claro a la izquierda (sobre la fotografía) y
+     casi imperceptible a la derecha, donde el contenedor se funde con el
+     negro. Estático: sin JavaScript ni animación. */
   .hero-search__panel::before {
     content: "";
     position: absolute;
     inset: 0;
-    z-index: -1;
+    padding: 1px;
     border-radius: inherit;
     pointer-events: none;
-    background:
-      radial-gradient(120% 90% at 8% -20%, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0) 55%),
-      linear-gradient(115deg, rgba(255, 255, 255, 0) 55%, rgba(255, 235, 215, 0.07) 100%);
+    background: linear-gradient(100deg, rgba(245, 242, 238, 0.26) 0%, rgba(245, 242, 238, 0.13) 40%, rgba(245, 242, 238, 0.05) 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
   }
 
   .hero-search__form {
@@ -1301,34 +1392,46 @@ html.hero-search-lock {
     padding-left: 2px;
     font-size: 12px;
     line-height: 14px;
-    color: rgba(255, 255, 255, 0.94);
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+    letter-spacing: 0.01em;
+    color: rgba(245, 242, 238, 0.74);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
   }
 
+  /* Pozos suaves dentro del cristal: sin borde propio hasta el hover o el
+     foco, para que los campos se lean como parte del mismo sistema. */
   .hero-search__select {
     min-height: 40px;
     padding: 6px 30px 6px 38px;
     font-size: 14px;
+    border-color: transparent;
     background-position: left 12px center, right 12px center;
     background-size: 16px 16px, 10px 6px;
   }
 
+  /* Dos filas (1024–1239): Buscar y "Búsqueda avanzada" forman un bloque
+     centrado verticalmente junto a los cuatro campos. */
   .hero-search__submit {
     grid-column: 3;
-    grid-row: 1;
-    align-self: start;
+    grid-row: 1 / span 2;
+    align-self: center;
     min-height: 44px;
-    padding: 0 22px;
+    width: 132px;
+    padding: 0;
     margin-left: 6px;
+    margin-top: -26px;
   }
 
-  /* Enlace en la esquina inferior derecha del contenedor, bajo Buscar */
+  /* "Búsqueda avanzada" va justo debajo de Buscar, centrada en su misma
+     columna (mismo ancho que el botón), como parte del mismo bloque. */
   .hero-search__advanced {
     position: absolute;
-    right: 18px;
-    bottom: 12px;
+    right: 16px;
+    bottom: calc(50% - 35px);
+    width: 132px;
+    justify-content: center;
     min-height: 20px;
     font-size: 12px;
+    text-decoration-thickness: 1px;
   }
 
   @media (max-height: 800px) {
@@ -1357,15 +1460,18 @@ html.hero-search-lock {
 /* ----- Escritorio ancho (≥1240): una sola fila, diseño de 1440px ----- */
 @media (min-width: 1240px) {
   .hero {
-    --hs-row: 118px;
+    --hs-row: 114px;
+    --hs-max: 1080px;
   }
 
+  /* Separado del borde inferior: el contenedor "flota" sobre el suelo
+     oscuro de la fotografía en vez de quedar pegado al borde. */
   .hero__search {
-    margin-bottom: 14px;
+    margin-bottom: 26px;
   }
 
   .hero-search__panel {
-    padding: 18px 26px;
+    padding: 12px 22px;
   }
 
   /* Anchos proporcionales al contenido: "Todas las ubicaciones" es el valor
@@ -1380,7 +1486,7 @@ html.hero-search-lock {
   }
 
   .hero-search__select {
-    min-height: 46px;
+    min-height: 44px;
     padding: 6px 24px 6px 33px;
     font-size: 13px;
     background-position: left 10px center, right 10px center;
@@ -1389,32 +1495,33 @@ html.hero-search-lock {
   .hero-search__submit {
     grid-column: auto;
     grid-row: auto;
-    min-height: 46px;
-    margin-left: 6px;
-    padding: 0 20px;
+    align-self: start;
+    min-height: 44px;
+    margin-left: 8px;
+    margin-top: 0;
   }
 
   .hero-search__advanced {
-    right: 30px;
-    bottom: 18px;
+    right: 22px;
+    bottom: 10px;
   }
 
   @media (max-height: 800px) {
     .hero {
-      --hs-row: 110px;
+      --hs-row: 100px;
     }
 
     .hero-search__panel {
-      padding: 13px 22px;
+      padding: 10px 20px;
     }
 
     .hero-search__advanced {
-      right: 26px;
-      bottom: 13px;
+      right: 20px;
+      bottom: 8px;
     }
 
     .hero__search {
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
   }
 }
@@ -1432,15 +1539,15 @@ html.hero-search-lock {
    recupera el aire de la referencia. */
 @media (min-width: 1240px) and (min-height: 960px) {
   .hero {
-    --hs-row: 156px;
+    --hs-row: 148px;
   }
 
   .hero__search {
-    margin-bottom: 28px;
+    margin-bottom: 44px;
   }
 
   .hero-search__panel {
-    padding: 26px 30px;
+    padding: 18px 26px;
   }
 
   .hero-search__form {
@@ -1449,12 +1556,12 @@ html.hero-search-lock {
 
   .hero-search__select,
   .hero-search__submit {
-    min-height: 50px;
+    min-height: 48px;
   }
 
   .hero-search__advanced {
-    right: 32px;
-    bottom: 26px;
+    right: 26px;
+    bottom: 14px;
   }
 }
 
@@ -1484,9 +1591,9 @@ html.hero-search-lock {
     background-color: rgba(10, 10, 10, 0.86);
   }
 
-  /* Escritorio: gris humo algo más opaco (sin desenfoque no se ve la foto) */
+  /* Escritorio: algo más opaco (sin desenfoque no se aprecia la foto) */
   .hero-search__panel {
-    background-color: rgba(58, 58, 64, 0.86);
+    background-color: rgba(14, 14, 16, 0.84);
   }
 }
 
@@ -3649,9 +3756,35 @@ a.article-card__cta {
    ============================================================= */
 .floating-contact {
   position: fixed;
-  right: 24px;
-  bottom: 24px;
+  right: max(24px, env(safe-area-inset-right));
+  bottom: max(24px, env(safe-area-inset-bottom));
   z-index: 150;
+}
+
+/* Home: el botón flotante espera a que el original (junto a "Ver propiedades")
+   salga de la vista; entonces aparece en la esquina con un fundido breve.
+   Oculto = visibility:hidden (no enfocable ni anunciado) + inert desde JS. */
+.floating-contact[data-defer] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: opacity 140ms var(--ease), transform 140ms var(--ease), visibility 0s linear 140ms;
+}
+
+.floating-contact[data-defer].is-active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+  transition: opacity 240ms var(--ease-out), transform 240ms var(--ease-out), visibility 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-contact[data-defer],
+  .floating-contact[data-defer].is-active {
+    transition: none;
+  }
 }
 
 .floating-contact__button {
@@ -3771,12 +3904,13 @@ a.article-card__cta {
 
 @media (max-width: 639px) {
   .floating-contact {
-    right: 16px;
-    bottom: 16px;
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(16px, env(safe-area-inset-bottom));
   }
 
+  /* 44px de alto: objetivo táctil mínimo (el ancho ya supera los 44px). */
   .floating-contact__button {
-    height: 40px;
+    height: 44px;
     padding: 0 14px;
     gap: 8px;
     font-size: 12px;

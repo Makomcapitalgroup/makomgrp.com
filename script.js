@@ -1132,6 +1132,10 @@ document.addEventListener('DOMContentLoaded', function () {
         closeFloatingPanel();
         if (floatingToggle) floatingToggle.focus();
       }
+      if (heroContactOpen) {
+        closeHeroContact();
+        if (heroContactToggle) heroContactToggle.focus();
+      }
     }
   });
 
@@ -1208,6 +1212,114 @@ document.addEventListener('DOMContentLoaded', function () {
         closeFloatingPanel();
       }
     });
+  }
+
+  /* ============================================================
+     13b. "INICIAR CONVERSACIÓN" EN EL HERO ↔ BOTÓN FLOTANTE
+     Solo en la Home. Hay dos representaciones del MISMO control, con las
+     mismas opciones (WhatsApp, correo y formulario): el botón del Hero,
+     junto a "Ver propiedades", y el flotante (esquina inferior derecha).
+     Nunca están activas a la vez: mientras el del Hero se ve, el flotante
+     está oculto; cuando el del Hero sale del área visible, aparece el
+     flotante, y al volver a verse el del Hero, el flotante se retira. La
+     visibilidad real se mide con IntersectionObserver (no con un umbral
+     de scroll). El representante inactivo queda inert + aria-hidden: ni
+     se ve, ni se enfoca, ni lo anuncian los lectores de pantalla.
+  ============================================================ */
+  var heroContact = document.getElementById('hero-contact');
+  var heroContactToggle = document.getElementById('hero-contact-toggle');
+  var heroContactPanel = document.getElementById('hero-contact-panel');
+  var heroContactOpen = false;
+
+  // El panel del Hero se abre hacia arriba. Si el botón está tan arriba en la
+  // pantalla que el panel quedaría bajo el header, se baja un poco el contenido
+  // (sin sacar el botón de la vista) para que el panel se vea completo.
+  function ensureHeroPanelVisible() {
+    var minTop = (typeof headerH === 'number' ? headerH : 72) + 8;
+    var pr = heroContactPanel.getBoundingClientRect();
+    if (pr.top >= minTop) return;
+    var br = heroContactToggle.getBoundingClientRect();
+    var delta = Math.min(minTop - pr.top, Math.max(0, window.innerHeight - 8 - br.bottom));
+    if (delta > 0) window.scrollBy(0, -delta);
+  }
+
+  function openHeroContact() {
+    heroContactOpen = true;
+    heroContactPanel.classList.add('is-open');
+    heroContactPanel.setAttribute('aria-hidden', 'false');
+    heroContactToggle.setAttribute('aria-expanded', 'true');
+    window.requestAnimationFrame(ensureHeroPanelVisible);
+  }
+
+  function closeHeroContact() {
+    heroContactOpen = false;
+    heroContactPanel.classList.remove('is-open');
+    heroContactPanel.setAttribute('aria-hidden', 'true');
+    heroContactToggle.setAttribute('aria-expanded', 'false');
+  }
+
+  if (heroContact && heroContactToggle && heroContactPanel && floatingContact && floatingToggle && floatingPanel) {
+    heroContactToggle.addEventListener('click', function () {
+      if (heroContactOpen) closeHeroContact(); else openHeroContact();
+    });
+
+    var heroContactForm = document.getElementById('hero-contact-form-link');
+    if (heroContactForm) heroContactForm.addEventListener('click', closeHeroContact);
+
+    document.addEventListener('click', function (e) {
+      if (heroContactOpen && !heroContact.contains(e.target)) closeHeroContact();
+    });
+
+    var heroContactFloating = null; // null = aún sin decidir
+
+    function setContactState(floating) {
+      if (floating === heroContactFloating) return;
+      var focusInHero = heroContact.contains(document.activeElement);
+      var focusInFloating = floatingContact.contains(document.activeElement);
+      heroContactFloating = floating;
+
+      if (floating) {
+        closeHeroContact();
+        heroContact.setAttribute('aria-hidden', 'true');
+        heroContact.setAttribute('inert', '');
+        heroContactToggle.setAttribute('tabindex', '-1');
+        floatingContact.removeAttribute('inert');
+        floatingContact.setAttribute('aria-hidden', 'false');
+        floatingContact.classList.add('is-active');
+        if (focusInHero) floatingToggle.focus({ preventScroll: true });
+      } else {
+        closeFloatingPanel();
+        floatingContact.classList.remove('is-active');
+        floatingContact.setAttribute('aria-hidden', 'true');
+        floatingContact.setAttribute('inert', '');
+        heroContact.removeAttribute('aria-hidden');
+        heroContact.removeAttribute('inert');
+        heroContactToggle.removeAttribute('tabindex');
+        if (focusInFloating) heroContactToggle.focus({ preventScroll: true });
+      }
+    }
+
+    // El header fijo tapa la franja superior: lo que queda debajo de él no cuenta como visible.
+    var headerH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height'), 10) || 72;
+
+    function heroContactVisibleNow() {
+      var r = heroContactToggle.getBoundingClientRect();
+      return r.bottom > headerH && r.top < window.innerHeight && r.width > 0;
+    }
+
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (entries) {
+        var last = entries[entries.length - 1];
+        setContactState(!(last.isIntersecting && last.intersectionRatio > 0));
+      }, { rootMargin: '-' + headerH + 'px 0px 0px 0px', threshold: [0, 0.01, 1] }).observe(heroContactToggle);
+
+      // Volver con "atrás" (bfcache) o cambiar de pestaña: se resincroniza.
+      window.addEventListener('pageshow', function () { setContactState(!heroContactVisibleNow()); });
+    } else {
+      // Sin IntersectionObserver: se conserva el flotante de siempre y no se duplica el control.
+      heroContact.classList.add('is-off');
+      setContactState(true);
+    }
   }
 
   /* ============================================================
