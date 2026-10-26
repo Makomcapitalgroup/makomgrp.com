@@ -1323,44 +1323,62 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /* ============================================================
-     13c. FICHAS CON GALERÍA ↔ BOTÓN FLOTANTE
-     En escritorio (≈1024–1440 px) la foto principal de la ficha, que ocupa
-     todo el ancho del contenido, llega hasta bajo la esquina inferior
-     derecha de la primera pantalla; ahí el flotante recibiría los clics
-     destinados a la foto. Mientras la foto principal solapa la huella del
-     flotante, éste se aparta (mismo mecanismo y estados que en la Home:
-     oculto = visibility:hidden + inert + aria-hidden) y reaparece en cuanto
-     el scroll deja libre esa esquina. Donde no hay solapamiento (móvil,
-     tablet y pantallas anchas) no cambia nada.
-     Solo cuenta la galería interactiva: la foto principal es el disparador
-     [data-galeria-abrir="0"] dentro de [data-galeria], el mismo contrato que
-     usa el lightbox (sección 16). Una imagen de portada sin interacción
-     (p. ej. en Perspectivas) no tiene nada que proteger y no aparta el botón.
+     13c. FICHAS ↔ BOTÓN FLOTANTE: no tapar controles propios de la ficha
+     Un botón fijo no puede esquivar contenido que se desplaza, así que, mientras
+     un control principal de la ficha solapa la huella del flotante (esquina
+     inferior derecha), éste se aparta (mismo mecanismo y estados que en la Home:
+     oculto = visibility:hidden + inert + aria-hidden) y reaparece en cuanto el
+     scroll deja libre esa esquina. Donde no hay solapamiento no cambia nada.
+     Controles protegidos (contratos explícitos, no clases de estilo):
+       - La foto principal de la galería interactiva: [data-galeria-abrir="0"]
+         dentro de [data-galeria], el mismo contrato que usa el lightbox
+         (sección 16). Con ancho de escritorio (≈1024–1440 px) ocupa todo el ancho
+         del contenido y llega bajo la esquina de la primera pantalla. Una imagen
+         de portada sin interacción (p. ej. en Perspectivas) no se protege.
+       - Cualquier elemento marcado con [data-flotante-evitar] (hoy, el CTA
+         "Solicitar información" de las fichas de Proyectos).
   ============================================================ */
-  var galeriaPrincipal = document.querySelector('[data-galeria] [data-galeria-abrir="0"]');
+  var evitadosPorFlotante = Array.prototype.slice.call(
+    document.querySelectorAll('[data-galeria] [data-galeria-abrir="0"], [data-flotante-evitar]')
+  );
 
-  if (galeriaPrincipal && !heroContact && floatingContact && floatingToggle && floatingPanel) {
-    var galeriaFloatingHidden = false;
-    var galeriaSyncPending = false;
+  if (evitadosPorFlotante.length && !heroContact && floatingContact && floatingToggle && floatingPanel) {
+    var evitaFloatingHidden = false;
+    var evitaSyncPending = false;
+
+    // Posición ya asentada del control: las secciones con [data-reveal] entran
+    // deslizándose (translateY de 24 px → 0); se descuenta ese desplazamiento para
+    // decidir con la posición final y no con la de la animación.
+    function rectAsentado(el) {
+      var r = el.getBoundingClientRect();
+      var rv = el.closest('[data-reveal]');
+      var ty = 0;
+      if (rv) {
+        try { ty = new DOMMatrixReadOnly(getComputedStyle(rv).transform).m42 || 0; } catch (e) { ty = 0; }
+      }
+      return { left: r.left, right: r.right, top: r.top - ty, bottom: r.bottom - ty, width: r.width };
+    }
 
     // La huella se calcula desde right/bottom (no desde getBoundingClientRect)
     // para que no influya el desplazamiento de 8 px del estado oculto.
-    function floatingOverlapsGallery() {
+    function floatingOverlapsProtected() {
       var cs = getComputedStyle(floatingContact);
       var right = document.documentElement.clientWidth - parseFloat(cs.right);
       var bottom = document.documentElement.clientHeight - parseFloat(cs.bottom);
       var left = right - floatingToggle.offsetWidth;
       var top = bottom - floatingToggle.offsetHeight;
-      var g = galeriaPrincipal.getBoundingClientRect();
-      return g.width > 0 && g.left < right && g.right > left && g.top < bottom && g.bottom > top;
+      return evitadosPorFlotante.some(function (el) {
+        var g = rectAsentado(el);
+        return g.width > 0 && g.left < right && g.right > left && g.top < bottom && g.bottom > top;
+      });
     }
 
-    function setFloatingForGallery(hide) {
-      if (hide === galeriaFloatingHidden) return;
-      galeriaFloatingHidden = hide;
+    function setFloatingForProtected(hide) {
+      if (hide === evitaFloatingHidden) return;
+      evitaFloatingHidden = hide;
       if (hide) {
         closeFloatingPanel();
-        floatingContact.setAttribute('data-defer', 'galeria');
+        floatingContact.setAttribute('data-defer', 'evitar');
         floatingContact.classList.remove('is-active');
         floatingContact.setAttribute('aria-hidden', 'true');
         floatingContact.setAttribute('inert', '');
@@ -1371,22 +1389,24 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
-    function syncFloatingWithGallery() {
-      galeriaSyncPending = false;
-      setFloatingForGallery(floatingOverlapsGallery());
+    function syncFloatingWithProtected() {
+      evitaSyncPending = false;
+      setFloatingForProtected(floatingOverlapsProtected());
     }
 
     function requestFloatingSync() {
-      if (galeriaSyncPending) return;
-      galeriaSyncPending = true;
-      window.requestAnimationFrame(syncFloatingWithGallery);
+      if (evitaSyncPending) return;
+      evitaSyncPending = true;
+      window.requestAnimationFrame(syncFloatingWithProtected);
     }
 
     window.addEventListener('scroll', requestFloatingSync, { passive: true });
     window.addEventListener('resize', requestFloatingSync);
     window.addEventListener('load', requestFloatingSync);
     window.addEventListener('pageshow', requestFloatingSync);
-    syncFloatingWithGallery();
+    // Cambios de maquetación sin scroll ni resize (imágenes diferidas, fuentes).
+    if ('ResizeObserver' in window) new ResizeObserver(requestFloatingSync).observe(document.body);
+    syncFloatingWithProtected();
   }
 
   /* ============================================================

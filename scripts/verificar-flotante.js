@@ -8,7 +8,8 @@
  *   1. Home ES/EN: el CTA del Hero y el flotante se relevan sin duplicarse.
  *   2. Fichas de propiedades ES/EN: el flotante se aparta SOLO mientras
  *      solapa la galería interactiva ([data-galeria] [data-galeria-abrir="0"])
- *      y reaparece al liberar la esquina.
+ *      y reaparece al liberar la esquina. Lo mismo en Proyectos con el CTA
+ *      marcado con [data-flotante-evitar].
  *   3. Perspectivas ES/EN: el flotante está disponible desde la carga.
  *   4. Catálogo y demás páginas interiores: siempre disponible; las páginas
  *      legales no lo llevan.
@@ -20,6 +21,9 @@
  *      al final de la página y, en fichas, la galería y su lightbox).
  *  10. Responsive de 375 a 1920 px; tamaño aprobado: 44 px de alto por
  *      debajo de 640 px y 46 px desde 640 px.
+ *  11. Lightbox de propiedades: cerrar, anterior, siguiente y contador quedan
+ *      completos dentro de la ventana (también en horizontal de teléfono) y
+ *      funcionan con clic, toque, teclado y Escape.
  *
  * Diseño para que sea determinista:
  *   - No hay esperas fijas: cada paso espera un ESTADO observable (valor
@@ -47,8 +51,8 @@
  *   --base <url>      Probar un sitio ya publicado en vez de _site/.
  *   --chrome <ruta>   Ejecutable de Chrome (o variable CHROME_PATH).
  *   --anchos 375,1440 Limitar los anchos de ventana (por defecto, los diez).
- *   --solo <grupo>    Un solo grupo: home, fichas, perspectivas, interiores,
- *                     panel, teclado, estados.
+ *   --solo <grupo>    Un solo grupo: home, fichas, proyectos, lightbox,
+ *                     perspectivas, interiores, panel, teclado, estados.
  *   --detalle         Imprimir también las comprobaciones que pasan.
  *
  * Código de salida: 0 sin fallas; 1 con fallas; 2 error de entorno.
@@ -74,12 +78,19 @@ const ANCHOS = [
   [639, 900],
   [640, 900],
   [768, 1024],
+  [900, 900],
   [1024, 768],
+  [1100, 800],
   [1366, 768],
   [1440, 900],
   [1728, 1117],
   [1920, 1080],
 ];
+
+// Ventanas extra: teléfonos en horizontal (lightbox) y alturas en las que el CTA de
+// Proyectos queda en la parte baja de la primera pantalla.
+const VENTANAS_HORIZONTALES = [[667, 375], [844, 390], [932, 430], [1024, 600]];
+const VENTANAS_PROYECTO = [[700, 900], [767, 900], [640, 700], [640, 800], [768, 800]];
 
 // Anchos en los que se ejercitan las interacciones largas (panel, teclado).
 const ANCHOS_INTERACCION = [375, 768, 1440];
@@ -334,12 +345,23 @@ const AYUDANTES_PAGINA = `(() => {
     return { l: vw - m - tg.offsetWidth, t: vh - m - tg.offsetHeight, r: vw - m, b: vh - m };
   };
   t.principal = () => document.querySelector('[data-galeria] [data-galeria-abrir="0"]');
-  t.solapaGaleria = () => {
-    const g = t.principal();
-    if (!g) return false;
-    const r = g.getBoundingClientRect();
+  // Controles que el flotante debe esquivar: foto principal de la galería interactiva y
+  // elementos marcados con [data-flotante-evitar].
+  t.protegidos = () => [...document.querySelectorAll('[data-galeria] [data-galeria-abrir="0"], [data-flotante-evitar]')];
+  // Posición final del control: las secciones con [data-reveal] entran deslizándose desde
+  // 24px más abajo; el flotante decide con la posición asentada, y el oráculo igual.
+  t.rectAsentado = (e) => {
+    const r = e.getBoundingClientRect();
+    const rv = e.closest('[data-reveal]');
+    const ty = rv ? new DOMMatrixReadOnly(getComputedStyle(rv).transform).m42 : 0;
+    return { left: r.left, right: r.right, top: r.top - ty, bottom: r.bottom - ty, width: r.width };
+  };
+  t.solapaProtegidos = () => {
     const f = t.huella();
-    return r.width > 0 && r.left < f.r && r.right > f.l && r.top < f.b && r.bottom > f.t;
+    return t.protegidos().some((g) => {
+      const r = t.rectAsentado(g);
+      return r.width > 0 && r.left < f.r && r.right > f.l && r.top < f.b && r.bottom > f.t;
+    });
   };
   t.altoCabecera = () => parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height'), 10) || 72;
   t.ctaVisible = () => {
@@ -348,11 +370,13 @@ const AYUDANTES_PAGINA = `(() => {
   };
   t.esperado = (tipo) => {
     if (tipo === 'home') return t.ctaVisible() ? { f: 'apartado', h: 'activo' } : { f: 'activo', h: 'apartado' };
-    if (tipo === 'galeria') return { f: t.solapaGaleria() ? 'apartado' : 'activo', h: 'ausente' };
+    if (tipo === 'evitar') return { f: t.solapaProtegidos() ? 'apartado' : 'activo', h: 'ausente' };
     return { f: 'activo', h: 'ausente' };
   };
+  // Transiciones en curso del widget y de las secciones que entran deslizándose
+  // ([data-reveal]), que mueven los controles hasta que terminan.
   t.animando = () => {
-    const nodos = [$('floating-contact'), $('hero-contact')].filter(Boolean);
+    const nodos = [$('floating-contact'), $('hero-contact'), ...document.querySelectorAll('[data-reveal]')].filter(Boolean);
     return nodos.some((n) => n.getAnimations({ subtree: true }).some((a) => a.playState === 'running' || a.playState === 'pending'));
   };
 
@@ -421,19 +445,20 @@ const AYUDANTES_PAGINA = `(() => {
     });
     return res;
   };
-  // Puntos de la galería principal (dentro de la ventana) que intercepta el flotante.
-  t.galeriaInterceptada = () => {
-    const g = t.principal();
+  // Puntos de los controles protegidos (dentro de la ventana) que intercepta el flotante.
+  t.protegidosInterceptados = () => {
     const fc = $('floating-contact');
-    if (!g || !fc) return 0;
-    const b = g.getBoundingClientRect();
+    if (!fc) return 0;
     let n = 0;
-    for (let x = b.left + 3; x < b.right; x += 8) {
-      for (let y = Math.max(b.top, 0) + 3; y < Math.min(b.bottom, innerHeight); y += 8) {
-        const e = document.elementFromPoint(x, y);
-        if (e && fc.contains(e)) n++;
+    t.protegidos().forEach((g) => {
+      const b = g.getBoundingClientRect();
+      for (let x = b.left + 3; x < b.right; x += 8) {
+        for (let y = Math.max(b.top, 0) + 3; y < Math.min(b.bottom, innerHeight); y += 8) {
+          const e = document.elementFromPoint(x, y);
+          if (e && fc.contains(e)) n++;
+        }
       }
-    }
+    });
     return n;
   };
   t.geometria = () => {
@@ -599,6 +624,11 @@ class Pagina {
     }
   }
 
+  async toque(x, y) {
+    await this.cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+    await this.cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  }
+
   async clicEn(selector) {
     const p = await this.eval(`window.__t.centro(${JSON.stringify(selector)})`);
     if (!p) throw new Error("No existe " + selector);
@@ -689,8 +719,8 @@ async function estadoFinal(p, etiqueta) {
   const t = await p.eval("window.__t.tapados()");
   ok(`${etiqueta} ningún control bloqueado por el flotante`, t.bloqueados.length === 0, t.bloqueados.join(" ; "));
   t.parciales.forEach((x) => avisos.add(`${etiqueta}: el flotante solapa parcialmente una esquina de ${x}`));
-  const n = await p.eval("window.__t.galeriaInterceptada()");
-  ok(`${etiqueta} galería no interceptada`, n === 0, n);
+  const n = await p.eval("window.__t.protegidosInterceptados()");
+  ok(`${etiqueta} controles protegidos no interceptados`, n === 0, n);
 }
 
 /* ------------------------------------------------------------------ */
@@ -792,11 +822,11 @@ async function grupoFichas(p, anchos, paginas) {
       for (let k = 0; k < muestras; k++) {
         const y = Math.min(k * paso, max);
         await p.scroll(y);
-        const solapa = await p.eval("window.__t.solapaGaleria()");
+        const solapa = await p.eval("window.__t.solapaProtegidos()");
         if (solapa) hubo = true;
-        const bien = await comprobarEstado(p, `${E} muestra ${k}`, "galeria");
-        const inter = await p.eval("window.__t.galeriaInterceptada()");
-        ok(`${E} muestra ${k}: galería no interceptada`, inter === 0, inter);
+        const bien = await comprobarEstado(p, `${E} muestra ${k}`, "evitar");
+        const inter = await p.eval("window.__t.protegidosInterceptados()");
+        ok(`${E} muestra ${k}: controles protegidos no interceptados`, inter === 0, inter);
         if (bien && !solapa) {
           activos++;
           if (primero) {
@@ -807,13 +837,13 @@ async function grupoFichas(p, anchos, paginas) {
       }
       if (hubo) configuracionesConSolape++;
       await p.scroll(max);
-      await comprobarEstado(p, `${E} final de la página`, "galeria");
+      await comprobarEstado(p, `${E} final de la página`, "evitar");
       await estadoFinal(p, `${E} final`);
       ok(`${E} el flotante está disponible en algún punto del recorrido`, activos > 0, activos);
 
       // Clic real en la esquina antes interceptada: abre la galería, no el panel.
       await p.scroll(0);
-      await comprobarEstadoSilencioso(p, "galeria");
+      await comprobarEstadoSilencioso(p, "evitar");
       const esquina = await p.eval(`(() => {
         const g = window.__t.principal().getBoundingClientRect(), f = window.__t.huella();
         const l = Math.max(g.left, f.l), r = Math.min(g.right, f.r), t = Math.max(g.top, f.t), b = Math.min(g.bottom, f.b, innerHeight);
@@ -832,15 +862,14 @@ async function grupoFichas(p, anchos, paginas) {
 
       // Lightbox con el flotante activo: los controles de la galería no quedan tapados.
       await p.scroll(max / 2);
-      await comprobarEstadoSilencioso(p, "galeria");
+      await comprobarEstadoSilencioso(p, "evitar");
       await p.eval("window.__t.principal().click(); true");
       const lb = await p.esperar("document.querySelector('.lightbox') && getComputedStyle(document.querySelector('.lightbox')).display !== 'none'");
       ok(`${E} el lightbox se abre`, lb, "");
       if (lb) {
         await p.esperar("(() => { const i = document.querySelector('.lightbox img'); return i && i.complete && i.naturalWidth > 0; })()", 5000);
-        await p.asentar("galeria");
-        // Cada control dentro de la ventana debe recibir el clic (ni el flotante ni nada lo tapa);
-        // un control fuera de la ventana es un hallazgo de maquetación del lightbox, no del flotante.
+        await p.asentar("evitar");
+        // Cada control debe estar dentro de la ventana y recibir el clic (ni el flotante ni nada lo tapa).
         const libres = await p.eval(`(() => {
           const sel = ['.lightbox__cerrar', '.lightbox__anterior', '.lightbox__siguiente'];
           return sel.map((s) => {
@@ -853,8 +882,7 @@ async function grupoFichas(p, anchos, paginas) {
             return (t === e || e.contains(t)) ? 'ok' : s + ':tapado';
           });
         })()`);
-        ok(`${E} controles del lightbox dentro de la ventana no quedan tapados`, libres.every((x) => x === "ok" || /:fuera$/.test(x)), json(libres));
-        libres.filter((x) => /:fuera$/.test(x)).forEach((x) => avisos.add(`${E}: ${x.replace(":fuera", "")} del lightbox queda fuera de la ventana (maquetación del lightbox, ajena al flotante)`));
+        ok(`${E} controles del lightbox dentro de la ventana y sin tapar`, libres.every((x) => x === "ok"), json(libres));
         const a = await p.eval("(document.querySelector('.lightbox img') || {}).src || ''");
         await p.tecla("ArrowRight");
         const cambio = await p.esperar(`((document.querySelector('.lightbox img') || {}).src || '') !== ${json(a)}`);
@@ -864,6 +892,177 @@ async function grupoFichas(p, anchos, paginas) {
         await p.esperar("!document.querySelector('.lightbox') || getComputedStyle(document.querySelector('.lightbox')).display === 'none'");
       }
       await p.scroll(0);
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Grupo: fichas de Proyectos (CTA "Solicitar información")           */
+/* ------------------------------------------------------------------ */
+
+async function grupoProyectos(p, anchos, paginas) {
+  grupoActual = "proyectos";
+  const ventanas = anchos.concat(args_solo_ventanas(anchos, VENTANAS_PROYECTO));
+  let huboSolape = false;
+  for (const [w, h] of ventanas) {
+    await p.ventana(w, h);
+    for (const lang of ["es", "en"]) {
+      const E = `proyecto ${lang.toUpperCase()} ${w}x${h}`;
+      await p.ir(paginas.proyecto[lang]);
+      const n = await p.eval("document.querySelectorAll('[data-flotante-evitar]').length");
+      ok(`${E} el CTA está marcado para que el flotante lo esquive`, n === 1, n);
+      if (n !== 1) continue;
+      ok(`${E} sin errores de JavaScript`, p.errores.length === 0, p.errores.join(" | "));
+      const max = await p.scrollMax();
+      const paso = Math.max(24, Math.round(h / 16));
+      let primero = true;
+      for (let k = 0; k < 25; k++) {
+        await p.scroll(Math.min(k * paso, max));
+        const solapa = await p.eval("window.__t.solapaProtegidos()");
+        if (solapa) huboSolape = true;
+        const bien = await comprobarEstado(p, `${E} muestra ${k}`, "evitar");
+        // Con el flotante activo, ninguno de los dos controles pierde superficie: ni un píxel
+        // del CTA queda bajo el flotante y el CTA recibe el clic en su centro.
+        const r = await p.eval(`(() => {
+          const cta = document.querySelector('[data-flotante-evitar]');
+          const b = cta.getBoundingClientRect();
+          // La parte visible excluye la franja del header fijo.
+          const vl = Math.max(b.left, 0), vt = Math.max(b.top, window.__t.altoCabecera()), vr = Math.min(b.right, innerWidth), vb = Math.min(b.bottom, innerHeight);
+          let centroOk = true;
+          if (vr > vl && vb > vt) { const t = document.elementFromPoint((vl + vr) / 2, (vt + vb) / 2); centroOk = !!(t && (t === cta || cta.contains(t))); }
+          const f = document.getElementById('floating-contact-toggle').getBoundingClientRect();
+          const ix = Math.min(b.right, f.right) - Math.max(b.left, f.left), iy = Math.min(b.bottom, f.bottom) - Math.max(b.top, f.top);
+          return { activo: window.__t.flotante() === 'activo', solape: ix > 0 && iy > 0, interceptados: window.__t.protegidosInterceptados(), centroOk };
+        })()`);
+        ok(`${E} muestra ${k}: el CTA recibe el clic en su centro`, r.centroOk, json(r));
+        ok(`${E} muestra ${k}: sin solape real entre el CTA y el flotante activo`, !(r.activo && r.solape) && r.interceptados === 0, json(r));
+        if (bien && r.activo && primero) {
+          primero = false;
+          await comprobarGeometria(p, `${E} flotante`, w);
+        }
+      }
+      await p.scroll(max);
+      await comprobarEstado(p, `${E} final de la página`, "evitar");
+      await estadoFinal(p, `${E} final`);
+      await p.scroll(0);
+    }
+  }
+  ok("la prueba de Proyectos no es vacua (el CTA llegó a solapar la huella del flotante)", huboSolape, "");
+}
+
+// Añade ventanas extra solo si no estamos filtrando por --anchos.
+function args_solo_ventanas(anchos, extra) {
+  return anchos.length === ANCHOS.length ? extra : [];
+}
+
+/* ------------------------------------------------------------------ */
+/* Grupo: lightbox de propiedades                                     */
+/* ------------------------------------------------------------------ */
+
+async function grupoLightbox(p, anchos, paginas) {
+  grupoActual = "lightbox";
+  const ventanas = anchos.concat(args_solo_ventanas(anchos, VENTANAS_HORIZONTALES));
+  const abierto = "document.querySelector('.lightbox') && !document.querySelector('.lightbox').hidden";
+  const cerrado = "!document.querySelector('.lightbox') || document.querySelector('.lightbox').hidden";
+  const imagenLista = "(() => { const i = document.querySelector('.lightbox img'); return i && i.complete && i.naturalWidth > 0; })()";
+  const contador = () => p.eval("(document.querySelector('.lightbox__contador') || {}).textContent || ''");
+  for (const [w, h] of ventanas) {
+    await p.ventana(w, h);
+    for (const lang of ["es", "en"]) {
+      const E = `lightbox ${lang.toUpperCase()} ${w}x${h}`;
+      await p.ir(paginas.ficha[lang]);
+      const total = await p.eval("document.querySelectorAll('[data-galeria] [data-galeria-abrir]').length");
+      // En ventanas bajas el centro de la foto queda fuera de la pantalla: se centra antes de pulsar.
+      const centrarFoto = () => p.eval("window.__t.principal().scrollIntoView({ block: 'center', behavior: 'instant' }); new Promise((r) => requestAnimationFrame(() => r(true)))");
+      await centrarFoto();
+      const y0 = await p.eval("scrollY");
+
+      // Abrir con un clic real en la foto principal.
+      await p.clicEn('[data-galeria] [data-galeria-abrir="0"]');
+      const seAbrio = await p.esperar(abierto);
+      ok(`${E} el clic abre la galería`, seAbrio, "");
+      if (!seAbrio) continue;
+      await p.esperar(imagenLista, 8000);
+      ok(`${E} abrir la galería no cambia el scroll (no hay bloqueo de scroll)`, (await p.eval("scrollY")) === y0, `${y0} → ${await p.eval("scrollY")}`);
+      ok(`${E} el foco pasa al botón cerrar`, (await p.eval("window.__t.activo()")) === "lightbox__cerrar", await p.eval("window.__t.activo()"));
+
+      // Todos los controles completos dentro de la ventana y con área suficiente.
+      const med = await p.eval(`(() => {
+        const vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
+        const sel = { cerrar: '.lightbox__cerrar', anterior: '.lightbox__anterior', siguiente: '.lightbox__siguiente', contador: '.lightbox__contador', imagen: '.lightbox__imagen' };
+        const o = {};
+        for (const k in sel) {
+          const e = document.querySelector(sel[k]);
+          if (!e || getComputedStyle(e).display === 'none') { o[k] = null; continue; }
+          const b = e.getBoundingClientRect();
+          o[k] = { dentro: b.left >= 0 && b.top >= 0 && b.right <= vw && b.bottom <= vh, w: b.width, h: b.height, margen: Math.min(b.left, b.top, vw - b.right, vh - b.bottom) };
+          if (k !== 'contador' && k !== 'imagen') {
+            const c = window.__t.centro(e); const t = document.elementFromPoint(c.x, c.y);
+            o[k].recibeClic = !!(t && (t === e || e.contains(t)));
+          }
+        }
+        return o;
+      })()`);
+      for (const k of ["cerrar", "anterior", "siguiente", "contador", "imagen"]) {
+        if (total < 2 && (k === "anterior" || k === "siguiente")) continue;
+        ok(`${E} ${k} completo dentro de la ventana`, med[k] && med[k].dentro, json(med[k]));
+      }
+      for (const k of ["cerrar", "anterior", "siguiente"]) {
+        if (total < 2 && k !== "cerrar") continue;
+        ok(`${E} ${k} recibe el clic en su centro`, med[k] && med[k].recibeClic, json(med[k]));
+        ok(`${E} ${k} con área táctil de al menos 40px`, med[k] && med[k].w >= 40 && med[k].h >= 40, json(med[k]));
+      }
+
+      if (total > 1) {
+        // Siguiente / anterior con clics reales.
+        await p.clicEn(".lightbox__siguiente");
+        ok(`${E} clic en siguiente muestra la 2.ª fotografía`, await p.esperar(`document.querySelector('.lightbox__contador').textContent.startsWith('2 /')`), await contador());
+        await p.clicEn(".lightbox__anterior");
+        ok(`${E} clic en anterior vuelve a la 1.ª`, await p.esperar(`document.querySelector('.lightbox__contador').textContent.startsWith('1 /')`), await contador());
+        await p.clicEn(".lightbox__anterior");
+        ok(`${E} anterior desde la 1.ª da la vuelta a la última`, await p.esperar(`document.querySelector('.lightbox__contador').textContent.startsWith('${total} /')`), await contador());
+        await p.tecla("ArrowRight");
+        ok(`${E} flecha derecha avanza`, await p.esperar(`document.querySelector('.lightbox__contador').textContent.startsWith('1 /')`), await contador());
+        await p.tecla("ArrowRight");
+        ok(`${E} flecha derecha avanza a la 2.ª`, await p.esperar(`document.querySelector('.lightbox__contador').textContent.startsWith('2 /')`), await contador());
+        await p.tecla("ArrowLeft");
+        ok(`${E} flecha izquierda retrocede`, await p.esperar(`document.querySelector('.lightbox__contador').textContent.startsWith('1 /')`), await contador());
+        // Toque (teléfonos y tabletas).
+        if (w <= 768) {
+          const c = await p.eval("window.__t.centro('.lightbox__siguiente')");
+          await p.toque(c.x, c.y);
+          ok(`${E} un toque en siguiente avanza`, await p.esperar(`document.querySelector('.lightbox__contador').textContent.startsWith('2 /')`), await contador());
+          const a = await p.eval("window.__t.centro('.lightbox__anterior')");
+          await p.toque(a.x, a.y);
+          ok(`${E} un toque en anterior retrocede`, await p.esperar(`document.querySelector('.lightbox__contador').textContent.startsWith('1 /')`), await contador());
+        }
+        // Foco contenido: tres Tab desde "cerrar" dan la vuelta; Mayús+Tab desde "cerrar" va al último.
+        await p.eval("document.querySelector('.lightbox__cerrar').focus(); true");
+        for (let i = 0; i < 3; i++) await p.tecla("Tab");
+        ok(`${E} Tab: el foco da la vuelta y vuelve a cerrar`, (await p.eval("window.__t.activo()")) === "lightbox__cerrar", await p.eval("window.__t.activo()"));
+        await p.tecla("Tab", { mayus: true });
+        ok(`${E} Mayús+Tab desde cerrar va al último control`, (await p.eval("window.__t.activo()")) === "lightbox__siguiente", await p.eval("window.__t.activo()"));
+      }
+
+      // Cerrar: Escape (y foco de vuelta a la foto), botón y fondo. La galería no mueve el scroll.
+      await p.tecla("Escape");
+      ok(`${E} Escape cierra la galería`, await p.esperar(cerrado), "");
+      ok(`${E} el foco vuelve a la foto principal`, (await p.eval("window.__t.activo()")) === "galeria-ficha__principal", await p.eval("window.__t.activo()"));
+      await centrarFoto();
+      await p.clicEn('[data-galeria] [data-galeria-abrir="0"]');
+      await p.esperar(abierto);
+      await p.esperar(imagenLista, 8000);
+      await p.clicEn(".lightbox__cerrar");
+      ok(`${E} el botón cerrar cierra la galería`, await p.esperar(cerrado), "");
+      await centrarFoto();
+      await p.clicEn('[data-galeria] [data-galeria-abrir="0"]');
+      await p.esperar(abierto);
+      await p.esperar(imagenLista, 8000);
+      await p.clic(2, 2);
+      ok(`${E} un clic en el fondo cierra la galería`, await p.esperar(cerrado), "");
+      // Al cerrar, el foco vuelve a la foto y el navegador la deja a la vista.
+      ok(`${E} tras cerrar, la foto principal enfocada queda a la vista`, await p.eval("(() => { const b = window.__t.principal().getBoundingClientRect(); return b.bottom > 0 && b.top < innerHeight; })()"), "");
+      ok(`${E} sin errores de JavaScript`, p.errores.length === 0, p.errores.join(" | "));
     }
   }
 }
@@ -910,7 +1109,6 @@ async function grupoInteriores(p, anchos, paginas) {
   for (const lang of ["es", "en"]) {
     lista.push([`catálogo ${lang.toUpperCase()}`, lang === "en" ? "/en/properties/" : "/propiedades/"]);
     lista.push([`proyectos ${lang.toUpperCase()}`, lang === "en" ? "/en/projects/" : "/proyectos/"]);
-    lista.push([`proyecto ${lang.toUpperCase()}`, paginas.proyecto[lang]]);
     lista.push([`perspectivas ${lang.toUpperCase()}`, lang === "en" ? "/en/insights/" : "/perspectivas/"]);
   }
   for (const [w, h] of anchos) {
@@ -1018,7 +1216,7 @@ async function grupoPanel(p, anchos, paginas) {
 
       await p.ir(paginas.ficha[lang]);
       await p.scroll(await p.scrollMax() / 2);
-      await comprobarEstadoSilencioso(p, "galeria");
+      await comprobarEstadoSilencioso(p, "evitar");
       await ciclo(p, `ficha ${L} ${w}px`, "flotante", "#floating-contact-panel");
 
       await p.ir(paginas.perspectiva[lang]);
@@ -1062,7 +1260,7 @@ async function grupoTeclado(p, anchos, paginas) {
       const L = lang.toUpperCase();
       const casos = [
         ["catálogo", lang === "en" ? "/en/properties/" : "/propiedades/", "siempre"],
-        ["ficha", paginas.ficha[lang], "galeria"],
+        ["ficha", paginas.ficha[lang], "evitar"],
         ["perspectiva", paginas.perspectiva[lang], "siempre"],
       ];
       for (const [nombre, ruta, tipo] of casos) {
@@ -1133,12 +1331,12 @@ async function grupoEstados(p, anchos, paginas) {
     // Recarga y vuelta atrás: ficha.
     await p.ir(paginas.ficha[lang]);
     await p.scroll(60);
-    await comprobarEstadoSilencioso(p, "galeria");
+    await comprobarEstadoSilencioso(p, "evitar");
     await p.recargar();
-    await comprobarEstado(p, `estados ficha ${L} recarga`, "galeria");
+    await comprobarEstado(p, `estados ficha ${L} recarga`, "evitar");
     await p.ir(lang === "en" ? "/en/properties/" : "/propiedades/");
     await p.atras();
-    await comprobarEstado(p, `estados ficha ${L} volver atrás`, "galeria");
+    await comprobarEstado(p, `estados ficha ${L} volver atrás`, "evitar");
     ok(`estados ficha ${L} volver atrás sin errores de JavaScript`, p.errores.length === 0, p.errores.join(" | "));
 
     // Cambios de tamaño de ventana sin recargar.
@@ -1149,7 +1347,7 @@ async function grupoEstados(p, anchos, paginas) {
     for (const [w, h] of orden) {
       await p.ventana(w, h);
       await p.scroll(0);
-      await comprobarEstado(p, `estados ficha ${L} cambio de tamaño a ${w}px`, "galeria");
+      await comprobarEstado(p, `estados ficha ${L} cambio de tamaño a ${w}px`, "evitar");
     }
     await p.ventana(...(orden[0] || secuencia[0]));
     await p.ir(lang === "en" ? "/en/" : "/");
@@ -1173,6 +1371,8 @@ async function grupoEstados(p, anchos, paginas) {
 const GRUPOS = {
   home: grupoHome,
   fichas: grupoFichas,
+  proyectos: grupoProyectos,
+  lightbox: grupoLightbox,
   perspectivas: grupoPerspectivas,
   interiores: grupoInteriores,
   panel: grupoPanel,

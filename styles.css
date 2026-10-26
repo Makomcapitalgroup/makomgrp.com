@@ -4391,14 +4391,28 @@ a.article-card__cta {
   position: relative;
   width: min(1100px, 92vw);
   max-height: 86vh;
+  /* Deja 64px libres arriba y abajo para el contador y el botón "cerrar" aunque
+     la ventana sea baja (teléfono en horizontal); dvh sigue la barra del navegador. */
+  max-height: min(86vh, calc(100dvh - 128px));
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+/* Desde 768px los botones se colocan FUERA de la foto (anterior a -64px, siguiente
+   y cerrar a -56px del borde): la figura deja 72px libres a cada lado para que
+   queden completos dentro de la ventana (16px de margen), en vez de depender de
+   que el viewport sea ancho. */
+@media (min-width: 768px) {
+  .lightbox__figura {
+    width: min(1100px, calc(100vw - 144px));
+  }
+}
+
 .lightbox__imagen {
   max-width: 100%;
   max-height: 86vh;
+  max-height: min(86vh, calc(100dvh - 128px));
   width: auto;
   height: auto;
   object-fit: contain;
