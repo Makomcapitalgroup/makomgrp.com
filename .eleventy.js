@@ -823,7 +823,8 @@ module.exports = function (eleventyConfig) {
     );
   });
 
-  // Milestone 14 — Etapa 3: hasta 2 perspectivas destacadas para el
+  // Milestone 14 — Etapa 3: hasta 4 perspectivas destacadas (antes 2; ampliado
+  // con la composición editorial Signature Liquid Glass) para el
   // Home. Orden: ordenHome ascendente si existe; si no, fecha
   // descendente (la más reciente primero) — igual criterio pedido
   // para el listado completo.
@@ -837,7 +838,7 @@ module.exports = function (eleventyConfig) {
       if (aOrden === null && bOrden !== null) return 1;
       return (b.fecha || "").localeCompare(a.fecha || "");
     });
-    return destacadas.slice(0, 2).map((p) => ({
+    return destacadas.slice(0, 4).map((p) => ({
       slug: p.slug,
       titulo: p.titulo,
       tituloEn: p.tituloEn || p.titulo,

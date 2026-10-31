@@ -1644,7 +1644,7 @@ document.addEventListener('DOMContentLoaded', function () {
   /* ============================================================
      15c. PERSPECTIVAS DESTACADAS — HOME
      Mismo criterio: sustituye los dos artículos placeholder de
-     #perspectivas-col-right por hasta 2 perspectivas reales cuando
+     #perspectivas-col-right por hasta 4 perspectivas reales cuando
      /data/perspectivas-destacadas.json está disponible.
   ============================================================ */
   var perspectivasColRight = document.getElementById('perspectivas-col-right');
@@ -1687,6 +1687,8 @@ document.addEventListener('DOMContentLoaded', function () {
       var divider = i > 0 ? '<hr class="perspectivas__divider" aria-hidden="true" />' : '';
       return divider + tarjetaPerspectivaHtml(a);
     }).join('');
+    // La composición de la Home (styles.css § 34.5) se adapta a 1–4 tarjetas según este atributo.
+    perspectivasColRight.setAttribute('data-count', String(destacadas.length));
   }
 
   /* ============================================================
@@ -2248,5 +2250,130 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
   });
+
+  /* ============================================================
+     20. NAVEGACIÓN LIQUID GLASS — tono y velo adaptativos + refracción
+     Mide qué hay REALMENTE detrás de la barra (fotografías, fondos de
+     sección, tarjetas) en 27 puntos y decide cristal claro u oscuro con
+     histéresis; calcula además el velo MÍNIMO que mantiene el texto de la
+     barra por encima de 4,5:1 (custom property --e-a en <header>). Sobre
+     fondos homogéneos el velo baja a ~0,03 (cristal casi incoloro). Solo lee
+     geometría/píxeles (muestras 8×8 por imagen, cacheadas) con rAF y
+     listeners pasivos; no modifica contenido ni eventos del sitio. Sin JS la
+     barra conserva el velo de seguridad definido en styles.css § 34.
+     La refracción de canto (filtro SVG de desplazamiento como
+     backdrop-filter) solo se activa en Chromium: Safari y Firefox no admiten
+     SVG en backdrop-filter y usan el respaldo CSS (desenfoque fino + borde
+     de luz). Respeta prefers-reduced-transparency.
+  ============================================================ */
+  (function () {
+    var h = document.getElementById('header'); if (!h) return;
+    var ham = document.getElementById('hamburger');
+    var cap = h.querySelector('.header__inner');
+    var cache = new WeakMap(), raf = 0, last = 0, tone = null;
+
+    function grid(img) {                       // luminancia sRGB (0–1): mínimo y máximo por celda de una malla 8×8 (imagen same-origin)
+      if (cache.has(img)) return cache.get(img);
+      var g = null;
+      if (img.complete && img.naturalWidth) {
+        try {
+          var c = document.createElement('canvas'); c.width = 32; c.height = 32;
+          var x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(img, 0, 0, 32, 32);
+          var d = x.getImageData(0, 0, 32, 32).data; g = [];
+          for (var cy = 0; cy < 8; cy++) for (var cx = 0; cx < 8; cx++) {
+            var mn = 1, mx = 0;
+            for (var yy = 0; yy < 4; yy++) for (var xx = 0; xx < 4; xx++) {
+              var i = (((cy * 4 + yy) * 32) + cx * 4 + xx) * 4, l = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
+              if (l < mn) mn = l; if (l > mx) mx = l;
+            }
+            g.push([mn, mx]);
+          }
+        } catch (e) { g = null; }
+        cache.set(img, g);
+      }
+      return g;
+    }
+    function imgLum(img, px, py) {
+      var g = grid(img); if (!g) return null;
+      var r = img.getBoundingClientRect(); if (!r.width || !r.height) return null;
+      var u = Math.min(7, Math.max(0, Math.floor((px - r.left) / r.width * 8)));
+      var v = Math.min(7, Math.max(0, Math.floor((py - r.top) / r.height * 8)));
+      return g[v * 8 + u];                      // [mín, máx]
+    }
+    function lumAt(x, y) {
+      var els = document.elementsFromPoint(x, y);
+      for (var i = 0; i < els.length; i++) {
+        var e = els[i];
+        if (e.closest('#header, .mobile-menu, .mobile-menu__overlay, .floating-contact, .mega-menu, .lightbox')) continue;
+        if (e.closest('.hero__visual')) return [0.06, 0.2];     // foto nocturna + overlay oscuro
+        if (e.tagName === 'IMG') { var v = imgLum(e, x, y); if (v != null) return v; continue; }
+        var cs = getComputedStyle(e), m = cs.backgroundColor.match(/[\d.]+/g);
+        if (m && (m[3] === undefined || +m[3] > 0.85)) { var L = (0.2126 * m[0] + 0.7152 * m[1] + 0.0722 * m[2]) / 255; return [L, L]; }
+      }
+      return [0.95, 0.95];
+    }
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+    function measure() {
+      raf = 0; last = performance.now();
+      var next = tone || 'light';
+      if (ham && ham.getAttribute('aria-expanded') === 'true') { next = 'light'; h.style.setProperty('--e-a', '0.98'); }
+      else if (cap) {
+        var r = cap.getBoundingClientRect(), n = 9, lo = 1, hi = 0;
+        for (var j = 0; j < 3; j++) for (var i = 0; i < n; i++) {   // 3 alturas (arriba, centro, abajo) × 9 posiciones: también detecta bordes de bloques oscuros que entran por abajo
+          var f = 0.04 + 0.92 * i / (n - 1), v = lumAt(r.left + r.width * f, r.top + r.height * (0.18 + 0.32 * j));
+          if (v[0] < lo) lo = v[0]; if (v[1] > hi) hi = v[1];
+        }
+        // Velo MÍNIMO que garantiza contraste en cada tono (texto negro necesita fondo ≥ .50 sRGB; texto marfil, fondo ≤ .38):
+        var aLight = clamp((0.50 - lo) / (0.96 - lo) + 0.08, 0.025, 0.64);   // mínimo que garantiza ≥ 4,5:1; sobre fondos homogéneos baja a 0,025
+        var aDark = clamp(1 - 0.38 / Math.max(hi, 0.38) + 0.08, 0.16, 0.66);
+        // elige el tono que pide MENOS velo (más transparencia); histéresis de 0.12 para no parpadear
+        if (!tone) next = aDark < aLight ? 'dark' : 'light';
+        else if (tone === 'light' && aDark + 0.12 < aLight) next = 'dark';
+        else if (tone === 'dark' && aLight + 0.12 < aDark) next = 'light';
+        h.style.setProperty('--e-a', (next === 'dark' ? aDark : aLight).toFixed(2));
+      }
+      if (next !== tone) { tone = next; h.setAttribute('data-tone', tone); }
+    }
+    function q() { if (raf) return; var wait = Math.max(0, 70 - (performance.now() - last)); raf = requestAnimationFrame(function () { wait ? setTimeout(measure, wait) : measure(); }); }
+    document.addEventListener('load', q, true);          // las imágenes diferidas (lazy) terminan de cargar después del scroll
+    addEventListener('scroll', q, { passive: true }); addEventListener('resize', q); addEventListener('load', q);
+    if (ham && window.MutationObserver) new MutationObserver(q).observe(ham, { attributes: true });
+    measure();
+
+    /* ---- Refracción de borde (aproximación del Liquid Glass de iOS) ----
+       Filtro SVG de desplazamiento aplicado como backdrop-filter SOLO en Chromium (Chrome/Edge): en el canto de la cápsula el
+       contenido de detrás se curva hacia adentro con un fleco cromático. Safari/Firefox no admiten SVG en backdrop-filter:
+       usan el respaldo CSS (desenfoque fino + borde de luz). Se genera un mapa de desplazamiento del tamaño exacto de la barra. */
+    var ud = navigator.userAgentData;
+    var chromium = !!(ud && ud.brands && ud.brands.some(function (b) { return /Chromium/.test(b.brand); }));
+    if (chromium && !matchMedia('(prefers-reduced-transparency: reduce)').matches) {
+      var NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg'), BEZEL = 17, SCALE = 36;
+      svg.setAttribute('width', '0'); svg.setAttribute('height', '0'); svg.setAttribute('aria-hidden', 'true'); svg.style.cssText = 'position:absolute;pointer-events:none';
+      function chan(id, k, matrix) {
+        return '<feDisplacementMap in="soft" in2="map" scale="' + (SCALE * k) + '" xChannelSelector="R" yChannelSelector="G" result="d' + id + '"/>' +
+               '<feColorMatrix in="d' + id + '" type="matrix" values="' + matrix + '" result="c' + id + '"/>';
+      }
+      function build() {
+        var W = Math.round(Math.min(innerWidth - 20, 1256)), H = 56, R = H / 2;
+        var c = document.createElement('canvas'); c.width = W; c.height = H; var x = c.getContext('2d'), im = x.createImageData(W, H), d = im.data;
+        for (var py = 0; py < H; py++) for (var px = 0; px < W; px++) {
+          var dx = px + 0.5 - W / 2, dy = py + 0.5 - H / 2, qx = Math.abs(dx) - (W / 2 - R), qy = Math.abs(dy) - (H / 2 - R);
+          var ox = Math.max(qx, 0), oy = Math.max(qy, 0), len = Math.hypot(ox, oy), sd = len + Math.min(Math.max(qx, qy), 0) - R, depth = -sd, nx = 0, ny = 0;
+          if (len > 0) { nx = (dx < 0 ? -1 : 1) * ox / len; ny = (dy < 0 ? -1 : 1) * oy / len; } else if (qx > qy) nx = dx < 0 ? -1 : 1; else ny = dy < 0 ? -1 : 1;
+          var m = depth >= 0 && depth < BEZEL ? Math.pow(1 - depth / BEZEL, 2) : 0, i = (py * W + px) * 4;
+          d[i] = 128 - nx * m * 127; d[i + 1] = 128 - ny * m * 127; d[i + 2] = 128; d[i + 3] = 255;   // hacia el centro = lente convexa
+        }
+        x.putImageData(im, 0, 0);
+        svg.innerHTML = '<defs><filter id="e-lens" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" x="0" y="0" width="' + W + '" height="' + H + '" color-interpolation-filters="sRGB">' +
+          '<feImage href="' + c.toDataURL() + '" x="0" y="0" width="' + W + '" height="' + H + '" preserveAspectRatio="none" result="map"/>' +
+          '<feGaussianBlur in="SourceGraphic" stdDeviation="2.8" result="soft"/>' +
+          chan('R', 1.0, '1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0') + chan('G', 0.93, '0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0') + chan('B', 0.86, '0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0') +
+          '<feBlend in="cR" in2="cG" mode="screen" result="rg"/><feBlend in="rg" in2="cB" mode="screen"/></filter></defs>';
+        document.documentElement.classList.add('e-refract');
+      }
+      document.body.appendChild(svg); build();
+      var rt; addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(build, 150); });
+    }
+  })();
 
 });

@@ -687,7 +687,7 @@ collections:
         name: "mostrarEnHome"
         widget: "boolean"
         default: false
-        hint: "MAKOM mostrará un máximo de 2 perspectivas destacadas."
+        hint: "MAKOM mostrará un máximo de 4 perspectivas destacadas."
 
       - label: "Orden en Home"
         name: "ordenHome"
