@@ -153,22 +153,51 @@
       {% set galeria = propiedad.fotografias.galeria | galeriaOrdenada %}
       <div class="ficha-propiedad__galeria" data-reveal>
         {% if galeria.principal %}
+          {#
+            Carrusel directo: una diapositiva por fotografía (principal + las
+            demás, en el mismo orden que usa el visor ampliado). La pista es un
+            contenedor con scroll-snap horizontal, así que el deslizamiento con
+            el dedo o el trackpad es nativo y no bloquea el scroll vertical. La
+            primera foto carga de inmediato; las demás van ocultas (no se
+            descargan) y script.js las revela al acercarse la diapositiva. El
+            contrato del visor se mantiene: cada diapositiva es un botón con
+            data-galeria-abrir="<índice>" y la foto principal es el "0".
+          #}
+          {% set fotosCarrusel = [galeria.principal].concat(galeria.miniaturas) %}
           <div class="galeria-ficha" data-galeria>
-            <button type="button" class="galeria-ficha__principal" data-galeria-abrir="0" aria-label="{{ 'Enlarge photo' if esEn else 'Ampliar fotografía' }}">
-              <img
-                src="{{ galeria.principal.archivo }}"
-                alt="{{ galeria.principal.alt | altAuto(tituloMostrado, ubicacionMostrada) }}"
-                eleventy:widths="800,1200"
-                sizes="(min-width: 1024px) 700px, 100vw"
-                loading="eager"
-                fetchpriority="high"
-                decoding="async"
-              />
-            </button>
+            <div class="galeria-ficha__visor" role="region" aria-roledescription="carousel" aria-label="{{ 'Property photos' if esEn else 'Fotografías de la propiedad' }}">
+              <div class="galeria-ficha__pista" data-galeria-pista>
+                {% for foto in fotosCarrusel %}
+                <div class="galeria-ficha__slide" role="group" aria-roledescription="slide" aria-label="{{ loop.index }} / {{ loop.length }}" data-galeria-slide>
+                  <button type="button" class="galeria-ficha__principal" data-galeria-abrir="{{ loop.index0 }}" aria-label="{{ 'Enlarge photo' if esEn else 'Ampliar fotografía' }}">
+                    <img
+                      src="{{ foto.archivo }}"
+                      alt="{{ foto.alt | altAuto(tituloMostrado, ubicacionMostrada) }}"
+                      eleventy:widths="{{ '800,1200' if loop.first else '1200' }}"
+                      sizes="(min-width: 1024px) 700px, 100vw"
+                      {% if loop.first %}loading="eager"
+                      fetchpriority="high"{% else %}loading="lazy"
+                      hidden{% endif %}
+                      decoding="async"
+                    />
+                  </button>
+                </div>
+                {% endfor %}
+              </div>
+              {% if fotosCarrusel.length > 1 %}
+              <button type="button" class="galeria-ficha__flecha galeria-ficha__flecha--anterior" data-galeria-flecha="-1" aria-label="{{ 'Previous photo' if esEn else 'Fotografía anterior' }}">
+                <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg>
+              </button>
+              <button type="button" class="galeria-ficha__flecha galeria-ficha__flecha--siguiente" data-galeria-flecha="1" aria-label="{{ 'Next photo' if esEn else 'Fotografía siguiente' }}">
+                <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>
+              </button>
+              <p class="galeria-ficha__vivo" data-galeria-vivo role="status" aria-live="polite"></p>
+              {% endif %}
+            </div>
             {% if galeria.miniaturas.length > 0 %}
             <div class="galeria-ficha__miniaturas" role="list">
               {% for foto in galeria.miniaturas %}
-                <button type="button" class="galeria-ficha__miniatura" data-galeria-abrir="{{ loop.index }}" role="listitem" aria-label="{{ 'View photo' if esEn else 'Ver fotografía' }} {{ loop.index + 1 }}">
+                <button type="button" class="galeria-ficha__miniatura" data-galeria-ir="{{ loop.index }}" role="listitem" aria-label="{{ 'View photo' if esEn else 'Ver fotografía' }} {{ loop.index + 1 }}">
                   <img
                     src="{{ foto.archivo }}"
                     alt="{{ foto.alt | altAuto(tituloMostrado, ubicacionMostrada) }}"

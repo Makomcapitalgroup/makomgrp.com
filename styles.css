@@ -5480,3 +5480,31 @@ a.proyecto-card__cta { position: static; }          /* conserva el área clicabl
 @media (min-width: 1024px) {
   .mk-multi--hero .mk-multi__panel { width: max(100%, 310px); background: rgba(14,14,14,.985); }
 }
+
+/* ---- 34.8 Carrusel directo en las fichas de propiedades ---- */
+/* Una pista con scroll-snap horizontal: deslizar con el dedo o el trackpad es nativo y no bloquea el scroll vertical.
+   Cada diapositiva conserva el botón y la proporción aprobados (.galeria-ficha__principal): mismas dimensiones, bordes y fotografías. */
+.galeria-ficha__visor { position: relative; border-radius: var(--d-r-card); }
+.galeria-ficha__pista { display: flex; overflow-x: auto; overflow-y: hidden; border-radius: var(--d-r-card);
+  scroll-snap-type: x mandatory; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.galeria-ficha__pista::-webkit-scrollbar { display: none; }
+.galeria-ficha__slide { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; }
+.galeria-ficha__slide .galeria-ficha__principal { background-color: rgba(10,10,10,.06); }
+.galeria-ficha__slide .galeria-ficha__principal:focus-visible { outline: none; box-shadow: inset 0 0 0 3px var(--color-blanco), inset 0 0 0 5px var(--color-negro); }
+/* Flechas: cristal discreto, solo con puntero fino (en táctil se desliza); en los extremos se ocultan */
+.galeria-ficha__flecha { position: absolute; top: 50%; z-index: 2; display: none; place-items: center; width: 44px; height: 44px; padding: 0;
+  transform: translateY(-50%); border-radius: 9999px; color: var(--color-blanco); background-color: rgba(10,10,10,.42); border: 1px solid rgba(245,242,238,.26);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5); backdrop-filter: blur(14px) saturate(1.5);
+  box-shadow: inset 0 1px 0 rgba(245,242,238,.16), 0 10px 24px -12px rgba(0,0,0,.6); cursor: pointer; opacity: .92;
+  transition: background-color var(--mk-fast) var(--mk-ease), opacity var(--mk-fast) var(--mk-ease), visibility var(--mk-fast) var(--mk-ease); }
+.galeria-ficha__flecha--anterior { left: 16px; }
+.galeria-ficha__flecha--siguiente { right: 16px; }
+@media (hover: hover) and (pointer: fine) { .galeria-ficha__flecha { display: grid; } }
+.galeria-ficha__flecha:hover:not(:disabled) { background-color: rgba(10,10,10,.64); opacity: 1; }
+.galeria-ficha__flecha:disabled { opacity: 0; visibility: hidden; }
+.galeria-ficha__flecha:focus-visible { outline: none; opacity: 1; box-shadow: 0 0 0 2px #0A0A0A, 0 0 0 4px #F5F2EE; }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .galeria-ficha__flecha { background-color: rgba(10,10,10,.8); } }
+.galeria-ficha__vivo { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* Miniatura de la foto que se está viendo */
+.galeria-ficha__miniatura[aria-current="true"] { opacity: 1; border-color: var(--color-blanco); box-shadow: 0 0 0 2px rgba(245,242,238,.32); }
+@media (prefers-reduced-motion: reduce) { .galeria-ficha__pista { scroll-behavior: auto; } }

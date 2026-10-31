@@ -1757,16 +1757,17 @@ document.addEventListener('DOMContentLoaded', function () {
      oculto = visibility:hidden + inert + aria-hidden) y reaparece en cuanto el
      scroll deja libre esa esquina. Donde no hay solapamiento no cambia nada.
      Controles protegidos (contratos explícitos, no clases de estilo):
-       - La foto principal de la galería interactiva: [data-galeria-abrir="0"]
-         dentro de [data-galeria], el mismo contrato que usa el lightbox
-         (sección 16). Con ancho de escritorio (≈1024–1440 px) ocupa todo el ancho
+       - La galería interactiva: la pista del carrusel [data-galeria-pista]
+         dentro de [data-galeria] (ocupa lo mismo que la foto principal
+         [data-galeria-abrir="0"], el contrato del lightbox, sección 16, pero
+         no se desplaza al cambiar de fotografía). Con ancho de escritorio (≈1024–1440 px) ocupa todo el ancho
          del contenido y llega bajo la esquina de la primera pantalla. Una imagen
          de portada sin interacción (p. ej. en Perspectivas) no se protege.
        - Cualquier elemento marcado con [data-flotante-evitar] (hoy, el CTA
          "Solicitar información" de las fichas de Proyectos).
   ============================================================ */
   var evitadosPorFlotante = Array.prototype.slice.call(
-    document.querySelectorAll('[data-galeria] [data-galeria-abrir="0"], [data-flotante-evitar]')
+    document.querySelectorAll('[data-galeria] [data-galeria-pista], [data-flotante-evitar]')
   );
 
   if (evitadosPorFlotante.length && !heroContact && floatingContact && floatingToggle && floatingPanel) {
@@ -2119,20 +2120,44 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /* ============================================================
-     16. GALERÍA DE FOTOGRAFÍAS — LIGHTBOX (FICHA DE PROPIEDAD)
+     16. GALERÍA DE FOTOGRAFÍAS — CARRUSEL DIRECTO + LIGHTBOX (FICHA DE PROPIEDAD)
      Vanilla JS, sin librerías. Lee las imágenes ya presentes en el
-     DOM (portada + miniaturas, ya optimizadas por eleventy-img) — no
-     depende de un bloque de datos aparte. Se activa solo si existe
-     [data-galeria] en la página.
+     DOM (una diapositiva por fotografía, ya optimizadas por
+     eleventy-img) — no depende de un bloque de datos aparte. Se
+     activa solo si existe [data-galeria] en la página.
+     Carrusel: la pista [data-galeria-pista] es un contenedor con
+     scroll-snap horizontal (deslizar con el dedo o el trackpad es
+     nativo y no bloquea el scroll vertical; un deslizamiento no genera
+     clic, así que nunca abre el visor por accidente). Las flechas
+     (solo puntero fino), las miniaturas y las teclas ← → mueven la
+     misma pista. Solo la diapositiva actual es interactiva (inert las
+     demás: sin foco ni lectura duplicada). Carga eficiente: las fotos
+     2+ van ocultas y no se descargan; se revelan la actual y sus
+     vecinas. Clic o Enter en la foto abre el visor en esa fotografía y,
+     al cerrarlo, el carrusel queda en la última que se vio.
   ============================================================ */
   var galeriaFicha = document.querySelector('[data-galeria]');
 
   if (galeriaFicha) {
-    var botonesGaleria = Array.from(galeriaFicha.querySelectorAll('[data-galeria-abrir]'));
+    var pistaGaleria = galeriaFicha.querySelector('[data-galeria-pista]');
+    var slidesGaleria = Array.from(galeriaFicha.querySelectorAll('[data-galeria-slide]'));
+    var botonesGaleria = slidesGaleria.map(function (slide) { return slide.querySelector('[data-galeria-abrir]'); });
+    var miniaturasGaleria = Array.from(galeriaFicha.querySelectorAll('[data-galeria-ir]'));
+    var flechasGaleria = Array.from(galeriaFicha.querySelectorAll('[data-galeria-flecha]'));
+    var vivoGaleria = galeriaFicha.querySelector('[data-galeria-vivo]');
+    var esEnGaleria = (document.documentElement.lang || '').toLowerCase().indexOf('en') === 0;
+    var reducirMovimiento = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
 
     function mejorSrcDe(img) {
       var srcset = img.getAttribute('srcset');
-      if (!srcset) return img.currentSrc || img.getAttribute('src');
+      if (!srcset) {
+        // Las diapositivas ocultas pueden estar dentro de <picture>: se toma el
+        // srcset del <source> de mayor resolución disponible (webp) o el src.
+        var picture = img.parentNode && img.parentNode.tagName === 'PICTURE' ? img.parentNode : null;
+        var source = picture ? picture.querySelector('source[srcset]') : null;
+        srcset = source ? source.getAttribute('srcset') : '';
+        if (!srcset) return img.currentSrc || img.getAttribute('src');
+      }
       var candidatos = srcset.split(',').map(function (c) {
         var partes = c.trim().split(/\s+/);
         return { url: partes[0], ancho: parseInt(partes[1], 10) || 0 };
@@ -2146,6 +2171,87 @@ document.addEventListener('DOMContentLoaded', function () {
       return { src: mejorSrcDe(img), alt: img.getAttribute('alt') || '' };
     });
 
+    // ----- Carrusel -----
+    var indiceCarrusel = 0;
+    var desplazando = null;
+
+    // Revela (deja que el navegador descargue) la foto indicada y sus vecinas.
+    function revelarFotos(i) {
+      [i - 1, i, i + 1].forEach(function (k) {
+        if (k < 0 || k >= slidesGaleria.length) return;
+        var img = slidesGaleria[k].querySelector('img');
+        if (img && img.hasAttribute('hidden')) img.removeAttribute('hidden');
+      });
+    }
+
+    function marcarActual(i) {
+      indiceCarrusel = i;
+      slidesGaleria.forEach(function (slide, k) {
+        if (k === i) slide.removeAttribute('inert'); else slide.setAttribute('inert', '');
+      });
+      miniaturasGaleria.forEach(function (mini) {
+        var esActual = parseInt(mini.getAttribute('data-galeria-ir'), 10) === i;
+        if (esActual) mini.setAttribute('aria-current', 'true'); else mini.removeAttribute('aria-current');
+      });
+      flechasGaleria.forEach(function (flecha) {
+        var paso = parseInt(flecha.getAttribute('data-galeria-flecha'), 10);
+        var fuera = i + paso < 0 || i + paso >= slidesGaleria.length;
+        flecha.disabled = fuera;
+      });
+      if (vivoGaleria) {
+        vivoGaleria.textContent = (esEnGaleria ? 'Photo ' : 'Fotografía ') + (i + 1) + (esEnGaleria ? ' of ' : ' de ') + slidesGaleria.length;
+      }
+      revelarFotos(i);
+    }
+
+    function irAFoto(i, opciones) {
+      opciones = opciones || {};
+      if (i < 0 || i >= slidesGaleria.length) return;
+      marcarActual(i);
+      var instantaneo = opciones.instantaneo || (reducirMovimiento && reducirMovimiento.matches);
+      pistaGaleria.scrollTo({ left: slidesGaleria[i].offsetLeft, behavior: instantaneo ? 'auto' : 'smooth' });
+      if (opciones.enfocar) botonesGaleria[i].focus({ preventScroll: true });
+    }
+
+    // Tras un deslizamiento (o cualquier desplazamiento) se determina cuál
+    // quedó a la vista una vez que se detiene el scroll.
+    if (pistaGaleria && slidesGaleria.length > 1) {
+      pistaGaleria.addEventListener('scroll', function () {
+        window.clearTimeout(desplazando);
+        desplazando = window.setTimeout(function () {
+          var ancho = pistaGaleria.clientWidth || 1;
+          var i = Math.max(0, Math.min(slidesGaleria.length - 1, Math.round(pistaGaleria.scrollLeft / ancho)));
+          if (i !== indiceCarrusel) marcarActual(i);
+        }, 90);
+      }, { passive: true });
+
+      // Un cambio de tamaño (girar el teléfono) conserva la foto actual.
+      window.addEventListener('resize', function () {
+        pistaGaleria.scrollTo({ left: slidesGaleria[indiceCarrusel].offsetLeft, behavior: 'auto' });
+      });
+
+      flechasGaleria.forEach(function (flecha) {
+        flecha.addEventListener('click', function () {
+          irAFoto(indiceCarrusel + parseInt(flecha.getAttribute('data-galeria-flecha'), 10));
+        });
+      });
+
+      miniaturasGaleria.forEach(function (mini) {
+        mini.addEventListener('click', function () {
+          irAFoto(parseInt(mini.getAttribute('data-galeria-ir'), 10));
+        });
+      });
+
+      // Teclado: con el foco en la foto actual, ← → cambian de fotografía.
+      pistaGaleria.addEventListener('keydown', function (e) {
+        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+        e.preventDefault();
+        irAFoto(indiceCarrusel + (e.key === 'ArrowRight' ? 1 : -1), { enfocar: true });
+      });
+      marcarActual(0);
+    }
+
+    // ----- Visor ampliado (lightbox) -----
     var indiceActual = 0;
     var disparadorActual = null;
     var lightbox = null;
@@ -2195,6 +2301,12 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!lightbox) return;
       lightbox.hidden = true;
       document.removeEventListener('keydown', onTeclaLightbox);
+      // El carrusel queda en la última fotografía vista en el visor, y el
+      // foco vuelve a esa foto (que ahora es la actual).
+      if (pistaGaleria && slidesGaleria.length > 1 && indiceActual !== indiceCarrusel) {
+        irAFoto(indiceActual, { instantaneo: true });
+        disparadorActual = botonesGaleria[indiceActual];
+      }
       if (disparadorActual) disparadorActual.focus();
     }
 

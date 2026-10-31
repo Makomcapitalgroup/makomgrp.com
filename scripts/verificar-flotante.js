@@ -847,7 +847,14 @@ async function grupoFichas(p, anchos, paginas) {
       const esquina = await p.eval(`(() => {
         const g = window.__t.principal().getBoundingClientRect(), f = window.__t.huella();
         const l = Math.max(g.left, f.l), r = Math.min(g.right, f.r), t = Math.max(g.top, f.t), b = Math.min(g.bottom, f.b, innerHeight);
-        return (r > l && b > t) ? { x: (l + r) / 2, y: (t + b) / 2 } : null;
+        if (!(r > l && b > t)) return null;
+        // El carrusel añade flechas sobre la foto: se busca, dentro de la zona antes interceptada, un punto
+        // que caiga sobre la foto misma (no sobre una flecha ni sobre las miniaturas), empezando por el centro.
+        const sobreFoto = (x, y) => { const e = document.elementFromPoint(x, y); return !!(e && e.closest('.galeria-ficha__principal')); };
+        const cx = (l + r) / 2, cy = (t + b) / 2;
+        if (sobreFoto(cx, cy)) return { x: cx, y: cy };
+        for (let y = t + 4; y < b; y += 6) for (let x = l + 4; x < r; x += 6) if (sobreFoto(x, y)) return { x, y };
+        return null;
       })()`);
       if (esquina) {
         await p.clic(esquina.x, esquina.y);
