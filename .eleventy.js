@@ -75,14 +75,51 @@ function validarConfigCmsContraFuenteCentral(raiz) {
 // por "descripcionHtml", que sí debe mostrar negrita/cursiva reales) —
 // cada uno parte del mismo campo de origen pero para una necesidad
 // distinta.
-function textoPlanoDesdeMarkdown(texto) {
+function textoPlanoDesdeMarkdown(texto, opciones) {
   if (!texto) return "";
-  return texto
-    .replace(/\*\*(.+?)\*\*/g, "$1")
+  const sinNegritas = texto.replace(/\*\*(.+?)\*\*/g, "$1");
+  if (opciones && opciones.soloEnfasis) {
+    // Extractos de tarjeta/listado (texto editorial corto): solo se retiran las marcas
+    // de énfasis (**negrita**, __negrita__, *cursiva*). No se tocan guiones, guiones
+    // bajos ni saltos de línea: la versión completa de abajo convertiría "Obarrio - Panamá"
+    // en "Obarrio Panamá" o "archivo_final_v2" en "archivofinalv2".
+    return sinNegritas
+      .replace(/__(.+?)__/g, "$1")
+      .replace(/(^|[\s(])\*(?!\s)([^*\n]+?)\*(?=[\s).,;:!?]|$)/g, "$1$2")
+      .trim();
+  }
+  return sinNegritas
     .replace(/_(.+?)_/g, "$1")
     .replace(/\n+/g, " ")
     .replace(/[-*]\s+/g, "")
     .trim();
+}
+
+// Perspectivas: presentación ES/EN de las categorías. El valor que guarda el CMS (texto libre
+// en español) NO cambia; solo se traduce al mostrarlo en inglés usando _data/categoriasPerspectivas.json.
+// Admite listas separadas por comas ("Mercado, Construcción, Inversión"). Una categoría sin
+// traducción se muestra tal cual y se avisa una sola vez en el build.
+const categoriasSinTraducir = new Set();
+function normalizarCategoria(c) {
+  return String(c).normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+}
+function categoriaPerspectivaPresentada(categoria, lang, mapa) {
+  if (!categoria || lang !== "en") return categoria;
+  return String(categoria)
+    .split(",")
+    .map((parte) => {
+      const traducida = mapa && mapa[normalizarCategoria(parte)];
+      if (!traducida) {
+        const clave = normalizarCategoria(parte);
+        if (clave && !categoriasSinTraducir.has(clave)) {
+          categoriasSinTraducir.add(clave);
+          console.warn(`[categorías] Sin traducción al inglés: "${parte.trim()}" — agrégala en _data/categoriasPerspectivas.json (clave: "${clave}").`);
+        }
+        return parte.trim();
+      }
+      return traducida;
+    })
+    .join(", ");
 }
 
 // Milestone 12 — Etapa 8A: valida en cada build que "referenciaMakom"
@@ -828,7 +865,11 @@ module.exports = function (eleventyConfig) {
   // Home. Orden: ordenHome ascendente si existe; si no, fecha
   // descendente (la más reciente primero) — igual criterio pedido
   // para el listado completo.
-  eleventyConfig.addFilter("perspectivasDestacadas", (lista) => {
+  // Extractos de Perspectivas sin marcas Markdown literales (protección para futuras publicaciones).
+  eleventyConfig.addFilter("extractoPlano", (texto) => textoPlanoDesdeMarkdown(texto, { soloEnfasis: true }));
+  eleventyConfig.addFilter("categoriaPerspectiva", categoriaPerspectivaPresentada);
+
+  eleventyConfig.addFilter("perspectivasDestacadas", (lista, mapaCategorias) => {
     const destacadas = (lista || []).filter((p) => p.mostrarEnHome === true);
     destacadas.sort((a, b) => {
       const aOrden = typeof a.ordenHome === "number" ? a.ordenHome : null;
@@ -843,8 +884,9 @@ module.exports = function (eleventyConfig) {
       titulo: p.titulo,
       tituloEn: p.tituloEn || p.titulo,
       categoria: p.categoria,
-      extracto: p.extracto,
-      extractoEn: p.extractoEn || p.extracto,
+      categoriaEn: categoriaPerspectivaPresentada(p.categoria, "en", mapaCategorias),
+      extracto: textoPlanoDesdeMarkdown(p.extracto, { soloEnfasis: true }),
+      extractoEn: textoPlanoDesdeMarkdown(p.extractoEn || p.extracto, { soloEnfasis: true }),
     }));
   });
 

@@ -2,4 +2,4 @@
 permalink: "/data/perspectivas-destacadas.json"
 eleventyExcludeFromCollections: true
 ---
-{{ collections.perspectivas | perspectivasDestacadas | dump | safe }}
+{{ collections.perspectivas | perspectivasDestacadas(categoriasPerspectivas) | dump | safe }}

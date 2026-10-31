@@ -1,0 +1,10 @@
+{
+  "_nota": "Presentación en inglés de las categorías de Perspectivas. Las claves son la categoría en español SIN acentos, en minúsculas (se normaliza al buscar). El valor interno que guarda el CMS no cambia; solo cambia cómo se muestra en /en/insights/. Una categoría nueva sin traducción aquí se muestra tal cual y el build avisa en consola.",
+  "propiedades": "Properties",
+  "inversion inmobiliaria": "Real Estate Investment",
+  "mercado": "Market",
+  "construccion": "Construction",
+  "inversion": "Investment",
+  "multiservicios": "Multiservices",
+  "turismo e inversion": "Tourism & Investment"
+}
