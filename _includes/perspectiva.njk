@@ -79,7 +79,7 @@
 
       <div class="ficha-propiedad__encabezado" data-reveal>
         <div class="ficha-propiedad__badges">
-          {% if perspectiva.categoria %}<span class="article-card__category">{{ perspectiva.categoria }}</span>{% endif %}
+          {% if perspectiva.categoria %}<span class="article-card__category">{{ perspectiva.categoria | categoriaPerspectiva(lang, categoriasPerspectivas) }}</span>{% endif %}
         </div>
         <h1 class="ficha-propiedad__titulo" id="ficha-titulo">{{ tituloMostrado }}</h1>
         {% if perspectiva.fecha or perspectiva.autor %}

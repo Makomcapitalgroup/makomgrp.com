@@ -63,12 +63,12 @@
         {% if not loop.first %}<hr class="perspectivas__divider" aria-hidden="true" />{% endif %}
         <article class="article-card" role="listitem" aria-labelledby="persp-{{ a.slug }}-title">
           <div class="article-card__meta">
-            {% if a.categoria %}<span class="article-card__category">{{ a.categoria }}</span>{% endif %}
+            {% if a.categoria %}<span class="article-card__category">{{ a.categoria | categoriaPerspectiva(lang, categoriasPerspectivas) }}</span>{% endif %}
             {% if a.categoria and a.fecha %}<span class="article-card__sep">·</span>{% endif %}
             {% if a.fecha %}<span class="article-card__date">{{ a.fecha | fechaFormato(lang) }}</span>{% endif %}
           </div>
           <h2 class="article-card__title" id="persp-{{ a.slug }}-title">{{ tituloA }}</h2>
-          {% if extractoA %}<p class="article-card__extract">{{ extractoA }}</p>{% endif %}
+          {% if extractoA %}<p class="article-card__extract">{{ extractoA | extractoPlano }}</p>{% endif %}
           <a href="{{ ('/en/insights/' if esEn else '/perspectivas/') + a.slug + '/' }}" class="link--arrow article-card__cta">{{ "Read article" if esEn else "Ver artículo" }}</a>
         </article>
         {% endfor %}

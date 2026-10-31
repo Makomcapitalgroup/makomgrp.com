@@ -68,7 +68,8 @@ document.addEventListener('DOMContentLoaded', function () {
     hamburger.setAttribute('aria-expanded', 'false');
     hamburger.setAttribute('aria-label', 'Abrir menú de navegación');
     document.body.style.overflow = '';
-    hamburger.focus();
+    // Devuelve el foco al botón solo si es visible (en escritorio el botón está oculto: no hay a dónde devolverlo).
+    if (hamburger.offsetParent !== null) hamburger.focus();
   }
 
   function toggleMobileMenu() {
@@ -1673,7 +1674,7 @@ document.addEventListener('DOMContentLoaded', function () {
     return (
       '<article class="article-card" aria-labelledby="persp-' + escaparHtmlHome(a.slug) + '-title">' +
         '<div class="article-card__meta">' +
-          (a.categoria ? '<span class="article-card__category">' + escaparHtmlHome(a.categoria) + '</span>' : '') +
+          (a.categoria ? '<span class="article-card__category">' + escaparHtmlHome(enIngles ? (a.categoriaEn || a.categoria) : a.categoria) + '</span>' : '') +
         '</div>' +
         '<h3 class="article-card__title" id="persp-' + escaparHtmlHome(a.slug) + '-title">' + escaparHtmlHome(titulo) + '</h3>' +
         (extracto ? '<p class="article-card__extract">' + escaparHtmlHome(extracto) + '</p>' : '') +
