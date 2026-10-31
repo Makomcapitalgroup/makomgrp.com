@@ -19,8 +19,8 @@
  *   8. Scroll, recarga, volver atrás y cambios de tamaño de ventana.
  *   9. Ningún control interactivo queda tapado por el flotante (en reposo,
  *      al final de la página y, en fichas, la galería y su lightbox).
- *  10. Responsive de 375 a 1920 px; tamaño aprobado: 44 px de alto por
- *      debajo de 640 px y 46 px desde 640 px.
+ *  10. Responsive de 375 a 1920 px; tamaño aprobado (Signature Liquid Glass):
+ *      48 px de alto en todos los anchos.
  *  11. Lightbox de propiedades: cerrar, anterior, siguiente y contador quedan
  *      completos dentro de la ventana (también en horizontal de teléfono) y
  *      funcionan con clic, toque, teclado y Escape.
@@ -690,18 +690,18 @@ async function descubrir(base) {
 /* Comprobaciones comunes                                             */
 /* ------------------------------------------------------------------ */
 
-// Tamaño aprobado (44 px < 640 px, 46 px desde 640 px), posición, estilo y desborde.
+// Tamaño aprobado (48 px, cápsula; antes 44 px < 640 px y 46 px desde 640 px), posición, estilo y desborde.
 async function comprobarGeometria(p, etiqueta, ancho) {
   const g = await p.eval("window.__t.geometria()");
-  const alto = ancho < 640 ? 44 : 46;
+  const alto = 48;
   ok(`${etiqueta} tamaño ${alto}px de alto`, Math.round(g.h) === alto, `${g.w}x${g.h}`);
   ok(`${etiqueta} objetivo táctil ≥ 44px de ancho`, g.w >= 44, g.w);
   ok(`${etiqueta} esquina inferior derecha a ${g.margen}px`, Math.abs(g.derecha - g.margen) <= 0.5 && Math.abs(g.abajo - g.margen) <= 0.5, `${g.derecha},${g.abajo}`);
   ok(`${etiqueta} dentro de la ventana`, g.dentro, json(g));
   ok(`${etiqueta} sin desborde horizontal de la página`, g.desborde <= 0, g.desborde);
   ok(
-    `${etiqueta} estilo cristal oscuro, borde terracota fino, texto hueso`,
-    /^rgba\(10, 10, 10/.test(g.fondo) && g.borde === "rgb(181, 71, 42)" && g.grosor === "1px" && g.color === "rgb(245, 242, 238)",
+    `${etiqueta} estilo cristal oscuro, borde de luz fino (hueso translúcido), texto hueso`,
+    /^rgba\(10, 10, 10/.test(g.fondo) && g.borde === "rgba(245, 242, 238, 0.22)" && g.grosor === "1px" && g.color === "rgb(245, 242, 238)",
     json(g)
   );
 }
