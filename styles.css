@@ -5498,22 +5498,38 @@ a.proyecto-card__cta { position: static; }          /* conserva el área clicabl
 .galeria-ficha__slide { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; }
 .galeria-ficha__slide .galeria-ficha__principal { background-color: rgba(10,10,10,.06); }
 .galeria-ficha__slide .galeria-ficha__principal:focus-visible { outline: none; box-shadow: inset 0 0 0 3px var(--color-blanco), inset 0 0 0 5px var(--color-negro); }
-/* Flechas: cristal discreto, solo con puntero fino (en táctil se desliza); en los extremos se ocultan */
-.galeria-ficha__flecha { position: absolute; top: 50%; z-index: 2; display: none; place-items: center; width: 44px; height: 44px; padding: 0;
-  transform: translateY(-50%); border-radius: 9999px; color: var(--color-blanco); background-color: rgba(10,10,10,.42); border: 1px solid rgba(245,242,238,.26);
-  -webkit-backdrop-filter: blur(14px) saturate(1.5); backdrop-filter: blur(14px) saturate(1.5);
-  box-shadow: inset 0 1px 0 rgba(245,242,238,.16), 0 10px 24px -12px rgba(0,0,0,.6); cursor: pointer; opacity: .92;
-  transition: background-color var(--mk-fast) var(--mk-ease), opacity var(--mk-fast) var(--mk-ease), visibility var(--mk-fast) var(--mk-ease); }
+/* Flechas: vidrio líquido discreto, solo con puntero fino (en táctil se desliza); en los extremos se ocultan.
+   La zona de clic (el botón) es estática; el cristal que se anima es su ::before y el icono, así que al hundirse o
+   estirarse el borde nunca se aleja del cursor. Respuesta magnética/elástica: script.js §5c (--tx/--ty/--sx/--sy/--gl/--lx/--ly). */
+.galeria-ficha__flecha { --tx: 0px; --ty: 0px; --sx: 1; --sy: 1; --gl: 0; --lx: 32%; --ly: 26%;
+  position: absolute; top: 50%; z-index: 2; display: none; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 9999px;
+  background: none; color: var(--color-blanco); cursor: pointer; opacity: .96; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  transform: translateY(-50%);
+  transition: opacity var(--mk-fast) var(--mk-ease), visibility var(--mk-fast) var(--mk-ease); }
+.galeria-ficha__flecha::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; will-change: transform;
+  transform: translate3d(var(--tx), var(--ty), 0) scale(var(--sx), var(--sy));
+  background-color: rgba(10,10,10,.66);
+  background-image:
+    radial-gradient(44% 44% at var(--lx) var(--ly), rgba(255,255,255,calc(.12 + .12 * var(--gl))) 0%, rgba(255,255,255,0) 100%),
+    linear-gradient(180deg, rgba(255,255,255,.15) 0%, rgba(255,255,255,0) 40%, rgba(255,255,255,.05) 100%);
+  border: 1px solid rgba(245,242,238,.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.7); backdrop-filter: blur(14px) saturate(1.7);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.62), inset 0 -8px 12px -9px rgba(255,255,255,.3), 0 0 0 1px rgba(10,10,10,.34), 0 12px 26px -12px rgba(0,0,0,.72);
+  transition: box-shadow var(--mk-fast) var(--mk-ease); }
+.galeria-ficha__flecha svg { position: relative; pointer-events: none; filter: drop-shadow(0 1px 2px rgba(0,0,0,.7));
+  transform: translate3d(calc(var(--tx) * 1.3), calc(var(--ty) * 1.3), 0) scale(var(--sx), var(--sy)); }
 .galeria-ficha__flecha--anterior { left: 16px; }
 .galeria-ficha__flecha--siguiente { right: 16px; }
 @media (hover: hover) and (pointer: fine) { .galeria-ficha__flecha { display: grid; } }
-.galeria-ficha__flecha:hover:not(:disabled) { background-color: rgba(10,10,10,.64); opacity: 1; }
 .galeria-ficha__flecha:disabled { opacity: 0; visibility: hidden; }
-.galeria-ficha__flecha:focus-visible { outline: none; opacity: 1; box-shadow: 0 0 0 2px #0A0A0A, 0 0 0 4px #F5F2EE; }
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .galeria-ficha__flecha { background-color: rgba(10,10,10,.8); } }
+.galeria-ficha__flecha.is-press::before { box-shadow: inset 0 0 0 1px rgba(255,255,255,.5), inset 0 0 6px rgba(255,255,255,.4), 0 0 0 1px rgba(10,10,10,.34), 0 6px 14px -8px rgba(0,0,0,.7); }
+.galeria-ficha__flecha:focus-visible { outline: none; opacity: 1; }
+.galeria-ficha__flecha:focus-visible::before { box-shadow: inset 0 1px 0 rgba(255,255,255,.62), 0 0 0 2px #0A0A0A, 0 0 0 4px #F5F2EE; }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .galeria-ficha__flecha::before { background-color: rgba(10,10,10,.82); } }
 .galeria-ficha__vivo { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 /* Miniatura de la foto que se está viendo */
 .galeria-ficha__miniatura[aria-current="true"] { opacity: 1; border-color: var(--color-blanco); box-shadow: 0 0 0 2px rgba(245,242,238,.32); }
+.galeria-ficha__miniaturas.tiene-lente .galeria-ficha__miniatura[aria-current="true"] { border-color: rgba(245,242,238,.25); box-shadow: none; }
 @media (prefers-reduced-motion: reduce) { .galeria-ficha__pista { scroll-behavior: auto; } }
 
 /* ---- 34.9 Pendientes menores (accesibilidad y desbordamiento) ---- */
@@ -5524,3 +5540,53 @@ a.proyecto-card__cta { position: static; }          /* conserva el área clicabl
 /* Una URL larga sin espacios en el texto de un artículo (p. ej. la fuente de «Turismo récord…») ensanchaba la columna y
    la página desbordaba 30 px a 375 px. Solo actúa cuando hay una cadena que no cabe; el resto del texto no cambia. */
 .ficha-propiedad__descripcion { overflow-wrap: anywhere; }
+
+/* ---- 34.10 Vidrio líquido: lente de miniaturas y botones de redes del footer ---- */
+/* Lente (inspirada en el indicador de pestañas de iOS): cristal translúcido, un poco mayor que la miniatura, con aro
+   fino claro/oscuro y refracción de borde (Chromium: filtro SVG; resto: respaldo de cristal translúcido). Solo indica la
+   selección: las fotografías no se deforman, solo se curva su borde bajo la lente. */
+.galeria-ficha__miniaturas { position: absolute; }
+.galeria-ficha__lente { --lx: 0px; --ly: 0px; --lw: 78px; --lh: 61px; --lsx: 1; --lsy: 1;
+  position: absolute; left: 0; top: 0; z-index: 2; width: var(--lw); height: var(--lh); border-radius: 19px; pointer-events: none; opacity: 0;
+  transform: translate3d(var(--lx), var(--ly), 0) scale(var(--lsx), var(--lsy)); transform-origin: 50% 50%; will-change: transform, opacity;
+  background-color: rgba(255,255,255,.1);
+  background-image: linear-gradient(180deg, rgba(255,255,255,.34) 0%, rgba(255,255,255,.07) 38%, rgba(255,255,255,0) 62%, rgba(255,255,255,.16) 100%);
+  -webkit-backdrop-filter: saturate(1.4) brightness(1.07); backdrop-filter: saturate(1.4) brightness(1.07);   /* sin desenfoque: la miniatura sigue nítida y reconocible */
+  box-shadow: 0 0 0 1px rgba(10,10,10,.4), inset 0 1px 0 rgba(255,255,255,.95), inset 0 0 0 1.5px rgba(255,255,255,.4), inset 0 -9px 14px -10px rgba(255,255,255,.55), 0 10px 20px -10px rgba(0,0,0,.65); }
+.mk-lente-refracta .galeria-ficha__lente { -webkit-backdrop-filter: url(#mk-lente) saturate(1.45) brightness(1.06); backdrop-filter: url(#mk-lente) saturate(1.45) brightness(1.06); }
+.galeria-ficha__miniaturas.tiene-lente .galeria-ficha__miniatura { opacity: .8; }
+.galeria-ficha__miniaturas.tiene-lente .galeria-ficha__miniatura:hover, .galeria-ficha__miniaturas.tiene-lente .galeria-ficha__miniatura[aria-current="true"],
+.galeria-ficha__miniaturas.tiene-lente .galeria-ficha__miniatura:focus-visible { opacity: 1; transform: none; }
+.galeria-ficha__miniaturas.tiene-lente .galeria-ficha__miniatura:focus-visible { outline: none; border-color: rgba(245,242,238,.5); }
+@media (max-width: 639px) { .galeria-ficha__lente { border-radius: 17px; } }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .galeria-ficha__lente { background-color: rgba(255,255,255,.22); } }
+@media (prefers-reduced-transparency: reduce) { .galeria-ficha__lente { -webkit-backdrop-filter: none; backdrop-filter: none; background-color: rgba(255,255,255,.2); } }
+
+/* Redes del footer: mismo cristal que las flechas, adaptado al fondo oscuro. Mismo tamaño (44 px), íconos y enlaces.
+   El enlace (zona de clic) no se mueve; se anima su ::before y el icono. */
+.footer__social-link { --tx: 0px; --ty: 0px; --sx: 1; --sy: 1; --gl: 0; --lx: 32%; --ly: 26%;
+  position: relative; touch-action: manipulation; -webkit-tap-highlight-color: transparent; opacity: .94;
+  background: none; border: 0; transition: opacity var(--mk-fast) var(--mk-ease); }
+.footer__social-link::before { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; will-change: transform;
+  transform: translate3d(var(--tx), var(--ty), 0) scale(var(--sx), var(--sy));
+  background-color: rgba(245,242,238,.07);
+  background-image:
+    radial-gradient(52% 52% at var(--lx) var(--ly), rgba(255,255,255,calc(.13 + .26 * var(--gl))) 0%, rgba(255,255,255,0) 100%),
+    linear-gradient(180deg, rgba(255,255,255,.15) 0%, rgba(255,255,255,0) 48%, rgba(255,255,255,.05) 100%);
+  border: 1px solid rgba(245,242,238,.28);
+  -webkit-backdrop-filter: blur(8px) saturate(1.5); backdrop-filter: blur(8px) saturate(1.5);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.42), inset 0 -7px 10px -8px rgba(255,255,255,.22), 0 10px 20px -12px rgba(0,0,0,.9);
+  transition: border-color var(--mk-fast) var(--mk-ease), box-shadow var(--mk-fast) var(--mk-ease), background-color var(--mk-fast) var(--mk-ease); }
+.footer__social-link svg { position: relative; pointer-events: none; filter: drop-shadow(0 1px 1px rgba(0,0,0,.5));
+  transform: translate3d(calc(var(--tx) * 1.3), calc(var(--ty) * 1.3), 0) scale(var(--sx), var(--sy)); }
+.footer__social-link:hover { opacity: 1; }
+.footer__social-link:hover::before { border-color: rgba(245,242,238,.5); background-color: rgba(245,242,238,.1); }
+.footer__social-link.is-press::before { box-shadow: inset 0 0 0 1px rgba(255,255,255,.4), inset 0 0 12px rgba(255,255,255,.4), 0 5px 12px -8px rgba(0,0,0,.9); }
+.footer__social-link:focus-visible { outline: 2px solid var(--color-blanco); outline-offset: 3px; border-radius: 50%; }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .footer__social-link::before { background-color: rgba(245,242,238,.12); } }
+
+/* Movimiento reducido: el cristal se queda quieto (sin resortes ni seguimiento); solo cambia el estado visual. */
+@media (prefers-reduced-motion: reduce) {
+  .galeria-ficha__flecha::before, .footer__social-link::before, .galeria-ficha__flecha svg, .footer__social-link svg { transform: none !important; will-change: auto; }
+  .galeria-ficha__lente { transition: none; will-change: auto; }
+}

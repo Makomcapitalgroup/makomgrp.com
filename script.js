@@ -335,6 +335,7 @@ document.addEventListener('DOMContentLoaded', function () {
           orden.push(o.value);
         });
         if (teniaFoco && !panel.contains(document.activeElement)) trigger.focus();
+        pistas();
       };
 
       // estado: { [valor]: { c: marcada, m: mixta, d: deshabilitada } }
@@ -556,6 +557,270 @@ document.addEventListener('DOMContentLoaded', function () {
       cumplePrecio: cumplePrecio,
       alternarUbicacion: alternarUbicacion
     };
+  })();
+
+  /* ============================================================
+     5c. VIDRIO LÍQUIDO — respuesta magnética y elástica (sin librerías)
+     Se usa SOLO en tres sitios: las flechas de la galería de fichas, los
+     botones de redes del footer y la lente que indica la miniatura activa.
+     Nada más del sitio (CTA terracota, botones, tarjetas) lo usa.
+     - resorte(): integrador de resortes amortiguados por canal. Solo corre
+       con requestAnimationFrame mientras algo se mueve; en reposo no hay
+       trabajo. Subamortiguado a propósito: da el rebote elástico.
+     - boton(): cristal que se inclina hacia el cursor (≤ 3,5 px), se
+       estira unos grados sobre el eje del cursor, lleva un reflejo que
+       sigue al puntero, se hunde al pulsar y recupera con rebote. Táctil:
+       solo respuesta breve al toque (sin hover). Teclado: pulso en
+       Enter/Espacio y el foco visible lo da el CSS.
+     - lente(): indicador de cristal que se desliza a la miniatura activa
+       (se estira con la velocidad, como en iOS), acompaña al cursor con
+       atracción magnética y refracta el borde (filtro SVG como
+       backdrop-filter solo en Chromium; Safari/Firefox usan el respaldo CSS).
+     prefers-reduced-motion: sin resortes ni seguimiento, solo el estado.
+  ============================================================ */
+  var mkVidrio = (function () {
+    var reducir = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+    function lim(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+    // Canales { nombre: valor }; k = rigidez, c = amortiguación; alFrame(valores, resorte).
+    function resorte(inicial, k, c, alFrame) {
+      var ch = {};
+      Object.keys(inicial).forEach(function (n) { ch[n] = { x: inicial[n], t: inicial[n], v: 0 }; });
+      var raf = 0, t0 = 0;
+      function valores() { var o = {}; Object.keys(ch).forEach(function (n) { o[n] = ch[n].x; }); return o; }
+      var api = {};
+      function paso(ts) {
+        var dt = Math.min(0.032, (ts - t0) / 1000 || 0.016);
+        t0 = ts;
+        var activo = false;
+        Object.keys(ch).forEach(function (n) {
+          var s = ch[n];
+          s.v += (-k * (s.x - s.t) - c * s.v) * dt;
+          s.x += s.v * dt;
+          if (Math.abs(s.v) > 0.02 || Math.abs(s.x - s.t) > 0.0008) activo = true; else { s.x = s.t; s.v = 0; }
+        });
+        alFrame(valores(), api);
+        raf = activo ? requestAnimationFrame(paso) : 0;
+      }
+      function arrancar() { if (!raf) { t0 = performance.now(); raf = requestAnimationFrame(paso); } }
+      api.ir = function (o) { Object.keys(o).forEach(function (n) { ch[n].t = o[n]; }); arrancar(); };
+      api.fijar = function (o) { Object.keys(o).forEach(function (n) { ch[n].x = ch[n].t = o[n]; ch[n].v = 0; }); alFrame(valores(), api); };
+      api.empujar = function (o) { Object.keys(o).forEach(function (n) { ch[n].v += o[n]; }); arrancar(); };
+      api.vel = function (n) { return ch[n].v; };
+      api.activo = function () { return raf !== 0; };
+      return api;
+    }
+
+    // ----- Botón de cristal (flechas, redes) -----
+    function boton(el, opciones) {
+      if (el.__mkVidrio) return;
+      el.__mkVidrio = true;
+      var MAG = (opciones && opciones.mag) || 3.5;
+      var rect = null, hover = false, press = false;
+      function css(v) {
+        el.style.setProperty('--tx', v.tx.toFixed(2) + 'px');
+        el.style.setProperty('--ty', v.ty.toFixed(2) + 'px');
+        el.style.setProperty('--sx', v.sx.toFixed(4));
+        el.style.setProperty('--sy', v.sy.toFixed(4));
+        el.style.setProperty('--gl', v.gl.toFixed(3));
+        el.style.setProperty('--lx', v.lx.toFixed(1) + '%');
+        el.style.setProperty('--ly', v.ly.toFixed(1) + '%');
+      }
+      var s = resorte({ tx: 0, ty: 0, sx: 1, sy: 1, gl: 0, lx: 32, ly: 26 }, 330, 19, css);
+      function base() { return press ? 0.88 : hover ? 1.045 : 1; }
+      function reposo() {
+        var b = base();
+        s.ir({ tx: 0, ty: 0, sx: b, sy: b, gl: press ? 1 : hover ? 0.55 : 0, lx: 32, ly: 26 });
+      }
+      el.addEventListener('pointerenter', function (e) {
+        if (e.pointerType === 'touch' || reducir.matches) return;
+        hover = true;
+        rect = el.getBoundingClientRect();
+        reposo();
+      });
+      el.addEventListener('pointermove', function (e) {
+        if (!hover || reducir.matches) return;
+        if (!rect) rect = el.getBoundingClientRect();
+        var nx = lim((e.clientX - rect.left - rect.width / 2) / (rect.width / 2), -1, 1);
+        var ny = lim((e.clientY - rect.top - rect.height / 2) / (rect.height / 2), -1, 1);
+        var b = base();
+        s.ir({
+          tx: nx * MAG, ty: ny * MAG,
+          sx: b + 0.05 * Math.abs(nx) - 0.022 * Math.abs(ny),   // se estira sobre el eje del cursor y se aplasta en el perpendicular
+          sy: b + 0.05 * Math.abs(ny) - 0.022 * Math.abs(nx),
+          gl: press ? 1 : 0.55,
+          lx: 32 + nx * 14, ly: 26 + ny * 14                    // el reflejo acompaña al cursor, sin pasar por el icono
+        });
+      });
+      el.addEventListener('pointerleave', function () {
+        hover = false;
+        rect = null;
+        if (press || reducir.matches) return;
+        reposo();                                               // el resorte subamortiguado recupera la forma con rebote
+      });
+      function soltar() {
+        if (!press) return;
+        press = false;
+        el.classList.remove('is-press');
+        if (reducir.matches) return;
+        reposo();
+        s.empujar({ sx: 3.4, sy: 3.4 });                        // rebote elástico al recuperar
+      }
+      el.addEventListener('pointerdown', function (e) {
+        if (e.button && e.pointerType === 'mouse') return;
+        press = true;
+        el.classList.add('is-press');
+        // El puntero queda capturado: el pointerup siempre llega aquí aunque el cursor se salga durante la pulsación.
+        try { el.setPointerCapture(e.pointerId); } catch (err) { /* sin captura: se suelta al salir */ }
+        if (reducir.matches) return;
+        rect = el.getBoundingClientRect();
+        reposo();
+      });
+      el.addEventListener('pointerup', soltar);
+      el.addEventListener('lostpointercapture', soltar);
+      el.addEventListener('pointercancel', soltar);
+      el.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        press = true;
+        el.classList.add('is-press');
+        if (!reducir.matches) reposo();
+        window.setTimeout(soltar, 140);
+      });
+    }
+
+    // ----- Refracción de borde para la lente (solo Chromium; el respaldo CSS cubre el resto) -----
+    var ud = navigator.userAgentData;
+    var chromium = !!(ud && ud.brands && ud.brands.some(function (b) { return /Chromium/.test(b.brand); }));
+    var svgLente = null, tamLente = '';
+    function filtroLente(W, H) {
+      if (!chromium || (window.matchMedia && matchMedia('(prefers-reduced-transparency: reduce)').matches)) return;
+      var clave = W + 'x' + H;
+      if (clave === tamLente) return;
+      tamLente = clave;
+      var R = Math.min(19, H / 2), BEZEL = 10, SCALE = 12;
+      var c = document.createElement('canvas'); c.width = W; c.height = H;
+      var x = c.getContext('2d'), im = x.createImageData(W, H), d = im.data;
+      for (var py = 0; py < H; py++) for (var px = 0; px < W; px++) {
+        var dx = px + 0.5 - W / 2, dy = py + 0.5 - H / 2, qx = Math.abs(dx) - (W / 2 - R), qy = Math.abs(dy) - (H / 2 - R);
+        var ox = Math.max(qx, 0), oy = Math.max(qy, 0), len = Math.hypot(ox, oy), sd = len + Math.min(Math.max(qx, qy), 0) - R, depth = -sd, nx = 0, ny = 0;
+        if (len > 0) { nx = (dx < 0 ? -1 : 1) * ox / len; ny = (dy < 0 ? -1 : 1) * oy / len; } else if (qx > qy) nx = dx < 0 ? -1 : 1; else ny = dy < 0 ? -1 : 1;
+        var m = depth >= 0 && depth < BEZEL ? Math.pow(1 - depth / BEZEL, 2) : 0, i = (py * W + px) * 4;
+        d[i] = 128 - nx * m * 127; d[i + 1] = 128 - ny * m * 127; d[i + 2] = 128; d[i + 3] = 255;   // lente convexa: el borde curva hacia dentro
+      }
+      x.putImageData(im, 0, 0);
+      function canal(id, k, mat) {
+        return '<feDisplacementMap in="SourceGraphic" in2="map" scale="' + (SCALE * k) + '" xChannelSelector="R" yChannelSelector="G" result="d' + id + '"/>' +
+               '<feColorMatrix in="d' + id + '" type="matrix" values="' + mat + '" result="c' + id + '"/>';
+      }
+      if (!svgLente) {
+        var NS = 'http://www.w3.org/2000/svg';
+        svgLente = document.createElementNS(NS, 'svg');
+        svgLente.setAttribute('width', '0'); svgLente.setAttribute('height', '0'); svgLente.setAttribute('aria-hidden', 'true');
+        svgLente.style.cssText = 'position:absolute;pointer-events:none';
+        document.body.appendChild(svgLente);
+      }
+      svgLente.innerHTML = '<defs><filter id="mk-lente" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" x="0" y="0" width="' + W + '" height="' + H + '" color-interpolation-filters="sRGB">' +
+        '<feImage href="' + c.toDataURL() + '" x="0" y="0" width="' + W + '" height="' + H + '" preserveAspectRatio="none" result="map"/>' +
+        canal('R', 1, '1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0') + canal('G', 0.92, '0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0') + canal('B', 0.84, '0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0') +
+        '<feBlend in="cR" in2="cG" mode="screen" result="rg"/><feBlend in="rg" in2="cB" mode="screen"/></filter></defs>';
+      document.documentElement.classList.add('mk-lente-refracta');
+    }
+
+    // ----- Lente: indicador de la miniatura activa -----
+    // tira = contenedor de miniaturas; devuelve { irA(miniatura|null), recalcular() }.
+    function lente(tira) {
+      var PAD = 5;
+      var lens = document.createElement('span');
+      lens.className = 'galeria-ficha__lente';
+      lens.setAttribute('aria-hidden', 'true');
+      tira.insertBefore(lens, tira.firstChild);
+      tira.classList.add('tiene-lente');
+      function css(v, r) {
+        var vx = Math.abs(r.vel('x'));
+        var st = 1 + lim(vx / 2600, 0, 0.16);                   // se estira con la velocidad y se aplasta en el otro eje
+        lens.style.setProperty('--lx', v.x.toFixed(2) + 'px');
+        lens.style.setProperty('--lw', v.w.toFixed(2) + 'px');
+        lens.style.setProperty('--lsx', (v.sc * st).toFixed(4));
+        lens.style.setProperty('--lsy', (v.sc * (1 - (st - 1) * 0.5)).toFixed(4));
+        lens.style.opacity = v.op.toFixed(3);
+      }
+      var s = resorte({ x: 0, w: 70, sc: 1, op: 0 }, 235, 21, css);
+      var activa = null, sobre = null, presionada = false, colocada = false;
+      function geo(mini) { return { x: mini.offsetLeft - PAD, w: mini.offsetWidth + PAD * 2 }; }
+      function fila(mini) {
+        lens.style.setProperty('--ly', (mini.offsetTop - PAD) + 'px');
+        lens.style.setProperty('--lh', (mini.offsetHeight + PAD * 2) + 'px');
+        filtroLente(Math.round(mini.offsetWidth + PAD * 2), Math.round(mini.offsetHeight + PAD * 2));
+      }
+      function objetivo() {
+        var mini = sobre || activa;
+        if (!mini) { if (reducir.matches) s.fijar({ op: 0, sc: 1 }); else s.ir({ op: 0, sc: 1 }); return; }
+        fila(mini);
+        var g = geo(mini);
+        var sc = presionada ? 0.94 : sobre ? 1.07 : 1;
+        if (reducir.matches || !colocada) {
+          s.fijar({ x: g.x, w: g.w, sc: 1, op: 1 });
+          colocada = true;
+          return;
+        }
+        s.ir({ x: g.x, w: g.w, sc: sc, op: 1 });
+      }
+      // Seguimiento magnético: la lente se desplaza hacia el cursor dentro de la miniatura (≈ 38 %).
+      function seguir(e, mini) {
+        var g = geo(mini);
+        var tr = tira.getBoundingClientRect();
+        var cursor = e.clientX - tr.left + tira.scrollLeft - tira.clientLeft;
+        var centro = mini.offsetLeft + mini.offsetWidth / 2;
+        var tir = lim((cursor - centro) * 0.38, -mini.offsetWidth * 0.3, mini.offsetWidth * 0.3);
+        fila(mini);
+        s.ir({ x: g.x + tir, w: g.w + 4, sc: presionada ? 0.94 : 1.07, op: 1 });
+      }
+      function miniaturaBajo(e) {
+        var m = e.target.closest ? e.target.closest('.galeria-ficha__miniatura') : null;
+        return m && tira.contains(m) ? m : null;
+      }
+      tira.addEventListener('pointermove', function (e) {
+        if (e.pointerType === 'touch' || reducir.matches) return;
+        var m = miniaturaBajo(e);
+        if (!m) return;
+        sobre = m;
+        tira.classList.add('is-hover');
+        seguir(e, m);
+      });
+      tira.addEventListener('pointerleave', function () {
+        sobre = null;
+        presionada = false;
+        tira.classList.remove('is-hover');
+        objetivo();
+      });
+      tira.addEventListener('pointerdown', function (e) {
+        var m = miniaturaBajo(e);
+        if (!m) return;
+        presionada = true;
+        if (!reducir.matches) { sobre = e.pointerType === 'touch' ? null : m; var g = geo(m); fila(m); s.ir({ x: g.x, w: g.w, sc: 0.94, op: 1 }); }
+      });
+      function soltar() {
+        if (!presionada) return;
+        presionada = false;
+        if (reducir.matches) return;
+        objetivo();
+        s.empujar({ sc: 2.6 });
+      }
+      tira.addEventListener('pointerup', soltar);
+      tira.addEventListener('pointercancel', soltar);
+      // Teclado: la lente acompaña al foco.
+      tira.addEventListener('focusin', function (e) { var m = miniaturaBajo(e); if (m) { sobre = m; objetivo(); } });
+      tira.addEventListener('focusout', function () { sobre = null; objetivo(); });
+      return {
+        irA: function (mini) { activa = mini || null; objetivo(); },
+        recalcular: function () { colocada = false; objetivo(); }
+      };
+    }
+
+    // Redes del footer (todas las páginas): único uso fuera de la galería.
+    Array.prototype.slice.call(document.querySelectorAll('.footer__social-link')).forEach(function (a) { boton(a, { mag: 3 }); });
+
+    return { boton: boton, lente: lente, resorte: resorte };
   })();
 
   /* ============================================================
@@ -2160,6 +2425,10 @@ document.addEventListener('DOMContentLoaded', function () {
     var miniaturasGaleria = Array.from(galeriaFicha.querySelectorAll('[data-galeria-ir]'));
     var flechasGaleria = Array.from(galeriaFicha.querySelectorAll('[data-galeria-flecha]'));
     var vivoGaleria = galeriaFicha.querySelector('[data-galeria-vivo]');
+    // Vidrio líquido (sección 5c): lente de la miniatura activa y flechas. Solo estos controles.
+    var tiraGaleria = galeriaFicha.querySelector('.galeria-ficha__miniaturas');
+    var lenteGaleria = tiraGaleria ? mkVidrio.lente(tiraGaleria) : null;
+    flechasGaleria.forEach(function (flecha) { mkVidrio.boton(flecha, { mag: 3.5 }); });
     var esEnGaleria = (document.documentElement.lang || '').toLowerCase().indexOf('en') === 0;
     var reducirMovimiento = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -2199,6 +2468,13 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
+    // Con muchas fotos la tira de miniaturas se desplaza: la activa se mantiene a la vista.
+    function centrarMiniatura(mini) {
+      if (!mini || !tiraGaleria || tiraGaleria.scrollWidth <= tiraGaleria.clientWidth + 1) return;
+      var x = mini.offsetLeft - (tiraGaleria.clientWidth - mini.offsetWidth) / 2;
+      tiraGaleria.scrollTo({ left: Math.max(0, x), behavior: reducirMovimiento && reducirMovimiento.matches ? 'auto' : 'smooth' });
+    }
+
     function marcarActual(i) {
       indiceCarrusel = i;
       slidesGaleria.forEach(function (slide, k) {
@@ -2208,6 +2484,9 @@ document.addEventListener('DOMContentLoaded', function () {
         var esActual = parseInt(mini.getAttribute('data-galeria-ir'), 10) === i;
         if (esActual) mini.setAttribute('aria-current', 'true'); else mini.removeAttribute('aria-current');
       });
+      var miniActual = miniaturasGaleria.filter(function (m) { return parseInt(m.getAttribute('data-galeria-ir'), 10) === i; })[0] || null;
+      if (lenteGaleria) lenteGaleria.irA(miniActual);
+      centrarMiniatura(miniActual);
       flechasGaleria.forEach(function (flecha) {
         var paso = parseInt(flecha.getAttribute('data-galeria-flecha'), 10);
         var fuera = i + paso < 0 || i + paso >= slidesGaleria.length;
@@ -2243,6 +2522,7 @@ document.addEventListener('DOMContentLoaded', function () {
       // Un cambio de tamaño (girar el teléfono) conserva la foto actual.
       window.addEventListener('resize', function () {
         pistaGaleria.scrollTo({ left: slidesGaleria[indiceCarrusel].offsetLeft, behavior: 'auto' });
+        if (lenteGaleria) lenteGaleria.recalcular();
       });
 
       flechasGaleria.forEach(function (flecha) {
