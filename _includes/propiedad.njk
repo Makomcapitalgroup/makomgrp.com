@@ -195,9 +195,9 @@
               {% endif %}
             </div>
             {% if galeria.miniaturas.length > 0 %}
-            <div class="galeria-ficha__miniaturas" role="list">
+            <div class="galeria-ficha__miniaturas" role="group" aria-label="{{ 'Photo thumbnails' if esEn else 'Miniaturas de fotografías' }}">
               {% for foto in galeria.miniaturas %}
-                <button type="button" class="galeria-ficha__miniatura" data-galeria-ir="{{ loop.index }}" role="listitem" aria-label="{{ 'View photo' if esEn else 'Ver fotografía' }} {{ loop.index + 1 }}">
+                <button type="button" class="galeria-ficha__miniatura" data-galeria-ir="{{ loop.index }}" aria-label="{{ 'View photo' if esEn else 'Ver fotografía' }} {{ loop.index + 1 }}">
                   <img
                     src="{{ foto.archivo }}"
                     alt="{{ foto.alt | altAuto(tituloMostrado, ubicacionMostrada) }}"
@@ -301,13 +301,13 @@
       {% if relacionadas.length > 0 %}
       <div class="ficha-propiedad__seccion ficha-relacionadas" data-reveal>
         <h2 class="ficha-propiedad__seccion-titulo">{{ "You may also be interested in" if esEn else "También podría interesarte" }}</h2>
-        <div class="ficha-relacionadas__grid" role="list" aria-label="{{ 'Related properties' if esEn else 'Propiedades relacionadas' }}">
+        <div class="ficha-relacionadas__grid" role="group" aria-label="{{ 'Related properties' if esEn else 'Propiedades relacionadas' }}">
           {% for p in relacionadas %}
             {% set portadaRel = p.fotografias.galeria | portadaDe %}
             {% set specsRel = p.detallesCuantitativos | specsTexto(lang) %}
             {% set tituloRel = (p.tituloEn or p.titulo) if esEn else p.titulo %}
             {% set ubicacionRel = (p.ubicacionPublicaEn or p.ubicacionPublica) if esEn else p.ubicacionPublica %}
-            <article class="property-card property-card--compact" role="listitem" aria-labelledby="rel-{{ p.slug }}-name">
+            <article class="property-card property-card--compact" aria-labelledby="rel-{{ p.slug }}-name">
               <div class="property-card__image">
                 {% if portadaRel %}
                   <img src="{{ portadaRel.archivo }}" alt="{{ portadaRel.alt or tituloRel }}" loading="lazy" />

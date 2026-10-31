@@ -262,13 +262,13 @@
       </script>
       </div>
 
-      <div class="propiedades__grid" role="list" aria-label="{{ 'Property listings' if esEn else 'Listado de propiedades' }}">
+      <div class="propiedades__grid" role="group" aria-label="{{ 'Property listings' if esEn else 'Listado de propiedades' }}">
         {% for p in publicas %}
         {% set portada = p.fotografias.galeria | portadaDe %}
         {% set specs = p.detallesCuantitativos | specsTexto(lang) %}
         {% set tituloP = (p.tituloEn or p.titulo) if esEn else p.titulo %}
         {% set ubicacionP = (p.ubicacionPublicaEn or p.ubicacionPublica) if esEn else p.ubicacionPublica %}
-        <article class="property-card" data-op="{{ p.operacion }}" data-cat="{{ p.categoriaGeneral }}" data-tipo="{{ p.tipo }}"{% if p.zona %} data-zona="{{ p.zona }}"{% endif %}{% if p.precio and p.precio.monto %} data-precio="{{ p.precio.monto }}"{% endif %} role="listitem" aria-labelledby="cat-{{ p.slug }}-name">
+        <article class="property-card" data-op="{{ p.operacion }}" data-cat="{{ p.categoriaGeneral }}" data-tipo="{{ p.tipo }}"{% if p.zona %} data-zona="{{ p.zona }}"{% endif %}{% if p.precio and p.precio.monto %} data-precio="{{ p.precio.monto }}"{% endif %} aria-labelledby="cat-{{ p.slug }}-name">
           <div class="property-card__image">
             {% if portada %}
               <img src="{{ portada.archivo }}" alt="{{ portada.alt or tituloP }}" loading="lazy" />

@@ -1973,7 +1973,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var href = (enIngles ? '/en/properties/' : '/propiedades/') + encodeURIComponent(p.slug) + '/';
 
     return (
-      '<article class="property-card" role="listitem">' +
+      '<article class="property-card">' +
         '<div class="property-card__image">' +
           imagenHtml +
           '<div class="property-card__badges">' +

@@ -5508,3 +5508,12 @@ a.proyecto-card__cta { position: static; }          /* conserva el área clicabl
 /* Miniatura de la foto que se está viendo */
 .galeria-ficha__miniatura[aria-current="true"] { opacity: 1; border-color: var(--color-blanco); box-shadow: 0 0 0 2px rgba(245,242,238,.32); }
 @media (prefers-reduced-motion: reduce) { .galeria-ficha__pista { scroll-behavior: auto; } }
+
+/* ---- 34.9 Pendientes menores (accesibilidad y desbordamiento) ---- */
+/* Enlace del idioma inactivo (ES | EN): con opacity .55 sobre el header claro llegaba a 4,19–4,28:1; con .66 supera 4,5:1
+   sobre claro y sobre oscuro. El idioma activo (opacity 1), la posición y el tamaño no cambian. */
+.header__lang-link:not(.header__lang-link--active) { opacity: .66; }
+.header__lang-link:not(.header__lang-link--active):hover { opacity: .9; }
+/* Una URL larga sin espacios en el texto de un artículo (p. ej. la fuente de «Turismo récord…») ensanchaba la columna y
+   la página desbordaba 30 px a 375 px. Solo actúa cuando hay una cadena que no cabe; el resto del texto no cambia. */
+.ficha-propiedad__descripcion { overflow-wrap: anywhere; }
