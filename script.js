@@ -68,7 +68,8 @@ document.addEventListener('DOMContentLoaded', function () {
     hamburger.setAttribute('aria-expanded', 'false');
     hamburger.setAttribute('aria-label', 'Abrir menú de navegación');
     document.body.style.overflow = '';
-    hamburger.focus();
+    // Devuelve el foco al botón solo si es visible (en escritorio el botón está oculto: no hay a dónde devolverlo).
+    if (hamburger.offsetParent !== null) hamburger.focus();
   }
 
   function toggleMobileMenu() {

@@ -450,12 +450,18 @@ textarea {
   flex-direction: column;
   padding: calc(var(--header-height) + 40px) 24px 40px;
   transform: translateX(100%);
-  transition: transform var(--dur-slow) var(--ease);
+  /* Cerrado: fuera del orden de tabulación y del árbol de accesibilidad (antes sus enlaces
+     seguían recibiendo foco estando fuera de pantalla con aria-hidden="true"). La visibilidad
+     cambia al terminar la animación de cierre y al instante al abrir. */
+  visibility: hidden;
+  transition: transform var(--dur-slow) var(--ease), visibility 0s linear var(--dur-slow);
   overflow-y: auto;
 }
 
 .mobile-menu.is-open {
   transform: translateX(0);
+  visibility: visible;
+  transition: transform var(--dur-slow) var(--ease), visibility 0s linear 0s;
 }
 
 .mobile-menu__nav {
