@@ -204,29 +204,369 @@ document.addEventListener('DOMContentLoaded', function () {
   }, 300);
 
   /* ============================================================
+     5b. FILTROS ACUMULATIVOS — componente compartido y helpers
+     Lo usan el catálogo (sección 6) y el buscador del Hero (sección
+     19), así que se comportan igual en ambos y en ES/EN.
+     - crearMulti: desplegable de casillas (disclosure + checkboxes
+       nativos). Seleccionar NO lo cierra; Escape, un clic fuera o el
+       foco en otro control sí. Es solo vista: el controlador decide el
+       estado y llama a actualizar().
+     - Precio: RANGOS (a, b]: incluyen su límite superior y excluyen el
+       inferior, así que no se solapan ni dejan huecos. Un rango es la
+       ficha "a-b" (o "a-max" para el último); enlaces antiguos ?max=N
+       se traducen a los rangos equivalentes.
+     - Parámetros de URL: un valor repetido por selección (?tipo=a&tipo=b
+       &zona=x&precio=100000-150000), también se aceptan listas con comas.
+  ============================================================ */
+  var mkFiltros = (function () {
+    var abiertos = [];
+    var seq = 0;
+
+    function el(tag, cls, text) {
+      var n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text !== undefined) n.textContent = text;
+      return n;
+    }
+
+    function cerrarTodos(salvo) {
+      abiertos.slice().forEach(function (w) { if (w !== salvo) w.cerrar(); });
+    }
+
+    // Clic fuera o foco en otro control: cierra los desplegables abiertos.
+    // (El foco por teclado se vigila con focusin; un clic con el ratón, con
+    // pointerdown — Safari no enfoca casillas al pulsar, por eso no se usa
+    // focusout.)
+    document.addEventListener('pointerdown', function (e) {
+      abiertos.slice().forEach(function (w) { if (!w.el.contains(e.target)) w.cerrar(); });
+    });
+    document.addEventListener('focusin', function (e) {
+      abiertos.slice().forEach(function (w) { if (!w.el.contains(e.target)) w.cerrar(); });
+    });
+
+    // cfg: { id, ariaLabel, placeholder, triggerClass, claseWrap, textoLimpiar,
+    //        nota, alAlternar(valor), alLimpiar() }
+    function crearMulti(cfg) {
+      var n = ++seq;
+      var wrap = el('div', 'mk-multi' + (cfg.claseWrap ? ' ' + cfg.claseWrap : ''));
+      var trigger = el('button', (cfg.triggerClass || '') + ' mk-multi__trigger');
+      trigger.type = 'button';
+      trigger.id = cfg.id;
+      var panelId = cfg.id + '-panel';
+      trigger.setAttribute('aria-expanded', 'false');
+      trigger.setAttribute('aria-controls', panelId);
+      var valueEl = el('span', 'mk-multi__value', cfg.placeholder);
+      trigger.appendChild(valueEl);
+
+      var panel = el('div', 'mk-multi__panel');
+      panel.id = panelId;
+      panel.setAttribute('role', 'group');
+      panel.setAttribute('aria-label', cfg.ariaLabel);
+      panel.hidden = true;
+      var list = el('div', 'mk-multi__list');
+      var foot = el('div', 'mk-multi__foot');
+      var nota = null;
+      if (cfg.nota) { nota = el('p', 'mk-multi__nota', cfg.nota); foot.appendChild(nota); }
+      var clearBtn = el('button', 'mk-multi__clear', cfg.textoLimpiar);
+      clearBtn.type = 'button';
+      clearBtn.disabled = true;
+      foot.appendChild(clearBtn);
+      panel.appendChild(list);
+      panel.appendChild(foot);
+      wrap.appendChild(trigger);
+      wrap.appendChild(panel);
+
+      var items = {};     // valor -> { input, row }
+      var orden = [];     // valores en orden de aparición
+      var clave = null;
+
+      var api = { el: wrap, trigger: trigger, panel: panel };
+
+      // items: [{ value, label, grupo, hijo, fuerte }]. Solo reconstruye
+      // si cambió la lista (el estado marcado se actualiza en sitio).
+      api.setOpciones = function (lista) {
+        var k = lista.map(function (o) { return o.value + '|' + o.label + '|' + (o.grupo || ''); }).join('§');
+        if (k === clave) return;
+        clave = k;
+        var teniaFoco = panel.contains(document.activeElement);
+        list.innerHTML = '';
+        items = {};
+        orden = [];
+        var grupoActual = null;
+        var contenedor = list;
+        lista.forEach(function (o, i) {
+          if ((o.grupo || '') !== grupoActual) {
+            grupoActual = o.grupo || '';
+            if (grupoActual) {
+              contenedor = el('div', 'mk-multi__grupo');
+              contenedor.setAttribute('role', 'group');
+              contenedor.setAttribute('aria-label', grupoActual);
+              list.appendChild(contenedor);
+            } else {
+              contenedor = list;
+            }
+          }
+          var row = el('label', 'mk-multi__item' + (o.hijo ? ' mk-multi__item--hijo' : '') + (o.fuerte ? ' mk-multi__item--fuerte' : ''));
+          var input = el('input', 'mk-multi__input');
+          input.type = 'checkbox';
+          input.value = o.value;
+          input.id = cfg.id + '-o' + i;
+          var box = el('span', 'mk-multi__box');
+          box.setAttribute('aria-hidden', 'true');
+          var text = el('span', 'mk-multi__text', o.label);
+          row.appendChild(input);
+          row.appendChild(box);
+          row.appendChild(text);
+          contenedor.appendChild(row);
+          input.addEventListener('change', function () { cfg.alAlternar(o.value); });
+          items[o.value] = { input: input, row: row };
+          orden.push(o.value);
+        });
+        if (teniaFoco && !panel.contains(document.activeElement)) trigger.focus();
+      };
+
+      // estado: { [valor]: { c: marcada, m: mixta, d: deshabilitada } }
+      api.actualizar = function (estado, texto, total) {
+        orden.forEach(function (v) {
+          var s = estado[v] || {};
+          var it = items[v];
+          it.input.checked = !!s.c;
+          it.input.indeterminate = !!s.m && !s.c;
+          it.input.disabled = !!s.d;
+          it.row.classList.toggle('is-disabled', !!s.d);
+          it.row.classList.toggle('is-checked', !!s.c);
+        });
+        valueEl.textContent = texto;
+        trigger.classList.toggle('is-active', total > 0);
+        wrap.classList.toggle('is-active', total > 0);
+        clearBtn.disabled = total === 0;
+      };
+
+      api.setDisabled = function (d) {
+        trigger.disabled = !!d;
+        if (d) api.cerrar();
+      };
+
+      api.abierto = false;
+      api.abrir = function () {
+        if (api.abierto || trigger.disabled) return;
+        cerrarTodos(api);
+        api.abierto = true;
+        panel.hidden = false;
+        wrap.classList.add('is-open');
+        trigger.setAttribute('aria-expanded', 'true');
+        abiertos.push(api);
+      };
+      api.cerrar = function () {
+        if (!api.abierto) return;
+        api.abierto = false;
+        panel.hidden = true;
+        wrap.classList.remove('is-open');
+        trigger.setAttribute('aria-expanded', 'false');
+        var i = abiertos.indexOf(api);
+        if (i !== -1) abiertos.splice(i, 1);
+      };
+
+      function habilitados() {
+        return orden.map(function (v) { return items[v].input; }).filter(function (i) { return !i.disabled; });
+      }
+
+      trigger.addEventListener('click', function () {
+        if (api.abierto) api.cerrar(); else api.abrir();
+      });
+      trigger.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          api.abrir();
+          var h = habilitados();
+          if (h.length) h[0].focus();
+        } else if (e.key === 'Escape' && api.abierto) {
+          e.preventDefault();
+          e.stopPropagation();
+          api.cerrar();
+        }
+      });
+      panel.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          api.cerrar();
+          trigger.focus();
+          return;
+        }
+        var campos = habilitados();
+        var idx = campos.indexOf(document.activeElement);
+        var destino = null;
+        if (e.key === 'ArrowDown') destino = campos[(idx + 1) % campos.length];
+        else if (e.key === 'ArrowUp') destino = idx <= 0 ? campos[campos.length - 1] : campos[idx - 1];
+        else if (e.key === 'Home') destino = campos[0];
+        else if (e.key === 'End') destino = campos[campos.length - 1];
+        if (destino) { e.preventDefault(); destino.focus(); }
+      });
+      clearBtn.addEventListener('click', function () { cfg.alLimpiar(); });
+      api.limpiarBtn = clearBtn;
+      return api;
+    }
+
+    // ----- Parámetros de URL (valores repetidos o separados por comas) -----
+    function lista(params, clave) {
+      var out = [];
+      params.getAll(clave).forEach(function (v) {
+        v.split(',').forEach(function (x) {
+          x = x.trim();
+          if (x && out.indexOf(x) === -1) out.push(x);
+        });
+      });
+      return out;
+    }
+
+    // Respeta el orden del catálogo para que la misma selección dé
+    // siempre la misma URL.
+    function ordenar(valores, ordenRef) {
+      return valores.slice().sort(function (a, b) {
+        var ia = ordenRef.indexOf(a), ib = ordenRef.indexOf(b);
+        return (ia === -1 ? 1e9 : ia) - (ib === -1 ? 1e9 : ib);
+      });
+    }
+
+    // ----- Rangos de precio: ficha "a-b" = a < precio <= b; "a-max" sin tope -----
+    function parseFicha(t) {
+      var m = /^(\d{1,9})-(\d{1,9}|max)$/.exec(t);
+      if (!m) return null;
+      var a = parseInt(m[1], 10);
+      var b = m[2] === 'max' ? Infinity : parseInt(m[2], 10);
+      return b > a ? { a: a, b: b } : null;
+    }
+
+    function dentroDeFicha(t, precio) {
+      var r = parseFicha(t);
+      return !!r && precio > r.a && precio <= r.b;
+    }
+
+    function dinero(n) {
+      return '$' + n.toLocaleString('en-US');
+    }
+
+    function etiquetaFicha(t, T) {
+      var r = parseFicha(t);
+      if (!r) return t;
+      if (r.b === Infinity) return T.over + ' ' + dinero(r.a);
+      if (r.a === 0) return T.upTo + ' ' + dinero(r.b);
+      return dinero(r.a) + ' – ' + dinero(r.b);
+    }
+
+    // Límites ordenados -> fichas consecutivas sin huecos ni solapes.
+    function fichasDeLimites(limites) {
+      var out = [];
+      var prev = 0;
+      limites.forEach(function (b) { out.push(prev + '-' + b); prev = b; });
+      out.push(prev + '-max');
+      return out;
+    }
+
+    function ordenarFichas(fichas) {
+      var vistos = {};
+      return fichas.filter(function (f) {
+        if (vistos[f]) return false;
+        vistos[f] = true;
+        return true;
+      }).sort(function (x, y) {
+        var a = parseFicha(x), b = parseFicha(y);
+        return a.a - b.a || (a.b === Infinity ? 1e12 : a.b) - (b.b === Infinity ? 1e12 : b.b);
+      });
+    }
+
+    // Fichas válidas de ?precio=… más las de un ?max=N antiguo: si N es uno
+    // de los límites se expande a los rangos hasta N (equivalente exacto de
+    // "precio <= N"); si no, queda como rango propio "0-N".
+    function parsePrecio(params, limites) {
+      var out = [];
+      lista(params, 'precio').forEach(function (t) { if (parseFicha(t)) out.push(t); });
+      var max = params.get('max');
+      if (max && /^\d{1,9}$/.test(max)) {
+        var n = parseInt(max, 10);
+        if (n > 0) {
+          var i = limites.indexOf(n);
+          if (i !== -1) out = out.concat(fichasDeLimites(limites).slice(0, i + 1));
+          else out.push('0-' + n);
+        }
+      }
+      return ordenarFichas(out);
+    }
+
+    function cumplePrecio(precio, fichas) {
+      return fichas.some(function (t) { return dentroDeFicha(t, precio); });
+    }
+
+    // ----- Ubicación: regiones ("todas las zonas") y zonas sueltas -----
+    // sel = { region: [], zona: [] }; ctx = { regionDe(zona), zonasDe(region) }
+    function alternarUbicacion(sel, valor, ctx) {
+      var region = sel.region.slice();
+      var zona = sel.zona.slice();
+      var v = valor.split(':');
+      var i;
+      if (v[0] === 'region') {
+        i = region.indexOf(v[1]);
+        if (i !== -1) {
+          region.splice(i, 1);
+        } else {
+          region.push(v[1]);
+          zona = zona.filter(function (z) { return ctx.regionDe(z) !== v[1]; });
+        }
+      } else if (v[0] === 'zona') {
+        var r = ctx.regionDe(v[1]);
+        if (region.indexOf(r) !== -1) {
+          // La zona estaba incluida por su región: se pasa a zonas sueltas
+          // (todas las de esa región menos la desmarcada).
+          region.splice(region.indexOf(r), 1);
+          ctx.zonasDe(r).forEach(function (z) { if (z !== v[1] && zona.indexOf(z) === -1) zona.push(z); });
+        } else {
+          i = zona.indexOf(v[1]);
+          if (i !== -1) zona.splice(i, 1); else zona.push(v[1]);
+        }
+      }
+      return { region: region, zona: zona };
+    }
+
+    return {
+      crearMulti: crearMulti,
+      lista: lista,
+      ordenar: ordenar,
+      parseFicha: parseFicha,
+      dentroDeFicha: dentroDeFicha,
+      etiquetaFicha: etiquetaFicha,
+      fichasDeLimites: fichasDeLimites,
+      ordenarFichas: ordenarFichas,
+      parsePrecio: parsePrecio,
+      cumplePrecio: cumplePrecio,
+      alternarUbicacion: alternarUbicacion
+    };
+  })();
+
+  /* ============================================================
      6. PROPERTY FILTERS — motor único de filtrado del catálogo
-     Dos grupos de selección única (Operación: Todos / Venta / Alquiler;
-     Categoría: Todas / Residencial / Comercial) y los selectores (tipo,
-     ubicación, presupuesto máximo) escriben sobre UN solo estado, y ese estado es lo único que decide qué
-     tarjetas se ven. El estado vive en la URL (?op=&cat=&tipo=&region=
-     &zona=&max=) para poder recargar, compartir y usar atrás/adelante.
+     Cuatro filtros independientes y ACUMULATIVOS (Operación, Tipo,
+     Ubicación y Precio) más Categoría (selección única). Todos escriben
+     sobre UN solo estado, y ese estado es lo único que decide qué
+     tarjetas se ven. Lógica: dentro de un mismo filtro, OR (cualquiera de
+     las opciones marcadas); entre filtros distintos, AND. Un filtro sin
+     selección no restringe. El estado vive en la URL con un valor
+     repetido por selección (?op=venta&op=alquiler&tipo=casa&tipo=ph
+     &region=…&zona=…&precio=100000-150000&cat=…) para poder recargar,
+     compartir y usar atrás/adelante; los enlaces antiguos de un solo
+     valor (incluido ?max=150000) siguen funcionando.
      Solo se leen datos públicos que el build dejó en el DOM
      (data-op, data-cat, data-tipo, data-zona, data-precio): nunca hay
-     ubicación interna ni direcciones. Regla de los grupos: "Venta" /
-     "Alquiler" fijan la operación y "Residencial" / "Comercial" la
-     categoría; son dimensiones independientes (cada grupo permite una
-     sola opción, "Todos"/"Todas" = sin filtro) y se combinan entre sí,
-     y con tipo, ubicación y presupuesto, mediante AND. Excepción: si
-     el tipo no pertenece a la categoría elegida, manda el tipo.
-     El presupuesto máximo es independiente: siempre está disponible,
-     no depende de la pestaña ni de la operación, y se conserva al
-     cambiar de pestaña (solo se compara con data-precio).
+     ubicación interna ni direcciones. Excepción de Categoría: si un tipo
+     marcado no pertenece a la categoría elegida, manda el tipo.
+     Precio: rangos (a, b] entre los límites de data-presupuestos; siempre
+     disponible, no depende de la operación.
   ============================================================ */
   (function () {
     var form = document.getElementById('prop-buscador');
-    // Dos grupos de selección única (role="radiogroup"). Operación conserva
-    // .filter-tab + data-filter (contrato que también lee el buscador del
-    // Home); Categoría usa data-categoria.
+    // Operación: casillas acumulativas (conserva .filter-tab + data-filter,
+    // contrato que también lee el buscador del Home). Categoría: grupo de
+    // selección única (role="radiogroup") con data-categoria.
     var opTabs = Array.prototype.slice.call(document.querySelectorAll('.filter-tab[data-filter]'));
     var catTabs = Array.prototype.slice.call(document.querySelectorAll('.filter-tab[data-categoria]'));
     var cards = Array.prototype.slice.call(document.querySelectorAll('.propiedades__grid .property-card'));
@@ -239,32 +579,37 @@ document.addEventListener('DOMContentLoaded', function () {
     function liberarEspera() {
       document.documentElement.classList.remove('catalogo-filtrando', 'catalogo-con-chips');
     }
-    if (!form || cards.length === 0) {
+    var srcTipo = document.getElementById('f-tipo');
+    var srcUbic = document.getElementById('f-ubicacion');
+    var datosPrecio = document.getElementById('f-precio');
+    var hostTipo = document.getElementById('f-tipo-host');
+    var hostUbic = document.getElementById('f-ubicacion-host');
+    var hostPrecio = document.getElementById('f-precio-host');
+    if (!form || cards.length === 0 || !srcTipo || !srcUbic || !datosPrecio || !hostTipo || !hostUbic || !hostPrecio) {
       liberarEspera();
       return;
     }
 
     var isEn = (document.documentElement.lang || '').toLowerCase().indexOf('en') === 0;
     var TXT = isEn ? {
-      noLimit: 'No limit', upTo: 'Up to', perMonth: '/ month',
-      type: 'Type', location: 'Location', budget: 'Budget', remove: 'Remove filter',
-      one: 'property', many: 'properties', of: 'of', noStock: '(no listings)'
+      upTo: 'Up to', over: 'Over',
+      type: 'Type', location: 'Location', price: 'Price', remove: 'Remove filter',
+      one: 'property', many: 'properties', of: 'of', noStock: '(no listings)',
+      allTypes: 'All types', allLocations: 'All locations', anyPrice: 'Any price',
+      types: 'types', locations: 'locations', ranges: 'ranges',
+      clear: 'Clear', typeLabel: 'Property type', priceNote: 'Each range includes its upper limit.'
     } : {
-      noLimit: 'Sin límite', upTo: 'Hasta', perMonth: '/ mes',
-      type: 'Tipo', location: 'Ubicación', budget: 'Presupuesto', remove: 'Quitar filtro',
-      one: 'propiedad', many: 'propiedades', of: 'de', noStock: '(sin propiedades publicadas)'
+      upTo: 'Hasta', over: 'Más de',
+      type: 'Tipo', location: 'Ubicación', price: 'Precio', remove: 'Quitar filtro',
+      one: 'propiedad', many: 'propiedades', of: 'de', noStock: '(sin propiedades publicadas)',
+      allTypes: 'Todos los tipos', allLocations: 'Todas las ubicaciones', anyPrice: 'Cualquier precio',
+      types: 'tipos', locations: 'ubicaciones', ranges: 'rangos',
+      clear: 'Limpiar', typeLabel: 'Tipo de propiedad', priceNote: 'Cada rango incluye su límite superior.'
     };
 
-    var selTipo = document.getElementById('f-tipo');
-    var selUbic = document.getElementById('f-ubicacion');
-    var selMax = document.getElementById('f-max');
-    var chipsEl = document.getElementById('f-chips');
-    var counterEl = document.getElementById('f-contador');
-    var clearBtn = document.getElementById('f-limpiar');
-    var emptyEl = document.getElementById('f-sin-resultados');
-    var emptyClearBtn = document.getElementById('f-sin-resultados-limpiar');
-    var KNOWN = ['op', 'cat', 'tipo', 'region', 'zona', 'max'];
+    var KNOWN = ['op', 'cat', 'tipo', 'region', 'zona', 'precio', 'max'];
     var has = function (obj, key) { return Object.prototype.hasOwnProperty.call(obj, key); };
+    var F = mkFiltros;
 
     // ----- Catálogo derivado de lo que renderizó el build -----
     var OPS = [];
@@ -285,17 +630,21 @@ document.addEventListener('DOMContentLoaded', function () {
     // no puede contradecir a ninguna categoría (el resultado será cero).
     var TIPOS = {};
     var TIPO_LABEL = {};
-    Array.prototype.slice.call(selTipo.options).forEach(function (o) {
+    var TIPO_LISTADOS = []; // con inventario, en orden de catálogo
+    Array.prototype.slice.call(srcTipo.options).forEach(function (o) {
       if (o.value) {
         TIPOS[o.value] = (o.getAttribute('data-cats') || '').split(' ');
         TIPO_LABEL[o.value] = o.text;
+        TIPO_LISTADOS.push(o.value);
       }
     });
+    var TIPO_ORDEN = TIPO_LISTADOS.slice();
     var catalogoTipos = null;
     try { catalogoTipos = JSON.parse(form.getAttribute('data-tipos') || 'null'); } catch (err) { catalogoTipos = null; }
     if (catalogoTipos && catalogoTipos.length) {
       catalogoTipos.forEach(function (t) {
         TIPO_LABEL[t.v] = t.l;
+        if (TIPO_ORDEN.indexOf(t.v) === -1) TIPO_ORDEN.push(t.v);
         if (!has(TIPOS, t.v)) TIPOS[t.v] = null;
       });
     }
@@ -312,46 +661,71 @@ document.addEventListener('DOMContentLoaded', function () {
     var REGIONES = {};
     var ZONAS = {};
     var UBIC_LABEL = {};
+    var UBIC_ORDEN = [];
     var catalogo = null;
     try { catalogo = JSON.parse(form.getAttribute('data-ubicaciones') || 'null'); } catch (err) { catalogo = null; }
     if (catalogo && catalogo.length) {
       catalogo.forEach(function (u) {
         UBIC_LABEL[u.t + ':' + u.v] = u.l;
+        UBIC_ORDEN.push(u.t + ':' + u.v);
         if (u.t === 'region') REGIONES[u.v] = true;
         if (u.t === 'zona') ZONAS[u.v] = u.r;
       });
     } else {
-      Array.prototype.slice.call(selUbic.options).forEach(function (o) {
+      Array.prototype.slice.call(srcUbic.options).forEach(function (o) {
         var v = o.value.split(':');
         if (v[0] === 'region') REGIONES[v[1]] = true;
         if (v[0] === 'zona') ZONAS[v[1]] = o.getAttribute('data-region');
-        if (o.value) UBIC_LABEL[o.value] = o.text.replace(/\s+—.*$/, '');
+        if (o.value) { UBIC_LABEL[o.value] = o.text.replace(/\s+—.*$/, ''); UBIC_ORDEN.push(o.value); }
       });
     }
-
-    // Presupuestos ofrecidos: UNA lista para todas las pestañas
-    // (data-presupuestos). Si el atributo faltara, se cae a la unión de
-    // las listas por operación que el Home también lee.
-    var BUDGETS = [];
-    (function () {
-      var raw = selMax.getAttribute('data-presupuestos');
-      if (!raw) {
-        raw = (selMax.getAttribute('data-presupuestos-venta') || '') + ',' + (selMax.getAttribute('data-presupuestos-alquiler') || '');
-      }
-      raw.split(',').forEach(function (v) {
-        var n = parseInt(v, 10);
-        if (n > 0 && BUDGETS.indexOf(n) === -1) BUDGETS.push(n);
-      });
-      BUDGETS.sort(function (a, b) { return a - b; });
-    })();
-
     function regionDe(zona) {
       return zona && has(ZONAS, zona) ? ZONAS[zona] : '';
     }
 
+    // Estructura del selector de ubicación: tal como la dejó el build
+    // (grupo por región: "todas las zonas" + zonas con inventario).
+    var UBIC_GRUPOS = [];  // [{ etiqueta, region, zonas: [{ value, label }] }]
+    var ZONAS_LISTADAS = {}; // region -> [zona]
+    Array.prototype.slice.call(srcUbic.children).forEach(function (nodo) {
+      if (nodo.tagName !== 'OPTGROUP') return;
+      var g = { etiqueta: nodo.label, region: '', zonas: [] };
+      Array.prototype.slice.call(nodo.children).forEach(function (o) {
+        var v = o.value.split(':');
+        if (v[0] === 'region') g.region = v[1];
+        if (v[0] === 'zona') g.zonas.push({ value: o.value, label: o.text });
+      });
+      if (g.region) {
+        ZONAS_LISTADAS[g.region] = g.zonas.map(function (z) { return z.value.split(':')[1]; });
+        UBIC_GRUPOS.push(g);
+      }
+    });
+    var ctxUbic = {
+      regionDe: regionDe,
+      zonasDe: function (r) { return ZONAS_LISTADAS[r] || []; }
+    };
+
+    // Precio: límites (data-presupuestos) -> rangos consecutivos; solo se
+    // ofrecen los que tienen propiedades (los demás siguen siendo válidos
+    // en una URL, con cero resultados).
+    var LIMITES = [];
+    (datosPrecio.getAttribute('data-presupuestos') || '').split(',').forEach(function (v) {
+      var n = parseInt(v, 10);
+      if (n > 0 && LIMITES.indexOf(n) === -1) LIMITES.push(n);
+    });
+    LIMITES.sort(function (a, b) { return a - b; });
+    var PRECIOS = [];
+    cards.forEach(function (c) {
+      var n = Number(c.getAttribute('data-precio'));
+      if (n > 0) PRECIOS.push(n);
+    });
+    var FICHAS_LISTADAS = F.fichasDeLimites(LIMITES).filter(function (t) {
+      return PRECIOS.some(function (p) { return F.dentroDeFicha(t, p); });
+    });
+
     // ----- Estado y URL -----
     function emptyState() {
-      return { op: '', cat: '', tipo: '', region: '', zona: '', max: 0 };
+      return { op: [], cat: '', tipo: [], region: [], zona: [], precio: [] };
     }
 
     // Lee y NORMALIZA el estado desde una query string: ignora
@@ -359,29 +733,17 @@ document.addEventListener('DOMContentLoaded', function () {
     function parseState(search) {
       var p = new URLSearchParams(search);
       var s = emptyState();
-      var op = p.get('op');
-      if (op && OPS.indexOf(op) !== -1) s.op = op;
+      s.op = F.ordenar(F.lista(p, 'op').filter(function (v) { return OPS.indexOf(v) !== -1; }), OPS);
       var cat = p.get('cat');
       if (cat && CATS.indexOf(cat) !== -1) s.cat = cat;
-      var tipo = p.get('tipo');
-      if (tipo && has(TIPOS, tipo)) s.tipo = tipo;
-      if (s.cat && s.tipo && !tipoCompatible(s.tipo, s.cat)) s.cat = '';
-      var zona = p.get('zona');
-      var region = p.get('region');
-      if (zona && has(ZONAS, zona)) {
-        s.zona = zona;
-      } else if (region && has(REGIONES, region)) {
-        s.region = region;
-      }
-      // El presupuesto no depende de la operación. Vale cualquier entero
-      // positivo razonable (también los de enlaces antiguos que ya no
-      // están en la lista, p. ej. 7500): se muestra como opción
-      // temporal. Se rechaza lo no numérico, decimal, negativo o cero.
-      var max = p.get('max');
-      if (max && /^\d{1,9}$/.test(max)) {
-        var n = parseInt(max, 10);
-        if (n > 0) s.max = n;
-      }
+      s.tipo = F.ordenar(F.lista(p, 'tipo').filter(function (v) { return has(TIPOS, v); }), TIPO_ORDEN);
+      if (s.cat && s.tipo.some(function (t) { return !tipoCompatible(t, s.cat); })) s.cat = '';
+      s.region = F.ordenar(F.lista(p, 'region').filter(function (v) { return has(REGIONES, v); }), UBIC_ORDEN.map(function (u) { return u.split(':')[1]; }));
+      // Una zona cuya región ya está marcada es redundante.
+      s.zona = F.ordenar(F.lista(p, 'zona').filter(function (v) {
+        return has(ZONAS, v) && s.region.indexOf(regionDe(v)) === -1;
+      }), UBIC_ORDEN.map(function (u) { return u.split(':')[1]; }));
+      s.precio = F.parsePrecio(p, LIMITES);
       return s;
     }
 
@@ -390,18 +752,18 @@ document.addEventListener('DOMContentLoaded', function () {
     function buildSearch(state, baseSearch) {
       var p = new URLSearchParams(baseSearch);
       KNOWN.forEach(function (k) { p.delete(k); });
-      if (state.op) p.set('op', state.op);
+      state.op.forEach(function (v) { p.append('op', v); });
       if (state.cat) p.set('cat', state.cat);
-      if (state.tipo) p.set('tipo', state.tipo);
-      if (state.region) p.set('region', state.region);
-      if (state.zona) p.set('zona', state.zona);
-      if (state.max) p.set('max', String(state.max));
+      state.tipo.forEach(function (v) { p.append('tipo', v); });
+      state.region.forEach(function (v) { p.append('region', v); });
+      state.zona.forEach(function (v) { p.append('zona', v); });
+      state.precio.forEach(function (v) { p.append('precio', v); });
       var q = p.toString();
       return q ? '?' + q : '';
     }
 
     function hasFilters(s) {
-      return !!(s.op || s.cat || s.tipo || s.region || s.zona || s.max);
+      return !!(s.op.length || s.cat || s.tipo.length || s.region.length || s.zona.length || s.precio.length);
     }
 
     // Cadena para el evento Search: solo parámetros públicos del filtro.
@@ -410,93 +772,168 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function matches(card, s) {
-      if (s.op && card.getAttribute('data-op') !== s.op) return false;
+      if (s.op.length && s.op.indexOf(card.getAttribute('data-op')) === -1) return false;
       if (s.cat && card.getAttribute('data-cat') !== s.cat) return false;
-      if (s.tipo && card.getAttribute('data-tipo') !== s.tipo) return false;
-      var zona = card.getAttribute('data-zona') || '';
-      if (s.zona && zona !== s.zona) return false;
-      if (s.region && regionDe(zona) !== s.region) return false;
-      if (s.max) {
-        var precio = card.getAttribute('data-precio');
-        if (!precio || Number(precio) > s.max) return false;
+      if (s.tipo.length && s.tipo.indexOf(card.getAttribute('data-tipo')) === -1) return false;
+      if (s.region.length || s.zona.length) {
+        var zona = card.getAttribute('data-zona') || '';
+        if (!zona || (s.zona.indexOf(zona) === -1 && s.region.indexOf(regionDe(zona)) === -1)) return false;
+      }
+      if (s.precio.length) {
+        var precio = Number(card.getAttribute('data-precio'));
+        if (!(precio > 0) || !F.cumplePrecio(precio, s.precio)) return false;
       }
       return true;
     }
 
-    function formatMoney(n) {
-      return '$' + n.toLocaleString('en-US');
+    // ----- Selectores múltiples (Tipo, Ubicación, Precio) -----
+    var state = parseState(window.location.search);
+
+    function copy(s) {
+      return { op: s.op.slice(), cat: s.cat, tipo: s.tipo.slice(), region: s.region.slice(), zona: s.zona.slice(), precio: s.precio.slice() };
     }
 
-    function budgetLabel(op, n) {
-      return TXT.upTo + ' ' + formatMoney(n) + (op === 'alquiler' ? ' ' + TXT.perMonth : '');
-    }
+    var multiTipo = F.crearMulti({
+      id: 'f-tipo-btn', ariaLabel: TXT.typeLabel, placeholder: TXT.allTypes,
+      triggerClass: 'prop-buscador__select', textoLimpiar: TXT.clear,
+      alAlternar: function (v) {
+        var next = copy(state);
+        var i = next.tipo.indexOf(v);
+        if (i !== -1) next.tipo.splice(i, 1);
+        else {
+          next.tipo.push(v);
+          next.tipo = F.ordenar(next.tipo, TIPO_ORDEN);
+          if (next.cat && !tipoCompatible(v, next.cat)) next.cat = '';
+        }
+        commit(next, trackString(next));
+      },
+      alLimpiar: function () {
+        var next = copy(state);
+        next.tipo = [];
+        commit(next, trackString(next));
+      }
+    });
+    var multiUbic = F.crearMulti({
+      id: 'f-ubicacion-btn', ariaLabel: TXT.location, placeholder: TXT.allLocations,
+      triggerClass: 'prop-buscador__select', textoLimpiar: TXT.clear,
+      alAlternar: function (v) {
+        var next = copy(state);
+        var r = F.alternarUbicacion({ region: next.region, zona: next.zona }, v, ctxUbic);
+        var orden = UBIC_ORDEN.map(function (u) { return u.split(':')[1]; });
+        next.region = F.ordenar(r.region, orden);
+        next.zona = F.ordenar(r.zona, orden);
+        commit(next, trackString(next));
+      },
+      alLimpiar: function () {
+        var next = copy(state);
+        next.region = [];
+        next.zona = [];
+        commit(next, trackString(next));
+      }
+    });
+    var multiPrecio = F.crearMulti({
+      id: 'f-precio-btn', ariaLabel: TXT.price, placeholder: TXT.anyPrice,
+      triggerClass: 'prop-buscador__select', claseWrap: 'mk-multi--end', textoLimpiar: TXT.clear, nota: TXT.priceNote,
+      alAlternar: function (t) {
+        var next = copy(state);
+        var i = next.precio.indexOf(t);
+        if (i !== -1) next.precio.splice(i, 1);
+        else next.precio = F.ordenarFichas(next.precio.concat([t]));
+        commit(next, trackString(next));
+      },
+      alLimpiar: function () {
+        var next = copy(state);
+        next.precio = [];
+        commit(next, trackString(next));
+      }
+    });
+    hostTipo.appendChild(multiTipo.el);
+    hostUbic.appendChild(multiUbic.el);
+    hostPrecio.appendChild(multiPrecio.el);
+
+    function etiquetaPrecio(t) { return F.etiquetaFicha(t, TXT); }
+    function etiquetaUbic(clave) { return UBIC_LABEL[clave] || clave; }
 
     // ----- Render -----
-    var renderedBudgetKey = null;
+    function resumen(n, uno, plural) {
+      return n === 0 ? null : n === 1 ? uno : n + ' ' + plural;
+    }
 
-    // El selector de presupuesto está siempre habilitado. Las opciones
-    // solo se reconstruyen cuando cambia lo que muestran: el sufijo
-    // "/ mes" (únicamente con la pestaña Alquiler) o la opción temporal
-    // de un valor válido que no está en la lista (p. ej. ?max=7500).
-    function renderBudget(s) {
-      var extra = s.max && BUDGETS.indexOf(s.max) === -1 ? s.max : 0;
-      var key = (s.op === 'alquiler' ? 'r' : 'v') + ':' + extra;
-      if (renderedBudgetKey !== key) {
-        var list = BUDGETS.slice();
-        if (extra) {
-          list.push(extra);
-          list.sort(function (a, b) { return a - b; });
-        }
-        selMax.innerHTML = '';
-        selMax.appendChild(new Option(TXT.noLimit, ''));
-        list.forEach(function (n) {
-          var o = new Option(budgetLabel(s.op, n), String(n));
-          if (n === extra) o.setAttribute('data-temporal', '1');
-          selMax.appendChild(o);
+    function renderTipo(s) {
+      var lista = TIPO_LISTADOS.slice();
+      s.tipo.forEach(function (t) { if (lista.indexOf(t) === -1) lista.push(t); });
+      multiTipo.setOpciones(lista.map(function (t) {
+        return { value: t, label: TIPO_LABEL[t] + (TIPO_LISTADOS.indexOf(t) === -1 ? ' ' + TXT.noStock : '') };
+      }));
+      var est = {};
+      lista.forEach(function (t) {
+        var marcada = s.tipo.indexOf(t) !== -1;
+        // Con una categoría activa solo se ofrecen los tipos compatibles.
+        est[t] = { c: marcada, d: !marcada && !tipoCompatible(t, s.cat) };
+      });
+      multiTipo.actualizar(est, resumen(s.tipo.length, TIPO_LABEL[s.tipo[0]], TXT.types) || TXT.allTypes, s.tipo.length);
+    }
+
+    function renderUbic(s) {
+      var opciones = [];
+      var est = {};
+      var listados = {};
+      UBIC_GRUPOS.forEach(function (g) {
+        opciones.push({ value: 'region:' + g.region, label: g.etiqueta + ' — ' + (isEn ? 'all areas' : 'todas las zonas'), grupo: g.etiqueta, fuerte: true });
+        listados['region:' + g.region] = true;
+        g.zonas.forEach(function (z) {
+          opciones.push({ value: z.value, label: z.label, grupo: g.etiqueta, hijo: true });
+          listados[z.value] = true;
         });
-        renderedBudgetKey = key;
-      }
-      selMax.disabled = false;
-      selMax.value = s.max ? String(s.max) : '';
-    }
-
-    // Los selectores solo listan opciones con propiedades. Si el filtro
-    // activo es un valor válido SIN inventario (una zona, una región o
-    // un tipo del catálogo), se añade una opción temporal para que el
-    // control refleje el filtro activo; se retira al cambiar de valor.
-    function renderTemporal(select, wanted, label) {
-      var tmp = select.querySelector('option[data-temporal]');
-      if (tmp && tmp.value !== wanted) {
-        tmp.parentNode.removeChild(tmp);
-        tmp = null;
-      }
-      if (wanted && !tmp) {
-        var listed = Array.prototype.slice.call(select.options).some(function (o) { return o.value === wanted; });
-        if (!listed) {
-          var op = new Option(label + ' ' + TXT.noStock, wanted);
-          op.setAttribute('data-temporal', '1');
-          select.appendChild(op);
+      });
+      // Valores válidos sin inventario: se muestran para reflejar el filtro activo.
+      var extras = s.region.map(function (r) { return 'region:' + r; }).concat(s.zona.map(function (z) { return 'zona:' + z; }));
+      extras.forEach(function (c) {
+        if (!listados[c]) opciones.push({ value: c, label: etiquetaUbic(c) + ' ' + TXT.noStock, grupo: isEn ? 'Other' : 'Otras', fuerte: c.indexOf('region:') === 0 });
+      });
+      multiUbic.setOpciones(opciones);
+      opciones.forEach(function (o) {
+        var v = o.value.split(':');
+        if (v[0] === 'region') {
+          var zl = ZONAS_LISTADAS[v[1]] || [];
+          var algunaZona = zl.some(function (z) { return s.zona.indexOf(z) !== -1; });
+          est[o.value] = { c: s.region.indexOf(v[1]) !== -1, m: algunaZona };
+        } else {
+          est[o.value] = { c: s.zona.indexOf(v[1]) !== -1 || s.region.indexOf(regionDe(v[1])) !== -1 };
         }
-      }
-      select.value = wanted;
+      });
+      var total = s.region.length + s.zona.length;
+      var primera = s.region.length ? 'region:' + s.region[0] : s.zona.length ? 'zona:' + s.zona[0] : '';
+      var textoUno = primera ? etiquetaUbic(primera) : '';
+      multiUbic.actualizar(est, resumen(total, textoUno, TXT.locations) || TXT.allLocations, total);
     }
 
-    function renderLocation(s) {
-      var wanted = s.zona ? 'zona:' + s.zona : s.region ? 'region:' + s.region : '';
-      renderTemporal(selUbic, wanted, wanted ? UBIC_LABEL[wanted] : '');
+    function renderPrecio(s) {
+      var lista = FICHAS_LISTADAS.slice();
+      var extras = s.precio.filter(function (t) { return lista.indexOf(t) === -1; });
+      lista = F.ordenarFichas(lista.concat(extras));
+      multiPrecio.setOpciones(lista.map(function (t) {
+        return { value: t, label: etiquetaPrecio(t) + (extras.indexOf(t) !== -1 && !PRECIOS.some(function (p) { return F.dentroDeFicha(t, p); }) ? ' ' + TXT.noStock : '') };
+      }));
+      var est = {};
+      lista.forEach(function (t) { est[t] = { c: s.precio.indexOf(t) !== -1 }; });
+      multiPrecio.actualizar(est, resumen(s.precio.length, etiquetaPrecio(s.precio[0] || ''), TXT.ranges) || TXT.anyPrice, s.precio.length);
     }
 
     function renderChips(s) {
       var items = [];
-      if (s.tipo) {
-        items.push({ key: 'tipo', label: TXT.type + ': ' + TIPO_LABEL[s.tipo] });
-      }
-      if (s.region || s.zona) {
-        items.push({ key: 'ubicacion', label: TXT.location + ': ' + UBIC_LABEL[s.zona ? 'zona:' + s.zona : 'region:' + s.region] });
-      }
-      if (s.max) {
-        items.push({ key: 'max', label: TXT.budget + ': ' + budgetLabel(s.op, s.max) });
-      }
+      s.tipo.forEach(function (t) {
+        items.push({ key: 'tipo:' + t, label: TXT.type + ': ' + TIPO_LABEL[t] });
+      });
+      s.region.forEach(function (r) {
+        items.push({ key: 'region:' + r, label: TXT.location + ': ' + etiquetaUbic('region:' + r) });
+      });
+      s.zona.forEach(function (z) {
+        items.push({ key: 'zona:' + z, label: TXT.location + ': ' + etiquetaUbic('zona:' + z) });
+      });
+      s.precio.forEach(function (t) {
+        items.push({ key: 'precio:' + t, label: TXT.price + ': ' + etiquetaPrecio(t) });
+      });
       chipsEl.innerHTML = '';
       items.forEach(function (it) {
         var li = document.createElement('li');
@@ -516,31 +953,32 @@ document.addEventListener('DOMContentLoaded', function () {
       chipsEl.hidden = items.length === 0;
     }
 
-    function render(s) {
-      // Grupos Operación y Categoría: una opción activa en cada uno
-      // ("all" = sin filtro). Patrón radiogroup: aria-checked y tabindex
-      // itinerante (solo la opción activa entra en el orden de tabulación).
-      function marcarGrupo(grupo, atributo, activa) {
-        grupo.forEach(function (t) {
-          var on = t.getAttribute(atributo) === activa;
-          t.classList.toggle('filter-tab--active', on);
-          t.setAttribute('aria-checked', on ? 'true' : 'false');
-          t.tabIndex = on ? 0 : -1;
-        });
-      }
-      marcarGrupo(opTabs, 'data-filter', s.op || 'all');
-      marcarGrupo(catTabs, 'data-categoria', s.cat || 'all');
+    var chipsEl = document.getElementById('f-chips');
+    var counterEl = document.getElementById('f-contador');
+    var clearBtn = document.getElementById('f-limpiar');
+    var emptyEl = document.getElementById('f-sin-resultados');
+    var emptyClearBtn = document.getElementById('f-sin-resultados-limpiar');
 
-      // Tipos: con una categoría activa solo se ofrecen los compatibles.
-      Array.prototype.slice.call(selTipo.options).forEach(function (o) {
-        if (!o.value) return;
-        var ok = tipoCompatible(o.value, s.cat);
-        o.disabled = !ok;
-        o.hidden = !ok;
+    function render(s) {
+      // Operación: casillas acumulativas ("Todos" activo = sin restricción).
+      // Categoría: una opción activa ("all" = sin filtro), patrón radiogroup
+      // con tabindex itinerante.
+      opTabs.forEach(function (t) {
+        var v = t.getAttribute('data-filter');
+        var on = v === 'all' ? s.op.length === 0 : s.op.indexOf(v) !== -1;
+        t.classList.toggle('filter-tab--active', on);
+        t.setAttribute('aria-checked', on ? 'true' : 'false');
       });
-      renderTemporal(selTipo, s.tipo, s.tipo ? TIPO_LABEL[s.tipo] : '');
-      renderLocation(s);
-      renderBudget(s);
+      catTabs.forEach(function (t) {
+        var on = t.getAttribute('data-categoria') === (s.cat || 'all');
+        t.classList.toggle('filter-tab--active', on);
+        t.setAttribute('aria-checked', on ? 'true' : 'false');
+        t.tabIndex = on ? 0 : -1;
+      });
+
+      renderTipo(s);
+      renderUbic(s);
+      renderPrecio(s);
 
       var visibles = 0;
       cards.forEach(function (card) {
@@ -562,8 +1000,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ----- Cambios del usuario -----
-    var state = parseState(window.location.search);
-
     function track(cadena) {
       if (typeof window.makomTrack === 'function') {
         window.makomTrack('Search', null, {
@@ -585,24 +1021,29 @@ document.addEventListener('DOMContentLoaded', function () {
       track(cadena);
     }
 
-    function copy(s) {
-      return { op: s.op, cat: s.cat, tipo: s.tipo, region: s.region, zona: s.zona, max: s.max };
-    }
+    // Operación: cada casilla suma o quita su operación; "Todos" las limpia.
+    // La cadena de analítica es la de siempre: el nombre de la opción
+    // pulsada ('all' = "Todos").
+    opTabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        var v = this.getAttribute('data-filter');
+        var next = copy(state);
+        if (v === 'all') {
+          next.op = [];
+        } else {
+          var i = next.op.indexOf(v);
+          if (i !== -1) next.op.splice(i, 1);
+          else next.op = F.ordenar(next.op.concat([v]), OPS);
+        }
+        commit(next, v);
+      });
+    });
 
-    // Operación y categoría son independientes: cambiar una no toca la otra.
-    // Tipo, ubicación y presupuesto se conservan; solo se descarta el tipo
-    // que no pertenece a la categoría elegida. La cadena de analítica es
-    // la de siempre: el nombre de la opción pulsada ('all' = "Todos"/"Todas").
-    function irAOperacion(valor) {
-      var next = copy(state);
-      next.op = valor === 'venta' || valor === 'alquiler' ? valor : '';
-      commit(next, valor);
-    }
-
+    // Categoría: selección única; descarta los tipos que no pertenecen a la elegida.
     function irACategoria(valor) {
       var next = copy(state);
       next.cat = valor === 'comercial' || valor === 'residencial' ? valor : '';
-      if (next.tipo && next.cat && !tipoCompatible(next.tipo, next.cat)) next.tipo = '';
+      if (next.cat) next.tipo = next.tipo.filter(function (t) { return tipoCompatible(t, next.cat); });
       commit(next, valor);
     }
 
@@ -636,29 +1077,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
       });
     }
-    enlazarGrupo(opTabs, 'data-filter', irAOperacion);
     enlazarGrupo(catTabs, 'data-categoria', irACategoria);
-
-    selTipo.addEventListener('change', function () {
-      var next = copy(state);
-      next.tipo = selTipo.value;
-      if (next.tipo && next.cat && !tipoCompatible(next.tipo, next.cat)) next.cat = '';
-      commit(next, trackString(next));
-    });
-
-    selUbic.addEventListener('change', function () {
-      var next = copy(state);
-      var v = selUbic.value.split(':');
-      next.region = v[0] === 'region' ? v[1] : '';
-      next.zona = v[0] === 'zona' ? v[1] : '';
-      commit(next, trackString(next));
-    });
-
-    selMax.addEventListener('change', function () {
-      var next = copy(state);
-      next.max = selMax.value ? parseInt(selMax.value, 10) : 0;
-      commit(next, trackString(next));
-    });
 
     function limpiar() {
       commit(emptyState(), 'all');
@@ -670,17 +1089,23 @@ document.addEventListener('DOMContentLoaded', function () {
       if (activa) activa.focus();
     });
 
+    // Quitar una selección desde su chip: solo esa opción; el foco pasa al
+    // selector de ese filtro.
     chipsEl.addEventListener('click', function (e) {
       var btn = e.target.closest ? e.target.closest('[data-quitar]') : null;
       if (!btn) return;
-      var key = btn.getAttribute('data-quitar');
+      var par = btn.getAttribute('data-quitar').split(':');
+      var clave = par[0];
+      var valor = par.slice(1).join(':');
       var next = copy(state);
-      var destino = selTipo;
-      if (key === 'tipo') { next.tipo = ''; destino = selTipo; }
-      if (key === 'ubicacion') { next.region = ''; next.zona = ''; destino = selUbic; }
-      if (key === 'max') { next.max = 0; destino = selMax; }
+      var destino = multiTipo;
+      var quitar = function (arr) { var i = arr.indexOf(valor); if (i !== -1) arr.splice(i, 1); };
+      if (clave === 'tipo') { quitar(next.tipo); destino = multiTipo; }
+      if (clave === 'region') { quitar(next.region); destino = multiUbic; }
+      if (clave === 'zona') { quitar(next.zona); destino = multiUbic; }
+      if (clave === 'precio') { quitar(next.precio); destino = multiPrecio; }
       commit(next, trackString(next));
-      destino.focus();
+      destino.trigger.focus();
     });
 
     form.addEventListener('submit', function (e) { e.preventDefault(); });
@@ -691,9 +1116,10 @@ document.addEventListener('DOMContentLoaded', function () {
       render(state);
     });
 
-    // Carga inicial (incluye URLs compartidas): se aplica el estado de
-    // la URL sin medir y, si traía algo inválido o contradictorio, se
-    // corrige la URL sin crear una entrada de historial.
+    // Carga inicial (incluye URLs compartidas y enlaces antiguos): se aplica
+    // el estado de la URL sin medir y, si traía algo inválido, contradictorio
+    // o en formato antiguo (?max=), se corrige la URL sin crear una entrada
+    // de historial.
     render(state);
     var normalizada = buildSearch(state, window.location.search);
     if (normalizada !== window.location.search) {
@@ -1865,10 +2291,13 @@ document.addEventListener('DOMContentLoaded', function () {
   /* ============================================================
      19. BUSCADOR DEL HERO (Home ES/EN)
      La barra solo ARMA UNA URL hacia el catálogo (?op=&tipo=&region=
-     &zona=&max=); el motor de filtrado vive únicamente en el catálogo
-     (sección 6). Las opciones de tipo, ubicación y presupuesto se leen
-     de la propia página del catálogo (en el idioma de la Home), así que
-     no se duplican datos aquí. Móvil: un enlace "Buscar propiedades"
+     &zona=&precio=, con un valor repetido por selección); el motor de
+     filtrado vive únicamente en el catálogo (sección 6). Los cuatro
+     filtros (Operación, Tipo, Ubicación y Precio) son independientes y
+     acumulativos, igual que en el catálogo (componente de la sección
+     5b). Las opciones de tipo, ubicación y rangos de precio se leen de
+     la propia página del catálogo (en el idioma de la Home), así que no
+     se duplican datos aquí. Móvil: un enlace "Buscar propiedades"
      se convierte en botón que abre un panel accesible; si JavaScript
      falla, sigue siendo un enlace válido al catálogo.
   ============================================================ */
@@ -1880,10 +2309,17 @@ document.addEventListener('DOMContentLoaded', function () {
     var isEn = (document.documentElement.lang || '').toLowerCase().indexOf('en') === 0;
     var catalogPath = root.getAttribute('data-catalogo') || (isEn ? '/en/properties/' : '/propiedades/');
     var TXT = isEn ? {
-      noLimit: 'No limit', upTo: 'Up to', perMonth: '/ month', chooseOp: 'Choose transaction', unavailable: 'No limit', loading: 'Loading…'
+      upTo: 'Up to', over: 'Over', loading: 'Loading…',
+      buyRent: 'Buy and rent', allTypes: 'All types', allLocations: 'All locations', anyPrice: 'Any price',
+      types: 'types', locations: 'locations', ranges: 'ranges', clear: 'Clear', allAreas: 'all areas',
+      priceNote: 'Each range includes its upper limit.'
     } : {
-      noLimit: 'Sin límite', upTo: 'Hasta', perMonth: '/ mes', chooseOp: 'Elija operación', unavailable: 'Sin límite', loading: 'Cargando…'
+      upTo: 'Hasta', over: 'Más de', loading: 'Cargando…',
+      buyRent: 'Comprar y alquilar', allTypes: 'Todos los tipos', allLocations: 'Todas las ubicaciones', anyPrice: 'Cualquier precio',
+      types: 'tipos', locations: 'ubicaciones', ranges: 'rangos', clear: 'Limpiar', allAreas: 'todas las zonas',
+      priceNote: 'Cada rango incluye su límite superior.'
     };
+    var F = mkFiltros;
 
     var selOp = document.getElementById('hero-search-op');
     var selTipo = document.getElementById('hero-search-tipo');
@@ -1897,7 +2333,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // compacto + panel (móvil y tablet); desde 1024px es la barra.
     var mobileQuery = window.matchMedia('(max-width: 1023px)');
 
-    var presets = { venta: [], alquiler: [] };
     // idle | loading | ready | failed. Es el único guardián de la carga:
     // el catálogo se pide UNA vez por vida de la página, aunque varias
     // señales de intención lleguen a la vez (y no se reintenta si falla).
@@ -1927,62 +2362,168 @@ document.addEventListener('DOMContentLoaded', function () {
     if (advanced) advanced.setAttribute('href', plainHref);
     if (trigger) trigger.setAttribute('href', plainHref);
 
-    // ----- Opciones tomadas del catálogo -----
-    function renderMax() {
-      var op = selOp.value;
-      var previous = selMax.value;
-      selMax.innerHTML = '';
+    // ----- Estado: cuatro filtros independientes y acumulativos -----
+    var hs = { op: [], tipo: [], region: [], zona: [], precio: [] };
+    var OPS_HERO = [];
+    var opLabels = {};
+    var opPlaceholder = '';
+    Array.prototype.slice.call(selOp.options).forEach(function (o) {
+      if (o.value) { OPS_HERO.push(o.value); opLabels[o.value] = o.text; } else { opPlaceholder = o.text; }
+    });
+    var datos = { tipos: [], grupos: [], zonasListadas: {}, regionDe: {}, limites: [], fichas: [], ordenUbic: [] };
+    var ctxUbic = {
+      regionDe: function (z) { return datos.regionDe[z] || ''; },
+      zonasDe: function (r) { return datos.zonasListadas[r] || []; }
+    };
+
+    function etiquetaDe(selectEl) {
+      var l = document.querySelector('label[for="' + selectEl.id + '"]');
+      return l ? l.textContent : '';
+    }
+
+    function crear(selectEl, cfg) {
+      cfg.id = selectEl.id;
+      cfg.ariaLabel = etiquetaDe(selectEl);
+      cfg.triggerClass = 'hero-search__select';
+      cfg.claseWrap = 'mk-multi--hero' + (cfg.fin ? ' mk-multi--end' : '');
+      cfg.textoLimpiar = TXT.clear;
+      var w = F.crearMulti(cfg);
+      selectEl.parentNode.replaceChild(w.el, selectEl);
+      return w;
+    }
+
+    var mOp = crear(selOp, {
+      placeholder: opPlaceholder,
+      alAlternar: function (v) {
+        var i = hs.op.indexOf(v);
+        if (i !== -1) hs.op.splice(i, 1); else hs.op = F.ordenar(hs.op.concat([v]), OPS_HERO);
+        renderHero();
+      },
+      alLimpiar: function () { hs.op = []; renderHero(); }
+    });
+    var mTipo = crear(selTipo, {
+      placeholder: TXT.allTypes,
+      alAlternar: function (v) {
+        var i = hs.tipo.indexOf(v);
+        if (i !== -1) hs.tipo.splice(i, 1); else hs.tipo.push(v);
+        hs.tipo = F.ordenar(hs.tipo, datos.tipos.map(function (t) { return t.value; }));
+        renderHero();
+      },
+      alLimpiar: function () { hs.tipo = []; renderHero(); }
+    });
+    var mUbic = crear(selUbic, {
+      placeholder: TXT.allLocations, fin: true,
+      alAlternar: function (v) {
+        var r = F.alternarUbicacion({ region: hs.region, zona: hs.zona }, v, ctxUbic);
+        hs.region = F.ordenar(r.region, datos.ordenUbic);
+        hs.zona = F.ordenar(r.zona, datos.ordenUbic);
+        renderHero();
+      },
+      alLimpiar: function () { hs.region = []; hs.zona = []; renderHero(); }
+    });
+    var mPrecio = crear(selMax, {
+      placeholder: TXT.anyPrice, fin: true, nota: TXT.priceNote,
+      alAlternar: function (t) {
+        var i = hs.precio.indexOf(t);
+        if (i !== -1) hs.precio.splice(i, 1); else hs.precio = F.ordenarFichas(hs.precio.concat([t]));
+        renderHero();
+      },
+      alLimpiar: function () { hs.precio = []; renderHero(); }
+    });
+    mTipo.setDisabled(true);
+    mUbic.setDisabled(true);
+    mPrecio.setDisabled(true);
+
+    function resumen(n, uno, plural) {
+      return n === 0 ? null : n === 1 ? uno : n + ' ' + plural;
+    }
+
+    function renderHero() {
+      var est = {};
+      mOp.setOpciones(OPS_HERO.map(function (v) { return { value: v, label: opLabels[v] }; }));
+      OPS_HERO.forEach(function (v) { est[v] = { c: hs.op.indexOf(v) !== -1 }; });
+      mOp.actualizar(est, hs.op.length === 0 ? opPlaceholder : hs.op.length === 1 ? opLabels[hs.op[0]] : TXT.buyRent, hs.op.length);
+
       if (catalogState === 'failed') {
-        selMax.appendChild(new Option(TXT.unavailable, ''));
-        selMax.disabled = true;
+        // El formulario sigue sirviendo para ir al catálogo con la operación.
+        [mTipo, mUbic, mPrecio].forEach(function (m) { m.setDisabled(true); });
         return;
       }
-      if (!op) {
-        selMax.appendChild(new Option(TXT.chooseOp, ''));
-        selMax.disabled = true;
-        return;
-      }
-      if (catalogState !== 'ready' || !presets[op] || presets[op].length === 0) {
-        // Operación ya elegida pero las opciones aún no llegaron: se
-        // conserva la operación y, al terminar la carga, se repinta.
-        selMax.appendChild(new Option(catalogState === 'ready' ? TXT.chooseOp : TXT.loading, ''));
-        selMax.disabled = true;
-        return;
-      }
-      selMax.appendChild(new Option(TXT.noLimit, ''));
-      presets[op].forEach(function (n) {
-        var label = TXT.upTo + ' $' + n.toLocaleString('en-US') + (op === 'alquiler' ? ' ' + TXT.perMonth : '');
-        selMax.appendChild(new Option(label, String(n)));
+      if (catalogState !== 'ready') return;
+
+      var tipoEst = {};
+      mTipo.setOpciones(datos.tipos);
+      datos.tipos.forEach(function (t) { tipoEst[t.value] = { c: hs.tipo.indexOf(t.value) !== -1 }; });
+      var tUno = datos.tipos.filter(function (t) { return t.value === hs.tipo[0]; })[0];
+      mTipo.actualizar(tipoEst, resumen(hs.tipo.length, tUno ? tUno.label : '', TXT.types) || TXT.allTypes, hs.tipo.length);
+
+      var ubicOpc = [];
+      var ubicEst = {};
+      var etiquetasUbic = {};
+      datos.grupos.forEach(function (g) {
+        ubicOpc.push({ value: 'region:' + g.region, label: g.etiqueta + ' — ' + TXT.allAreas, grupo: g.etiqueta, fuerte: true });
+        etiquetasUbic['region:' + g.region] = g.etiqueta;
+        g.zonas.forEach(function (z) {
+          ubicOpc.push({ value: z.value, label: z.label, grupo: g.etiqueta, hijo: true });
+          etiquetasUbic[z.value] = z.label;
+          var zn = z.value.split(':')[1];
+          ubicEst[z.value] = { c: hs.zona.indexOf(zn) !== -1 || hs.region.indexOf(g.region) !== -1 };
+        });
+        var zl = datos.zonasListadas[g.region] || [];
+        ubicEst['region:' + g.region] = { c: hs.region.indexOf(g.region) !== -1, m: zl.some(function (z) { return hs.zona.indexOf(z) !== -1; }) };
       });
-      selMax.disabled = false;
-      // Solo se conserva el presupuesto si sigue siendo válido para la operación.
-      if (previous && presets[op].indexOf(Number(previous)) !== -1) selMax.value = previous;
+      mUbic.setOpciones(ubicOpc);
+      var totalU = hs.region.length + hs.zona.length;
+      var primera = hs.region.length ? 'region:' + hs.region[0] : hs.zona.length ? 'zona:' + hs.zona[0] : '';
+      mUbic.actualizar(ubicEst, resumen(totalU, etiquetasUbic[primera] || '', TXT.locations) || TXT.allLocations, totalU);
+
+      var precioEst = {};
+      mPrecio.setOpciones(datos.fichas.map(function (t) { return { value: t, label: F.etiquetaFicha(t, TXT) }; }));
+      datos.fichas.forEach(function (t) { precioEst[t] = { c: hs.precio.indexOf(t) !== -1 }; });
+      mPrecio.actualizar(precioEst, resumen(hs.precio.length, F.etiquetaFicha(hs.precio[0] || '', TXT), TXT.ranges) || TXT.anyPrice, hs.precio.length);
     }
 
     function fillOptions(doc) {
       var cTipo = doc.getElementById('f-tipo');
       var cUbic = doc.getElementById('f-ubicacion');
-      var cMax = doc.getElementById('f-max');
-      if (!cTipo || !cUbic || !cMax) throw new Error('catalog markup');
+      var cPrecio = doc.getElementById('f-precio');
+      if (!cTipo || !cUbic || !cPrecio) throw new Error('catalog markup');
 
-      Array.prototype.slice.call(cTipo.options).forEach(function (o) {
-        if (o.value) selTipo.appendChild(new Option(o.text, o.value));
+      datos.tipos = Array.prototype.slice.call(cTipo.options).filter(function (o) { return o.value; }).map(function (o) {
+        return { value: o.value, label: o.text };
       });
 
       Array.prototype.slice.call(cUbic.children).forEach(function (node) {
-        if (node.tagName === 'OPTGROUP') {
-          var group = document.createElement('optgroup');
-          group.label = node.label;
-          Array.prototype.slice.call(node.children).forEach(function (o) {
-            group.appendChild(new Option(o.text, o.value));
-          });
-          selUbic.appendChild(group);
-        }
+        if (node.tagName !== 'OPTGROUP') return;
+        var g = { etiqueta: node.label, region: '', zonas: [] };
+        Array.prototype.slice.call(node.children).forEach(function (o) {
+          var v = o.value.split(':');
+          if (v[0] === 'region') g.region = v[1];
+          if (v[0] === 'zona') g.zonas.push({ value: o.value, label: o.text });
+        });
+        if (!g.region) return;
+        datos.grupos.push(g);
+        datos.ordenUbic.push(g.region);
+        datos.zonasListadas[g.region] = g.zonas.map(function (z) { return z.value.split(':')[1]; });
+        g.zonas.forEach(function (z) {
+          var zn = z.value.split(':')[1];
+          datos.regionDe[zn] = g.region;
+          datos.ordenUbic.push(zn);
+        });
       });
 
-      ['venta', 'alquiler'].forEach(function (op) {
-        var raw = cMax.getAttribute('data-presupuestos-' + op) || '';
-        presets[op] = raw ? raw.split(',').map(Number).filter(function (n) { return n > 0; }) : [];
+      // Precio: mismos límites y mismas fichas que el catálogo (solo los
+      // rangos con propiedades publicadas).
+      (cPrecio.getAttribute('data-presupuestos') || '').split(',').forEach(function (v) {
+        var n = parseInt(v, 10);
+        if (n > 0 && datos.limites.indexOf(n) === -1) datos.limites.push(n);
+      });
+      datos.limites.sort(function (a, b) { return a - b; });
+      var precios = Array.prototype.slice.call(doc.querySelectorAll('.property-card[data-precio]')).map(function (c) {
+        return Number(c.getAttribute('data-precio'));
+      }).filter(function (n) { return n > 0; });
+      datos.fichas = F.fichasDeLimites(datos.limites).filter(function (t) {
+        return precios.some(function (p) { return F.dentroDeFicha(t, p); });
       });
 
       // Solo se ofrecen las operaciones que el catálogo tiene disponibles.
@@ -1990,12 +2531,8 @@ document.addEventListener('DOMContentLoaded', function () {
       Array.prototype.slice.call(doc.querySelectorAll('.filter-tab')).forEach(function (t) {
         available[t.getAttribute('data-filter')] = true;
       });
-      ['venta', 'alquiler'].forEach(function (op) {
-        if (!available[op]) {
-          var opt = selOp.querySelector('option[value="' + op + '"]');
-          if (opt) opt.parentNode.removeChild(opt);
-        }
-      });
+      OPS_HERO = OPS_HERO.filter(function (op) { return available[op]; });
+      hs.op = hs.op.filter(function (op) { return OPS_HERO.indexOf(op) !== -1; });
     }
 
     function loadCatalogOptions() {
@@ -2008,41 +2545,35 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .then(function (html) {
           fillOptions(new DOMParser().parseFromString(html, 'text/html'));
-          selTipo.disabled = false;
-          selUbic.disabled = false;
           catalogState = 'ready';
-          renderMax();
+          [mTipo, mUbic, mPrecio].forEach(function (m) { m.setDisabled(false); });
+          renderHero();
         })
         .catch(function () {
           // El formulario sigue sirviendo para ir al catálogo con la operación.
           catalogState = 'failed';
-          renderMax();
+          renderHero();
         });
     }
 
     // Carga perezosa: no se descarga nada al abrir la Home. El catálogo se
     // pide cuando hay intención real de usar el buscador: hover (escritorio),
-    // foco de teclado, toque o clic sobre la barra, interacción con la
-    // operación o apertura del panel móvil (más abajo). Cualquiera de esas
-    // señales llama a loadCatalogOptions, que solo actúa la primera vez.
+    // foco de teclado, toque o clic sobre la barra, o apertura del panel
+    // móvil (más abajo). Cualquiera de esas señales llama a
+    // loadCatalogOptions, que solo actúa la primera vez.
     ['pointerenter', 'pointerdown', 'touchstart', 'focusin'].forEach(function (type) {
       root.addEventListener(type, loadCatalogOptions, { passive: true });
     });
+    renderHero();
 
-    selOp.addEventListener('change', function () {
-      loadCatalogOptions();
-      renderMax();
-    });
-
-    // ----- Envío: URL solo con los parámetros elegidos -----
+    // ----- Envío: URL solo con los parámetros elegidos (un valor repetido por selección) -----
     function buildHref() {
       var params = new URLSearchParams();
-      if (selOp.value) params.set('op', selOp.value);
-      if (selTipo.value) params.set('tipo', selTipo.value);
-      var loc = selUbic.value.split(':');
-      if (loc[0] === 'zona' && loc[1]) params.set('zona', loc[1]);
-      else if (loc[0] === 'region' && loc[1]) params.set('region', loc[1]);
-      if (selOp.value && selMax.value) params.set('max', selMax.value);
+      hs.op.forEach(function (v) { params.append('op', v); });
+      hs.tipo.forEach(function (v) { params.append('tipo', v); });
+      hs.region.forEach(function (v) { params.append('region', v); });
+      hs.zona.forEach(function (v) { params.append('zona', v); });
+      hs.precio.forEach(function (v) { params.append('precio', v); });
       var filterQuery = params.toString();
       return { href: withAttribution(params), filterQuery: filterQuery };
     }
@@ -2089,7 +2620,7 @@ document.addEventListener('DOMContentLoaded', function () {
       panel.setAttribute('aria-labelledby', 'hero-search-title');
       trigger.setAttribute('aria-expanded', 'true');
       loadCatalogOptions();
-      selOp.focus();
+      mOp.trigger.focus();
     }
 
     function closePanel(restoreFocus) {

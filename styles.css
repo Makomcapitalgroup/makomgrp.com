@@ -5405,3 +5405,78 @@ a.proyecto-card__cta { position: static; }          /* conserva el área clicabl
    Tratamiento local: tinte claro del mismo terracota (20 % de marfil → #C26951, 5,1:1) solo para este texto
    sobre oscuro, más una sombra suave que lo separa de la fotografía en móvil. La paleta y los demás usos del terracota no cambian. */
 .hero__tagline { color: #C26951; text-shadow: 0 1px 10px rgba(10, 10, 10, .55); }
+
+/* ---- 34.7 Filtros acumulativos: desplegables de casillas (Hero y catálogo) ---- */
+/* Operación, Tipo, Ubicación y Precio admiten varias opciones (OR dentro de un filtro, AND entre filtros).
+   El disparador reutiliza las clases de los <select> aprobados (.hero-search__select / .prop-buscador__select),
+   así que cápsula, icono, flecha y estados no cambian; aquí solo se añade el panel de casillas. */
+.mk-multi { position: relative; min-width: 0; }
+.mk-multi__trigger { display: flex; align-items: center; width: 100%; text-align: left; font-family: inherit; line-height: 1.25; }
+.mk-multi__value { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mk-multi__panel { position: absolute; z-index: 40; top: calc(100% + 8px); left: 0; display: flex; flex-direction: column;
+  width: max(100%, 272px); max-width: min(380px, calc(100vw - 32px)); max-height: min(380px, 56vh); overflow: hidden;
+  border-radius: 24px; animation: mk-multi-in var(--mk-fast, .18s) var(--mk-ease, ease) both; }
+.mk-multi__panel[hidden] { display: none; }
+.mk-multi--end .mk-multi__panel { left: auto; right: 0; }
+.mk-multi__list { overflow-y: auto; overscroll-behavior: contain; padding: 8px; }
+.mk-multi__grupo + .mk-multi__grupo { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--mk-line, rgba(10,10,10,.08)); }
+.mk-multi__item { position: relative; display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 12px; border-radius: 16px;
+  font-size: 14px; font-weight: 300; line-height: 1.3; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--mk-fast, .18s) var(--mk-ease, ease); }
+.mk-multi__item--hijo { padding-left: 34px; }
+.mk-multi__item--fuerte { font-weight: 400; }
+.mk-multi__item.is-disabled { opacity: .4; cursor: not-allowed; }
+.mk-multi__input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+.mk-multi__box { position: relative; flex: 0 0 18px; width: 18px; height: 18px; border-radius: 6px; border: 1.5px solid currentColor; opacity: .55;
+  transition: background-color var(--mk-fast, .18s) var(--mk-ease, ease), border-color var(--mk-fast, .18s) var(--mk-ease, ease), opacity var(--mk-fast, .18s) var(--mk-ease, ease); }
+.mk-multi__box::after { content: ""; position: absolute; left: 4.5px; top: 1.5px; width: 5px; height: 9px; border: solid transparent; border-width: 0 1.8px 1.8px 0;
+  transform: rotate(45deg) scale(.6); opacity: 0; transition: opacity var(--mk-fast, .18s) var(--mk-ease, ease), transform var(--mk-fast, .18s) var(--mk-ease, ease); }
+.mk-multi__input:checked + .mk-multi__box, .mk-multi__input:indeterminate + .mk-multi__box { opacity: 1; }
+.mk-multi__input:checked + .mk-multi__box::after { opacity: 1; transform: rotate(45deg) scale(1); }
+.mk-multi__input:indeterminate + .mk-multi__box::after { left: 3px; top: 6.5px; width: 9px; height: 0; border-width: 0 0 1.8px 0; transform: none; opacity: 1; }
+.mk-multi__foot { display: flex; align-items: center; gap: 12px; padding: 6px 12px 6px 18px; border-top: 1px solid var(--mk-line, rgba(10,10,10,.08)); }
+.mk-multi__nota { flex: 1 1 auto; margin: 0; font-size: 11px; line-height: 1.35; opacity: .7; }
+.mk-multi__clear { margin-left: auto; min-height: 40px; padding: 0 10px; border-radius: 9999px; font-size: 12px; font-weight: 400; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.mk-multi__clear:disabled { opacity: .35; cursor: default; text-decoration: none; }
+@keyframes mk-multi-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .mk-multi__panel { animation: none; } }
+
+/* Catálogo: cristal claro, tinta negra */
+.prop-buscador .mk-multi__panel { color: var(--color-negro); background: rgba(245,242,238,.94); border: 1px solid rgba(255,255,255,.75);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4); backdrop-filter: blur(22px) saturate(1.4);
+  box-shadow: 0 28px 56px -28px rgba(10,10,10,.5), inset 0 1px 0 rgba(255,255,255,.8); }
+.prop-buscador .mk-multi__item:hover:not(.is-disabled) { background: rgba(10,10,10,.05); }
+.prop-buscador .mk-multi__input:checked + .mk-multi__box, .prop-buscador .mk-multi__input:indeterminate + .mk-multi__box { background: var(--color-negro); border-color: var(--color-negro); }
+.prop-buscador .mk-multi__input:checked + .mk-multi__box::after { border-color: var(--color-blanco); }
+.prop-buscador .mk-multi__input:indeterminate + .mk-multi__box::after { border-color: var(--color-blanco); }
+.prop-buscador .mk-multi__input:focus-visible + .mk-multi__box { box-shadow: var(--mk-focus); opacity: 1; }
+.prop-buscador .mk-multi__clear { color: var(--color-terracota-dark, #8F3720); }
+.prop-buscador .mk-multi__trigger.is-active { border-color: rgba(10,10,10,.55); background-color: rgba(255,255,255,.78); }
+.prop-buscador .mk-multi__trigger.is-active .mk-multi__value { font-weight: 400; }
+
+/* Hero: cristal oscuro, tinta marfil */
+.mk-multi--hero .mk-multi__panel { color: var(--color-blanco); background: rgba(18,18,18,.88); border: 1px solid rgba(245,242,238,.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.3); backdrop-filter: blur(24px) saturate(1.3);
+  box-shadow: 0 30px 60px -28px rgba(0,0,0,.75), inset 0 1px 0 rgba(245,242,238,.1); --mk-line: rgba(245,242,238,.14); }
+.mk-multi--hero .mk-multi__item:hover:not(.is-disabled) { background: rgba(245,242,238,.09); }
+.mk-multi--hero .mk-multi__input:checked + .mk-multi__box, .mk-multi--hero .mk-multi__input:indeterminate + .mk-multi__box { background: var(--color-blanco); border-color: var(--color-blanco); }
+.mk-multi--hero .mk-multi__input:checked + .mk-multi__box::after { border-color: var(--color-negro); }
+.mk-multi--hero .mk-multi__input:indeterminate + .mk-multi__box::after { border-color: var(--color-negro); }
+.mk-multi--hero .mk-multi__input:focus-visible + .mk-multi__box { box-shadow: 0 0 0 2px #121212, 0 0 0 4px #F5F2EE; opacity: 1; }
+.mk-multi--hero .mk-multi__clear { color: var(--color-blanco); }
+.mk-multi--hero .mk-multi__trigger.is-active { border-color: rgba(245,242,238,.5); background-color: rgba(245,242,238,.14); }
+.mk-multi--hero .mk-multi__trigger.is-active .mk-multi__value { font-weight: 400; }
+/* Panel móvil/tablet del Hero (< 1024): el desplegable se abre en línea, dentro del panel desplazable */
+@media (max-width: 1023.98px) {
+  .mk-multi--hero .mk-multi__panel { position: static; width: 100%; max-width: none; max-height: 300px; margin-top: 8px; }
+}
+/* Barra del Hero (≥ 1024): vive pegada al borde inferior, así que los desplegables se abren hacia arriba */
+@media (min-width: 1024px) {
+  .mk-multi--hero .mk-multi__panel { top: auto; bottom: calc(100% + 12px); animation-name: mk-multi-in-up; }
+}
+@keyframes mk-multi-in-up { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+/* El contenido del Hero (z-index 2) quedaba por encima de la barra: con un desplegable abierto la barra pasa al frente */
+.hero__search:has(.mk-multi.is-open) { z-index: 6; }
+@media (min-width: 1024px) {
+  .mk-multi--hero .mk-multi__panel { width: max(100%, 310px); background: rgba(14,14,14,.985); }
+}
