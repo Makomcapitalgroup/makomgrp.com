@@ -264,17 +264,29 @@ document.addEventListener('DOMContentLoaded', function () {
       panel.setAttribute('aria-label', cfg.ariaLabel);
       panel.hidden = true;
       var list = el('div', 'mk-multi__list');
-      var foot = el('div', 'mk-multi__foot');
-      var nota = null;
-      if (cfg.nota) { nota = el('p', 'mk-multi__nota', cfg.nota); foot.appendChild(nota); }
+      // Cabecera fija: nombre del filtro (+ nota opcional) y «Limpiar». No se desplaza con la lista.
+      var head = el('div', 'mk-multi__head');
+      var titulo = el('div', 'mk-multi__titulo');
+      titulo.appendChild(el('span', 'mk-multi__nombre', cfg.ariaLabel));
+      if (cfg.nota) titulo.appendChild(el('span', 'mk-multi__nota', cfg.nota));
       var clearBtn = el('button', 'mk-multi__clear', cfg.textoLimpiar);
       clearBtn.type = 'button';
       clearBtn.disabled = true;
-      foot.appendChild(clearBtn);
+      head.appendChild(titulo);
+      head.appendChild(clearBtn);
+      panel.appendChild(head);
       panel.appendChild(list);
-      panel.appendChild(foot);
       wrap.appendChild(trigger);
       wrap.appendChild(panel);
+
+      // Degradado en el borde superior/inferior de la lista solo si hay más opciones en esa dirección.
+      function pistas() {
+        var arriba = list.scrollTop > 2;
+        var abajo = list.scrollTop + list.clientHeight < list.scrollHeight - 2;
+        list.style.setProperty('--mk-fade-t', arriba ? '18px' : '0px');
+        list.style.setProperty('--mk-fade-b', abajo ? '22px' : '0px');
+      }
+      list.addEventListener('scroll', pistas, { passive: true });
 
       var items = {};     // valor -> { input, row }
       var orden = [];     // valores en orden de aparición
@@ -356,6 +368,8 @@ document.addEventListener('DOMContentLoaded', function () {
         wrap.classList.add('is-open');
         trigger.setAttribute('aria-expanded', 'true');
         abiertos.push(api);
+        pistas();
+        if (cfg.alAbrir) cfg.alAbrir(api);
       };
       api.cerrar = function () {
         if (!api.abierto) return;
@@ -363,6 +377,7 @@ document.addEventListener('DOMContentLoaded', function () {
         panel.hidden = true;
         wrap.classList.remove('is-open');
         trigger.setAttribute('aria-expanded', 'false');
+        if (cfg.alCerrar) cfg.alCerrar(api);
         var i = abiertos.indexOf(api);
         if (i !== -1) abiertos.splice(i, 1);
       };
@@ -2493,7 +2508,52 @@ document.addEventListener('DOMContentLoaded', function () {
       return l ? l.textContent : '';
     }
 
+    // Los desplegables se abren hacia arriba y pueden caer sobre los CTA del Hero («Ver propiedades»,
+    // «Iniciar conversación»). Si el panel los invade, se eleva hasta quedar justo por encima de ellos
+    // (10 px de aire); si no los toca, queda pegado a la barra como siempre. Solo en escritorio: en
+    // móvil/tablet el panel se abre en línea dentro del panel de búsqueda.
+    function ctasDelHero() {
+      // Solo los CTA visibles (no las opciones del menú de contacto, que están ocultas hasta abrirlo).
+      return Array.prototype.slice.call(document.querySelectorAll('.hero__actions > a, .hero__actions .hero-contact__button')).map(function (n) {
+        return n.getBoundingClientRect();
+      }).filter(function (r) { return r.width > 0 && r.height > 0; });
+    }
+    function liberarCtas(m) {
+      m.panel.style.bottom = '';
+      var lista = m.panel.querySelector('.mk-multi__list');
+      if (lista) lista.style.maxHeight = '';
+    }
+    function apartarDeCtas(m) {
+      liberarCtas(m);
+      if (mobileQuery.matches) {
+        // Panel en línea dentro del panel de búsqueda desplazable: se lleva a la vista completo.
+        var reducido = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        m.panel.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: reducido ? 'auto' : 'smooth' });
+        return;
+      }
+      var p = m.panel;
+      var pr = p.getBoundingClientRect();
+      var wr = m.el.getBoundingClientRect();
+      var tope = null;
+      ctasDelHero().forEach(function (c) {
+        if (c.right > pr.left && c.left < pr.right && c.bottom > pr.top && c.top < pr.bottom) {
+          tope = tope === null ? c.top : Math.min(tope, c.top);
+        }
+      });
+      if (tope === null) return;
+      p.style.bottom = Math.max(wr.bottom - (tope - 10), wr.height + 12) + 'px';
+      // Sin salirse por arriba (bajo el header fijo): si no cabe, la lista se acorta.
+      var arriba = p.getBoundingClientRect().top;
+      var minimo = 84;
+      if (arriba < minimo) {
+        var lista = p.querySelector('.mk-multi__list');
+        if (lista) lista.style.maxHeight = Math.max(88, lista.clientHeight - (minimo - arriba)) + 'px';
+      }
+    }
+
     function crear(selectEl, cfg) {
+      cfg.alAbrir = apartarDeCtas;
+      cfg.alCerrar = liberarCtas;
       cfg.id = selectEl.id;
       cfg.ariaLabel = etiquetaDe(selectEl);
       cfg.triggerClass = 'hero-search__select';
