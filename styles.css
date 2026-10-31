@@ -5398,3 +5398,10 @@ a.proyecto-card__cta { position: static; }          /* conserva el área clicabl
 
 /* Perspectivas (listado interior): aire inferior antes del footer negro — 64 px en escritorio, proporcional en tablet y móvil */
 .perspectivas-listado { padding-bottom: clamp(40px, 6vw, 64px); }
+
+/* ---- 34.6 Mantenimiento posterior al lanzamiento ---- */
+/* Frase del Hero: el terracota oficial (#B5472A) sobre negro llega como máximo a 3,9:1 (3,68:1 sobre #0A0A0A),
+   por debajo de 4,5:1 para texto de 14 px, y ningún tratamiento de peso o posición lo resuelve sobre un fondo negro.
+   Tratamiento local: tinte claro del mismo terracota (20 % de marfil → #C26951, 5,1:1) solo para este texto
+   sobre oscuro, más una sombra suave que lo separa de la fotografía en móvil. La paleta y los demás usos del terracota no cambian. */
+.hero__tagline { color: #C26951; text-shadow: 0 1px 10px rgba(10, 10, 10, .55); }
