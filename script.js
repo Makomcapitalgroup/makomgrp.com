@@ -611,6 +611,7 @@ document.addEventListener('DOMContentLoaded', function () {
       api.fijar = function (o) { Object.keys(o).forEach(function (n) { ch[n].x = ch[n].t = o[n]; ch[n].v = 0; }); alFrame(valores(), api); };
       api.empujar = function (o) { Object.keys(o).forEach(function (n) { ch[n].v += o[n]; }); arrancar(); };
       api.vel = function (n) { return ch[n].v; };
+      api.valor = function (n) { return ch[n].x; };
       api.activo = function () { return raf !== 0; };
       return api;
     }
@@ -863,6 +864,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .filter(function (a) { return !a.closest('.header__nav-item--lang'); });
       if (!enlaces.length) return;
       var trigger = nav.querySelector('.header__nav-trigger');
+      var cta = nav.querySelector('.header__nav-link--cta');   // «Contacto»: no usa la lente compartida, tiene su propia respuesta de cristal
       var lens = document.createElement('span');
       lens.className = 'header__lente';
       lens.setAttribute('aria-hidden', 'true');
@@ -883,6 +885,35 @@ document.addEventListener('DOMContentLoaded', function () {
         lens.style.visibility = v.op < 0.004 ? 'hidden' : 'visible';   // sin pintar (ni backdrop-filter) mientras está oculta
       }
       var s = resorte({ x: 0, y: 0, w: 80, h: 34, sc: 1, op: 0, gx: 50 }, 250, 20, css);
+      // «Contacto»: el cristal es la propia cápsula del botón (su ::before), con el relleno terracota ya aprobado. Se estira un poco hacia el
+      // cursor en horizontal, el reflejo lo sigue, se hunde al pulsar y recupera con rebote. Nunca se desplaza: el botón no se mueve.
+      var sc = cta ? resorte({ gl: 0, lx: 50, sx: 1, sy: 1 }, 300, 19, function (v) {
+        cta.style.setProperty('--cgl', v.gl.toFixed(3));
+        cta.style.setProperty('--clx', v.lx.toFixed(1) + '%');
+        cta.style.setProperty('--csx', v.sx.toFixed(4));
+        cta.style.setProperty('--csy', v.sy.toFixed(4));
+      }) : null;
+      var ctaOn = false;
+      function ctaEstado(on) {
+        if (!cta || on === ctaOn) return;
+        ctaOn = on;
+        cta.classList.toggle('is-on', on);
+        if (reducir.matches) { sc.fijar({ gl: on ? 0.5 : 0, lx: 50, sx: 1, sy: 1 }); return; }
+        if (!on) sc.ir({ gl: 0, sx: 1, sy: 1, lx: 50 });
+      }
+      function ctaRespuesta() {
+        if (!cta || !ctaOn || reducir.matches) return;
+        var nx = 0, lx = 50;
+        if (sobre === cta && cursor) {
+          var r = cta.getBoundingClientRect();
+          nx = lim((cursor.x - (r.left + r.width / 2)) / (r.width / 2), -1, 1);
+          lx = 50 + nx * 38;
+        }
+        sc.ir(presionada && sobre === cta
+          ? { gl: 1, lx: lx, sx: 0.955, sy: 0.93 }
+          : { gl: 0.55, lx: lx, sx: 1 + 0.03 * Math.abs(nx), sy: 1 - 0.012 * Math.abs(nx) });
+      }
+      var desdeCta = false;
       var sobre = null, foco = null, presionada = false, tactil = false, visible = false, cursor = null, ocultarT = 0, raf = 0, ultimo = null;
       function rectDe(a) {
         var nr = nav.getBoundingClientRect(), r = a.getBoundingClientRect();
@@ -890,25 +921,38 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       function objetivo() {
         var a = sobre || foco;
+        ctaEstado(!!a && a === cta);
+        if (a && a === cta) {                                        // «Contacto» tiene su propio cristal: la lente compartida se detiene antes
+          ctaRespuesta();
+          if (visible) { visible = false; desdeCta = true; if (reducir.matches) s.fijar({ op: 0, sc: 1 }); else s.ir({ op: 0, sc: 0.94, x: s.valor('x') + 3 }); }   // se aparta 3 px hacia su lado, sin llegar a pisar la cápsula del botón
+          return;
+        }
         if (!a) { ocultar(); return; }
         clearTimeout(ocultarT);
         var g = rectDe(a);
-        var tx = 0, ty = 0, gx = 50;
-        if (sobre && cursor && !reducir.matches) {                 // atracción magnética hacia el cursor
-          var cx = cursor.x - g.nx, cy = cursor.y - g.ny;
+        var tx = 0, gx = 50;
+        if (sobre && cursor && !reducir.matches) {                 // atracción magnética: SOLO horizontal (la altura sale de la geometría del enlace)
+          var cx = cursor.x - g.nx;
           tx = lim((cx - (g.x + g.w / 2)) * 0.28, -g.w * 0.16, g.w * 0.16);
-          ty = lim((cy - (g.y + g.h / 2)) * 0.3, -2.5, 2.5);
           gx = lim(50 + ((cx - (g.x + g.w / 2)) / g.w) * 70, 12, 88);
         }
-        var geo = { x: g.x - PX + tx, y: g.y - PY + ty, w: g.w + PX * 2, h: g.h + PY * 2, gx: gx };
-        if (reducir.matches) { s.fijar({ x: geo.x, y: geo.y, w: geo.w, h: geo.h, sc: 1, op: 1, gx: 50 }); visible = true; return; }
-        if (!visible) {                                              // primera aparición: nace sobre el enlace, sin viajar desde ninguna parte
-          s.fijar({ x: geo.x, y: geo.y, w: geo.w, h: geo.h, sc: 0.86, op: 0, gx: gx });
-          visible = true;
+        // Vertical: siempre el centro del enlace. y/h se fijan al instante (nunca se animan ni dependen del cursor).
+        var geo = { x: g.x - PX + tx, y: g.y - PY, w: g.w + PX * 2, h: g.h + PY * 2, gx: gx };
+        if (cta && a !== cta) {                                      // la lente nunca invade la cápsula de «Contacto»
+          var tope = rectDe(cta).x - 1;
+          if (g.x < tope && geo.x + geo.w > tope) geo.x = tope - geo.w;
         }
-        s.ir({ x: geo.x, y: geo.y, w: geo.w, h: geo.h, sc: presionada ? 0.93 : 1, op: 1, gx: gx });
+        s.fijar({ y: geo.y, h: geo.h });
+        if (reducir.matches) { s.fijar({ x: geo.x, w: geo.w, sc: 1, op: 1, gx: 50 }); visible = true; desdeCta = false; return; }
+        if (!visible) {                                              // primera aparición: nace sobre el enlace (si viene de «Contacto», entra deslizando desde ese lado)
+          s.fijar({ x: geo.x + (desdeCta ? 10 : 0), w: geo.w, sc: desdeCta ? 0.94 : 0.86, op: 0, gx: gx });
+          visible = true;
+          desdeCta = false;
+        }
+        s.ir({ x: geo.x, w: geo.w, sc: presionada ? 0.93 : 1, op: 1, gx: gx });
       }
       function ocultar() {
+        ctaEstado(false);
         if (!visible) return;
         visible = false;
         if (reducir.matches) { s.fijar({ op: 0, sc: 1 }); return; }
@@ -955,7 +999,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (tactil) { setTimeout(function () { tactil = false; sobre = null; objetivo(); }, 260); }
         if (reducir.matches) { if (!tactil) objetivo(); return; }
         objetivo();
-        s.empujar({ sc: 2.4 });
+        if (sobre === cta) sc.empujar({ sx: 2.2, sy: 2.2 }); else s.empujar({ sc: 2.4 });
       }
       nav.addEventListener('pointerdown', function (e) {
         var a = enlaceBajo(e.target);
