@@ -427,7 +427,13 @@ document.addEventListener('DOMContentLoaded', function () {
         else if (e.key === 'End') destino = campos[campos.length - 1];
         if (destino) { e.preventDefault(); destino.focus(); }
       });
-      clearBtn.addEventListener('click', function () { cfg.alLimpiar(); });
+      clearBtn.addEventListener('click', function () {
+        var teniaFoco = document.activeElement === clearBtn;
+        cfg.alLimpiar();
+        // «Limpiar» se deshabilita al quedar sin selección: un botón deshabilitado pierde el foco, el teclado se quedaba en <body> y
+        // Escape ya no cerraba la lista. El foco pasa a la primera opción (o al control) para seguir dentro del desplegable.
+        if (teniaFoco && clearBtn.disabled) { var h = habilitados(); (h[0] || trigger).focus(); }
+      });
       api.limpiarBtn = clearBtn;
       return api;
     }
@@ -1044,6 +1050,47 @@ document.addEventListener('DOMContentLoaded', function () {
       filtroNav();
       return { recalcular: objetivo };
     }
+    // ----- Filtros segmentados del catálogo: la opción activa es una lente de cristal que se desliza en horizontal -----
+    // Misma física que la lente de la barra y la de miniaturas (resorte subamortiguado), solo en el eje X: el texto no se mueve y la lente
+    // conserva su altura. Con varias opciones activas (Operación acumulativa) abarca de la primera a la última (siempre contiguas).
+    // Es un hijo aria-hidden: no cambia la semántica de los botones (role=checkbox/radio) ni su lógica; el estado sigue siendo la clase
+    // .filter-tab--active que ya escribe el motor del catálogo. Sin JavaScript queda el estilo de cristal estático de la propia opción.
+    function segmentado(grupo) {
+      if (grupo.__mkSegmentado) return;
+      grupo.__mkSegmentado = true;
+      var lens = document.createElement('span');
+      lens.className = 'prop-filters__lente';
+      lens.setAttribute('aria-hidden', 'true');
+      grupo.insertBefore(lens, grupo.firstChild);
+      var colocada = false;
+      function css(v, r) {
+        var st = 1 + lim(Math.abs(r.vel('x')) / 2600, 0, 0.14);       // se estira con la velocidad (solo a lo ancho)
+        lens.style.setProperty('--lx', v.x.toFixed(2) + 'px');
+        lens.style.setProperty('--lw', v.w.toFixed(2) + 'px');
+        lens.style.setProperty('--lsx', st.toFixed(4));
+        lens.style.opacity = v.op.toFixed(3);
+      }
+      var s = resorte({ x: 0, w: 60, op: 0 }, 235, 21, css);
+      function objetivo() {
+        var act = Array.prototype.filter.call(grupo.querySelectorAll('.filter-tab'), function (t) { return t.classList.contains('filter-tab--active'); });
+        var f = act[0], l = act[act.length - 1];
+        // Solo se escribe la clase si cambia: reescribirla igual dispara de nuevo el MutationObserver (bucle infinito).
+        if (!f || !f.offsetWidth) { if (grupo.classList.contains('tiene-lente')) grupo.classList.remove('tiene-lente'); return; }
+        if (!grupo.classList.contains('tiene-lente')) grupo.classList.add('tiene-lente');
+        lens.style.setProperty('--ly', f.offsetTop + 'px');
+        lens.style.setProperty('--lh', f.offsetHeight + 'px');
+        var x = f.offsetLeft, w = l.offsetLeft + l.offsetWidth - x;
+        if (reducir.matches || !colocada) { s.fijar({ x: x, w: w, op: 1 }); colocada = true; return; }
+        s.ir({ x: x, w: w, op: 1 });
+      }
+      new MutationObserver(objetivo).observe(grupo, { subtree: true, attributes: true, attributeFilter: ['class'] });
+      if (window.ResizeObserver) new ResizeObserver(function () { colocada = false; objetivo(); }).observe(grupo);
+      window.addEventListener('resize', function () { colocada = false; objetivo(); });
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { colocada = false; objetivo(); });
+      objetivo();
+    }
+    Array.prototype.slice.call(document.querySelectorAll('.prop-filters__grupo')).forEach(segmentado);
+
     var navPrincipal = document.querySelector('.header__nav');
     if (navPrincipal) navegacion(navPrincipal);
 
