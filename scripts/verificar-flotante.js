@@ -464,6 +464,8 @@ const AYUDANTES_PAGINA = `(() => {
   t.geometria = () => {
     const tg = $('floating-contact-toggle');
     const cs = getComputedStyle(tg);
+    // Liquid Glass unificado: el cuerpo de cristal de la cápsula vive en ::after (se anima con los resortes; el botón es la zona de clic estática).
+    const cuerpo = getComputedStyle(tg, '::after');
     const r = tg.getBoundingClientRect();
     const vw = document.documentElement.clientWidth;
     const vh = document.documentElement.clientHeight;
@@ -471,7 +473,7 @@ const AYUDANTES_PAGINA = `(() => {
       w: r.width, h: r.height, derecha: vw - r.right, abajo: vh - r.bottom, margen: t.margen(),
       dentro: r.left >= 0 && r.top >= 0 && r.right <= vw && r.bottom <= vh,
       desborde: document.documentElement.scrollWidth - vw,
-      fondo: cs.backgroundColor, borde: cs.borderTopColor, grosor: cs.borderTopWidth, color: cs.color,
+      fondo: cuerpo.backgroundColor, aro: /rgba[(]245, 242, 238, [0-9.]+[)] 0px 0px 0px 1px inset/.test(cuerpo.boxShadow), desenfoque: cuerpo.backdropFilter || cuerpo.webkitBackdropFilter || '', color: cs.color,
     };
   };
   t.centro = (sel) => {
@@ -700,8 +702,8 @@ async function comprobarGeometria(p, etiqueta, ancho) {
   ok(`${etiqueta} dentro de la ventana`, g.dentro, json(g));
   ok(`${etiqueta} sin desborde horizontal de la página`, g.desborde <= 0, g.desborde);
   ok(
-    `${etiqueta} estilo cristal oscuro, borde de luz fino (hueso translúcido), texto hueso`,
-    /^rgba\(10, 10, 10/.test(g.fondo) && g.borde === "rgba(245, 242, 238, 0.22)" && g.grosor === "1px" && g.color === "rgb(245, 242, 238)",
+    `${etiqueta} estilo Liquid Glass oscuro (cuerpo ::after: relleno humo, desenfoque, aro de luz de 1px hueso), texto hueso`,
+    /^rgba\(10, 10, 10/.test(g.fondo) && g.aro && /blur/.test(g.desenfoque) && g.color === "rgb(245, 242, 238)",
     json(g)
   );
 }

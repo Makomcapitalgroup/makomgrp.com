@@ -5819,7 +5819,7 @@ ol.articulo__lista li + li::before { top: calc(.75em + .22em + 1px); }
 }
 /* Sin backdrop-filter (o con «reducir transparencia»): superficies opacas elegantes, misma receta */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  :root { --lg-d-fill: rgba(14, 14, 14, .93); --lg-d-fill-denso: rgba(10, 10, 10, .94); --lg-l-fill: rgba(245, 242, 238, .95); --lg-l-fill-denso: rgba(245, 242, 238, .97); }
+  :root { --lg-d-fill: rgba(14, 14, 14, .96); --lg-d-fill-denso: rgba(10, 10, 10, .96); --lg-l-fill: rgba(245, 242, 238, .96); --lg-l-fill-denso: rgba(245, 242, 238, .98); }
 }
 @media (prefers-reduced-transparency: reduce) {
   :root { --lg-d-fill: rgba(14, 14, 14, .95); --lg-d-fill-denso: rgba(10, 10, 10, .96); --lg-l-fill: rgba(245, 242, 238, .96); --lg-l-fill-denso: rgba(245, 242, 238, .98); --lg-blur: 0px; }
@@ -5912,10 +5912,15 @@ body:not(.pagina-interior) .header:not(.header--scrolled) .mega-menu,
 .mega-menu__item-desc { color: var(--lg-ink-soft); }
 .mega-menu__item-soon { color: var(--lg-accent); }
 .mega-menu__item:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--lg-ink); }
+/* Puente de cursor: entre «Servicios» y el menú hay ~40 px de aire; sin puente, un cursor lento salía del <li> y el menú se cerraba
+   a mitad de camino. El puente es invisible, solo existe mientras el cursor está sobre el elemento y no intercepta nada más. */
+.header__nav-item--has-mega:hover::after { content: ""; position: absolute; top: 100%; left: 50%; width: 520px; height: 60px; transform: translateX(-50%); }
 
 /* ====================================================================
    B · Panel «¿Cómo desea contactarnos?» (flotante y del Hero) — menú flotante de cristal
    ==================================================================== */
+/* El panel flotante aparece sobre cualquier fondo (también el footer negro): usa el relleno marfil denso para conservar 4,5:1 en su texto de 12 px */
+.floating-contact__panel:not(.hero-contact__panel) { --lg-fill: var(--lg-l-fill-denso); }
 .floating-contact__panel {
   width: 256px; padding: 18px 14px 14px; gap: 8px; border: 0; border-radius: 28px;
   transform-origin: 100% 100%;
@@ -6027,6 +6032,8 @@ html.mk-nav-refracta .hero-contact__button::after, html.mk-nav-refracta .floatin
 .mk-multi--hero .mk-multi__clear { color: var(--lg-ink); }
 .prop-buscador .mk-multi__clear { color: var(--lg-accent); }
 .mk-multi__panel .mk-multi__nombre, .mk-multi__panel .mk-multi__nota { color: var(--lg-ink); }
+.mk-multi__panel .mk-multi__nombre { opacity: .86; }   /* 11 px: con .72 caía a 4,48:1 sobre titulares claros */
+.mk-multi__panel .mk-multi__nota { opacity: .78; }
 
 /* Anclaje en escritorio: cada lista nace pegada a SU control (alineada a su borde; --mk-dx corrige si se saldría del viewport)
    y crece hacia arriba (la barra vive en el borde inferior del Hero) con la altura que quepa; si no cabe, la lista se desplaza. */
@@ -6181,7 +6188,7 @@ body.hero-search-fijo { position: fixed; left: 0; right: 0; width: 100%; overflo
   box-shadow: inset 0 1px 0 var(--lg-hi), inset 0 -1px 0 var(--lg-lo), inset 0 0 0 1px rgba(245, 242, 238, .10), inset 1px 0 0 var(--lg-fringe-a), inset -1px 0 0 var(--lg-fringe-b), 0 28px 56px -30px rgba(0, 0, 0, .7);
 }
 .contact-form .form-field__input {
-  min-height: 54px; padding: 14px 24px; border: 1px solid transparent; border-radius: 9999px;
+  min-height: 52px; padding: 14px 24px; border: 1px solid transparent; border-radius: 9999px;
   background-color: var(--lg-fill-campo); color: var(--color-blanco);
   transition: background-color var(--lg-t) var(--lg-ease), box-shadow var(--lg-t) var(--lg-ease), border-color var(--lg-t) var(--lg-ease);
 }

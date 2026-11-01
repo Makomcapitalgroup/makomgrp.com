@@ -1785,7 +1785,10 @@ document.addEventListener('DOMContentLoaded', function () {
         panel.setAttribute('aria-labelledby', etiqueta.id);
         disparador.setAttribute('aria-labelledby', etiqueta.id + ' ' + valor.id);
         etiqueta.setAttribute('for', disparador.id);   // pulsar la etiqueta enfoca el selector visible
+        // Como en un <select> nativo, pulsar la etiqueta solo enfoca el campo (un botón se activaría y abriría la lista).
+        etiqueta.addEventListener('click', function (e) { e.preventDefault(); disparador.focus(); });
       }
+      disparador.setAttribute('role', 'combobox');   // permite aria-required/aria-invalid; el botón conserva Enter/Espacio/flechas
       disparador.setAttribute('aria-haspopup', 'listbox');
       disparador.setAttribute('aria-expanded', 'false');
       disparador.setAttribute('aria-controls', panel.id);
