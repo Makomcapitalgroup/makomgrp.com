@@ -5767,3 +5767,471 @@ ol.articulo__lista li + li::before { top: calc(.75em + .22em + 1px); }
   .articulo-explorar__card:only-child { grid-column: 1 / span 8; }
 }
 @media (prefers-reduced-motion: reduce) { .articulo-explorar__card, .articulo__texto a { transition: none; } }
+
+/* ---- 34.13 Liquid Glass unificado: UNA fórmula, dos tonos ----
+   Referencia oficial: la lente de la barra de navegación (§34.11) y los botones de redes del footer (§34.10).
+   Toda superficie de cristal del sitio se pinta con la misma receta, solo cambia el tono:
+     relleno translúcido + reflejo superior (y reflejo que acompaña al cursor, --lgx) + backdrop saturado/desenfocado
+     + filo de luz interior + leve dispersión cromática en los extremos + aro exterior + sombra de contacto.
+   Tonos: «humo» (.lg-oscuro, sobre fotografía o negro, texto marfil) y «marfil» (.lg-claro, sobre claro, texto negro).
+   Variantes de componente (solo tamaño, densidad y movimiento): panel (superficie grande), cápsula (botón de texto: se estira y
+   refracta con los resortes de script.js §5c), campo (cápsula dentro de otra superficie de cristal: sin backdrop propio,
+   porque un backdrop-filter anidado no ve la página). Los componentes ya aprobados de la barra, la galería y el footer
+   conservan su código y comparten estos mismos valores. */
+:root {
+  --lg-blur: 20px;
+  --lg-sat: 1.7;
+  --lg-bri: 1.05;
+  --lg-fringe-a: rgba(150, 190, 255, .20);
+  --lg-fringe-b: rgba(255, 160, 110, .20);
+  --lg-ease: var(--mk-ease);
+  --lg-t: var(--mk-fast);
+  /* Tono humo */
+  --lg-d-fill: rgba(12, 12, 12, .60);
+  --lg-d-fill-denso: rgba(10, 10, 10, .74);
+  --lg-d-fill-campo: rgba(245, 242, 238, .07);
+  --lg-d-spec: rgba(255, 255, 255, .24);
+  --lg-d-hi: rgba(245, 242, 238, .50);
+  --lg-d-lo: rgba(245, 242, 238, .14);
+  --lg-d-rim: rgba(245, 242, 238, .16);
+  --lg-d-ring: rgba(0, 0, 0, .30);
+  --lg-d-sh: rgba(0, 0, 0, .62);
+  --lg-d-ink: #F5F2EE;
+  --lg-d-ink-soft: rgba(245, 242, 238, .74);
+  --lg-d-line: rgba(245, 242, 238, .14);
+  --lg-d-hover: rgba(245, 242, 238, .10);
+  --lg-d-accent: #E8876A;
+  /* Tono marfil */
+  --lg-l-fill: rgba(245, 242, 238, .62);
+  --lg-l-fill-denso: rgba(245, 242, 238, .80);
+  --lg-l-fill-campo: rgba(255, 255, 255, .46);
+  --lg-l-spec: rgba(255, 255, 255, .62);
+  --lg-l-hi: rgba(255, 255, 255, .95);
+  --lg-l-lo: rgba(10, 10, 10, .10);
+  --lg-l-rim: rgba(255, 255, 255, .34);
+  --lg-l-ring: rgba(10, 10, 10, .08);
+  --lg-l-sh: rgba(10, 10, 10, .34);
+  --lg-l-ink: #0A0A0A;
+  --lg-l-ink-soft: rgba(10, 10, 10, .66);
+  --lg-l-line: rgba(10, 10, 10, .10);
+  --lg-l-hover: rgba(10, 10, 10, .06);
+  --lg-l-accent: #8F3720;
+}
+/* Sin backdrop-filter (o con «reducir transparencia»): superficies opacas elegantes, misma receta */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root { --lg-d-fill: rgba(14, 14, 14, .93); --lg-d-fill-denso: rgba(10, 10, 10, .94); --lg-l-fill: rgba(245, 242, 238, .95); --lg-l-fill-denso: rgba(245, 242, 238, .97); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root { --lg-d-fill: rgba(14, 14, 14, .95); --lg-d-fill-denso: rgba(10, 10, 10, .96); --lg-l-fill: rgba(245, 242, 238, .96); --lg-l-fill-denso: rgba(245, 242, 238, .98); --lg-blur: 0px; }
+}
+
+/* Tonos: cada superficie declara el suyo; el resto lo hereda de la fórmula */
+.lg-claro,
+.mega-menu,
+.prop-buscador .mk-multi__panel,
+.floating-contact__panel {
+  --lg-fill: var(--lg-l-fill); --lg-fill-denso: var(--lg-l-fill-denso); --lg-fill-campo: var(--lg-l-fill-campo);
+  --lg-spec: var(--lg-l-spec); --lg-hi: var(--lg-l-hi); --lg-lo: var(--lg-l-lo); --lg-rim: var(--lg-l-rim); --lg-ring: var(--lg-l-ring); --lg-sh: var(--lg-l-sh);
+  --lg-ink: var(--lg-l-ink); --lg-ink-soft: var(--lg-l-ink-soft); --lg-line: var(--lg-l-line); --lg-hover: var(--lg-l-hover); --lg-accent: var(--lg-l-accent);
+}
+.lg-oscuro,
+.mk-multi--hero .mk-multi__panel,
+.hero-contact__panel,
+.floating-contact__button,
+.hero-contact__button,
+.hero-search__trigger,
+.hero-search__close,
+.hero-search.is-open .hero-search__panel,
+.hero-search__panel-portal,
+.contact-form,
+.contact-form .mk-select__panel,
+body:not(.pagina-interior) .header:not(.header--scrolled) .mega-menu,
+.header--scrolled[data-tone="dark"] .mega-menu {
+  --lg-fill: var(--lg-d-fill); --lg-fill-denso: var(--lg-d-fill-denso); --lg-fill-campo: var(--lg-d-fill-campo);
+  --lg-spec: var(--lg-d-spec); --lg-hi: var(--lg-d-hi); --lg-lo: var(--lg-d-lo); --lg-rim: var(--lg-d-rim); --lg-ring: var(--lg-d-ring); --lg-sh: var(--lg-d-sh);
+  --lg-ink: var(--lg-d-ink); --lg-ink-soft: var(--lg-d-ink-soft); --lg-line: var(--lg-d-line); --lg-hover: var(--lg-d-hover); --lg-accent: var(--lg-d-accent);
+}
+
+/* La receta (superficie con backdrop): panel o cuerpo de cristal de una cápsula */
+.lg,
+.mega-menu,
+.mk-multi__panel,
+.floating-contact__panel,
+.hero-contact__button::after,
+.floating-contact__button::after,
+.hero-search__trigger,
+.hero-search.is-open .hero-search__panel {
+  background-color: var(--lg-fill);
+  background-image:
+    radial-gradient(80% 130% at var(--lgx, 50%) -25%, var(--lg-spec) 0%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, .16) 0%, rgba(255, 255, 255, 0) 46%, rgba(10, 10, 10, .035) 100%);
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(var(--lg-bri));
+  backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(var(--lg-bri));
+  box-shadow:
+    inset 0 1px 0 var(--lg-hi),
+    inset 0 -1px 0 var(--lg-lo),
+    inset 0 0 0 1px var(--lg-rim),
+    inset 1px 0 0 var(--lg-fringe-a), inset -1px 0 0 var(--lg-fringe-b),
+    0 0 0 1px var(--lg-ring),
+    0 22px 44px -22px var(--lg-sh), 0 2px 6px rgba(10, 10, 10, .10);
+}
+/* Campo: cápsula dentro de una superficie de cristal (sin backdrop propio) */
+.lg-campo,
+.hero-search__select,
+.prop-buscador__select,
+.contact-form .form-field__input,
+.contact-form .mk-select__trigger,
+.floating-contact__option,
+.mk-multi__item {
+  --lg-campo-sombra:
+    inset 0 1px 0 var(--lg-hi),
+    inset 0 -1px 0 var(--lg-lo),
+    inset 1px 0 0 var(--lg-fringe-a), inset -1px 0 0 var(--lg-fringe-b);
+}
+.hero-search__select, .prop-buscador__select,
+.contact-form .form-field__input, .contact-form .mk-select__trigger,
+.floating-contact__option {
+  background-color: var(--lg-fill-campo);
+  box-shadow: var(--lg-campo-sombra), inset 0 0 0 1px var(--lg-rim);
+}
+
+/* ---------- Tonos propios de cada campo (los hereda del contenedor) ---------- */
+.hero-search__select, .contact-form .form-field__input, .contact-form .mk-select__trigger { --lg-fill-campo: var(--lg-d-fill-campo); --lg-hi: var(--lg-d-hi); --lg-lo: var(--lg-d-lo); --lg-rim: var(--lg-d-rim); }
+.prop-buscador__select { --lg-fill-campo: var(--lg-l-fill-campo); --lg-hi: var(--lg-l-hi); --lg-lo: var(--lg-l-lo); --lg-rim: rgba(10, 10, 10, .10); }
+.floating-contact__option { --lg-fill-campo: var(--lg-l-fill-campo); }
+.hero-contact__panel .floating-contact__option { --lg-fill-campo: var(--lg-d-fill-campo); }
+
+/* ====================================================================
+   A · Menú «Servicios» — el cristal sigue el tono de la barra (humo sobre el Hero, marfil sobre claro)
+   ==================================================================== */
+.mega-menu { border: 0; background-color: var(--lg-fill); }
+.mega-menu.is-open, .mega-menu { -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(var(--lg-bri)); backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(var(--lg-bri)); }
+.mega-menu__item { border-color: var(--lg-line); transition: background-color var(--lg-t) var(--lg-ease); }
+.mega-menu__item:hover, .mega-menu__item:focus-visible { background-color: var(--lg-hover); }
+.mega-menu__item-name { color: var(--lg-ink); }
+.mega-menu__item-desc { color: var(--lg-ink-soft); }
+.mega-menu__item-soon { color: var(--lg-accent); }
+.mega-menu__item:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--lg-ink); }
+
+/* ====================================================================
+   B · Panel «¿Cómo desea contactarnos?» (flotante y del Hero) — menú flotante de cristal
+   ==================================================================== */
+.floating-contact__panel {
+  width: 256px; padding: 18px 14px 14px; gap: 8px; border: 0; border-radius: 28px;
+  transform-origin: 100% 100%;
+  transform: translateY(10px) scale(.94);
+  transition: opacity var(--mk-med) var(--lg-ease), transform 360ms cubic-bezier(.2, 1.15, .3, 1), visibility 0s linear var(--mk-med);
+}
+.floating-contact__panel.is-open { transform: none; transition: opacity var(--mk-med) var(--lg-ease), transform 360ms cubic-bezier(.2, 1.15, .3, 1), visibility 0s; }
+.hero-contact__panel { transform-origin: 0 100%; }
+.floating-contact__prompt { margin: 0 8px 4px; opacity: 1; font-size: 12px; letter-spacing: .04em; color: var(--lg-ink-soft); }
+.floating-contact__option {
+  min-height: 48px; padding: 0 20px; border: 0; border-radius: 9999px; color: var(--lg-ink); font-size: 14px;
+  position: relative; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  opacity: 0; transform: translateY(6px);
+  transition: background-color var(--lg-t) var(--lg-ease), box-shadow var(--lg-t) var(--lg-ease), transform var(--mk-med) var(--lg-ease), opacity var(--mk-med) var(--lg-ease), color var(--lg-t) var(--lg-ease);
+}
+.floating-contact__panel.is-open .floating-contact__option { opacity: 1; transform: none; }
+.floating-contact__panel.is-open .floating-contact__option:nth-of-type(2) { transition-delay: 0ms, 0ms, 50ms, 50ms, 0ms; }
+.floating-contact__panel.is-open .floating-contact__option:nth-of-type(3) { transition-delay: 0ms, 0ms, 100ms, 100ms, 0ms; }
+.floating-contact__panel.is-open .floating-contact__option:nth-of-type(4) { transition-delay: 0ms, 0ms, 150ms, 150ms, 0ms; }
+.floating-contact__option:hover, .floating-contact__option:focus-visible {
+  background-color: var(--lg-hover); color: var(--lg-ink); border-color: transparent;
+  box-shadow: var(--lg-campo-sombra), inset 0 0 0 1px var(--lg-hi);
+}
+.floating-contact__panel.is-open .floating-contact__option:active { transform: scale(.972); transition-delay: 0ms; transition-duration: 90ms; }
+.floating-contact__option:focus-visible { outline: none; box-shadow: var(--lg-campo-sombra), 0 0 0 2px var(--lg-ink); }
+
+/* ====================================================================
+   C · Botones «Iniciar conversación» (Hero) y «Contactar» (flotante) — cápsula de cristal con la interacción de las redes del footer
+   El botón (zona de clic) no se mueve: se anima su cuerpo de cristal (::after), el icono y la etiqueta (script.js §5c · boton()).
+   ==================================================================== */
+.hero-contact__button, .floating-contact__button {
+  --tx: 0px; --ty: 0px; --sx: 1; --sy: 1; --gl: 0; --lx: 32%; --ly: 26%;
+  position: relative; isolation: isolate; border: 0; background: none; box-shadow: none; color: var(--lg-ink);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  transition: none;
+}
+.hero-contact__button::after, .floating-contact__button::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; will-change: transform;
+  height: auto; opacity: 1;
+  transform: translate3d(var(--tx), var(--ty), 0) scale(var(--sx), var(--sy));
+  background-color: var(--lg-fill-denso);
+  background-image:
+    radial-gradient(60% 120% at var(--lx) -30%, rgba(255, 255, 255, calc(.10 + .26 * var(--gl))) 0%, rgba(255, 255, 255, 0) 66%),
+    linear-gradient(180deg, rgba(255, 255, 255, .15) 0%, rgba(255, 255, 255, 0) 46%, rgba(255, 255, 255, .04) 100%);
+  -webkit-backdrop-filter: blur(8px) saturate(var(--lg-sat)) brightness(var(--lg-bri)); backdrop-filter: blur(8px) saturate(var(--lg-sat)) brightness(var(--lg-bri));
+  box-shadow:
+    inset 0 1px 0 var(--lg-hi), inset 0 -1px 0 var(--lg-lo), inset 0 0 0 1px var(--lg-rim),
+    inset 1px 0 0 var(--lg-fringe-a), inset -1px 0 0 var(--lg-fringe-b),
+    0 0 0 1px var(--lg-ring), 0 12px 24px -12px var(--lg-sh);
+  transition: box-shadow var(--lg-t) var(--lg-ease), background-color var(--lg-t) var(--lg-ease);
+}
+html.mk-nav-refracta .hero-contact__button::after, html.mk-nav-refracta .floating-contact__button::after {
+  -webkit-backdrop-filter: blur(5px) url(#mk-nav-lente) saturate(var(--lg-sat)) brightness(var(--lg-bri)); backdrop-filter: blur(5px) url(#mk-nav-lente) saturate(var(--lg-sat)) brightness(var(--lg-bri));
+}
+/* Filete terracota del flotante (acento único de la pieza), dentro del cristal */
+.floating-contact__button::after {
+  background-image:
+    linear-gradient(var(--color-terracota), var(--color-terracota)),
+    radial-gradient(60% 120% at var(--lx) -30%, rgba(255, 255, 255, calc(.10 + .26 * var(--gl))) 0%, rgba(255, 255, 255, 0) 66%),
+    linear-gradient(180deg, rgba(255, 255, 255, .15) 0%, rgba(255, 255, 255, 0) 46%, rgba(255, 255, 255, .04) 100%);
+  background-size: calc(100% - 36px) 1px, auto, auto; background-position: center calc(100% - 1px), 0 0, 0 0; background-repeat: no-repeat;
+}
+.hero-contact__button::before, .floating-contact__button::before, .hero-contact__button > span, .floating-contact__button > span {
+  position: relative; pointer-events: none;
+  transform: translate3d(calc(var(--tx) * 1.3), calc(var(--ty) * 1.3), 0) scale(var(--sx), var(--sy));
+}
+.hero-contact__button > span, .floating-contact__label--full { display: inline-block; }
+.hero-contact__button:hover, .floating-contact__button:hover { background: none; border: 0; transform: none; }
+.hero-contact__button:hover::after, .floating-contact__button:hover::after { box-shadow: inset 0 1px 0 var(--lg-hi), inset 0 -1px 0 var(--lg-lo), inset 0 0 0 1px rgba(245, 242, 238, .30), inset 1px 0 0 var(--lg-fringe-a), inset -1px 0 0 var(--lg-fringe-b), 0 0 0 1px var(--lg-ring), 0 14px 26px -12px var(--lg-sh); }
+.hero-contact__button.is-press::after, .floating-contact__button.is-press::after { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .42), inset 0 0 12px rgba(255, 255, 255, .30), 0 0 0 1px var(--lg-ring), 0 6px 14px -9px var(--lg-sh); }
+.hero-contact__button:active, .floating-contact__button:active { transform: none; }
+.hero-contact__button:focus-visible, .floating-contact__button:focus-visible { outline: none; box-shadow: none; }
+.hero-contact__button:focus-visible::after, .floating-contact__button:focus-visible::after { box-shadow: inset 0 1px 0 var(--lg-hi), 0 0 0 2px #0A0A0A, 0 0 0 4px #F5F2EE; }
+@media (max-width: 639px) {
+  .floating-contact__label--short { display: inline-block; }
+  .floating-contact__label--full { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-contact__button::after, .floating-contact__button::after, .hero-contact__button::before, .floating-contact__button::before, .hero-contact__button > span, .floating-contact__button > span { transform: none !important; will-change: auto; }
+  .floating-contact__panel, .floating-contact__panel.is-open, .floating-contact__option { transition-duration: 0ms !important; transition-delay: 0ms !important; transform: none !important; }
+}
+
+/* ====================================================================
+   D · Buscador del Hero y filtros del catálogo — barra, campos, desplegables y panel móvil
+   ==================================================================== */
+/* Desplegables de casillas (Hero: humo; catálogo: marfil): misma receta de panel */
+.prop-buscador .mk-multi__panel, .mk-multi--hero .mk-multi__panel {
+  background-color: var(--lg-fill);
+  background-image:
+    radial-gradient(80% 130% at var(--lgx, 50%) -25%, var(--lg-spec) 0%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, .16) 0%, rgba(255, 255, 255, 0) 46%, rgba(10, 10, 10, .035) 100%);
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(var(--lg-bri));
+  backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(var(--lg-bri));
+  border: 0; border-radius: 26px; color: var(--lg-ink);
+  box-shadow:
+    inset 0 1px 0 var(--lg-hi), inset 0 -1px 0 var(--lg-lo), inset 0 0 0 1px var(--lg-rim),
+    inset 1px 0 0 var(--lg-fringe-a), inset -1px 0 0 var(--lg-fringe-b),
+    0 0 0 1px var(--lg-ring), 0 22px 44px -22px var(--lg-sh), 0 2px 6px rgba(10, 10, 10, .10);
+  --mk-line: var(--lg-line);
+}
+.mk-multi--hero .mk-multi__panel { --lg-fill: rgba(12, 12, 12, .68); }   /* sobre titulares claros: un poco más densa para conservar 4,5:1 */
+@media (min-width: 1024px) {
+  .mk-multi--hero .mk-multi__panel { background-color: var(--lg-fill); }
+}
+.mk-multi__item { color: var(--lg-ink); border-radius: 9999px; }
+.prop-buscador .mk-multi__item:hover:not(.is-disabled), .mk-multi--hero .mk-multi__item:hover:not(.is-disabled),
+.mk-multi__item:focus-within:not(.is-disabled) { background: var(--lg-hover); box-shadow: inset 0 0 0 1px var(--lg-rim); }
+.mk-multi--hero .mk-multi__clear { color: var(--lg-ink); }
+.prop-buscador .mk-multi__clear { color: var(--lg-accent); }
+.mk-multi__panel .mk-multi__nombre, .mk-multi__panel .mk-multi__nota { color: var(--lg-ink); }
+
+/* Anclaje en escritorio: cada lista nace pegada a SU control (alineada a su borde; --mk-dx corrige si se saldría del viewport)
+   y crece hacia arriba (la barra vive en el borde inferior del Hero) con la altura que quepa; si no cabe, la lista se desplaza. */
+@media (min-width: 1024px) {
+  .mk-multi--hero .mk-multi__panel {
+    --mk-dx: 0px;
+    top: auto; bottom: calc(100% + 30px); left: var(--mk-dx); right: auto;   /* 30 = etiqueta del campo (18) + aire (12) */
+    width: max(100%, 292px); max-width: min(380px, calc(100vw - 32px));
+    transform-origin: 28px 100%;
+    animation: mk-multi-in-up 220ms cubic-bezier(.2, 1.1, .3, 1) both;
+  }
+  .mk-multi--hero.mk-multi--end .mk-multi__panel { left: auto; right: calc(var(--mk-dx) * -1); transform-origin: calc(100% - 28px) 100%; }
+  .mk-multi--hero .mk-multi__list { max-height: var(--mk-lista-max, calc(var(--mk-item) * 5 + 16px)); }
+}
+@keyframes mk-multi-in-up { from { opacity: 0; transform: translateY(8px) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes mk-multi-in { from { opacity: 0; transform: translateY(-6px) scale(.97); } to { opacity: 1; transform: none; } }
+
+/* Barra de escritorio (≥1024): superficie de cristal con la misma receta; los campos son cápsulas dentro.
+   El cristal vive en ::before (no en el contenedor): así los desplegables, que son hijos de la barra, pueden tener su propio
+   backdrop-filter y ver la página (un backdrop-filter anidado no la ve; mismo patrón que la barra de navegación, §34.4-1). */
+@media (min-width: 1024px) {
+  .hero-search__panel { isolation: isolate; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+  .hero-search__panel::before {
+    content: ""; display: block; position: absolute; inset: 0; z-index: -1; padding: 0; border-radius: inherit; pointer-events: none;
+    -webkit-mask: none; mask: none;
+    --lg-fill: rgba(10, 10, 10, .46);
+    --lg-spec: var(--lg-d-spec); --lg-hi: var(--lg-d-hi); --lg-lo: var(--lg-d-lo); --lg-rim: var(--lg-d-rim); --lg-ring: var(--lg-d-ring); --lg-sh: var(--lg-d-sh);
+    background-color: var(--lg-fill);
+    background-image:
+      radial-gradient(80% 130% at var(--lgx, 50%) -25%, rgba(255, 255, 255, .16) 0%, rgba(255, 255, 255, 0) 62%),
+      linear-gradient(180deg, rgba(255, 255, 255, .10) 0%, rgba(255, 255, 255, 0) 46%, rgba(10, 10, 10, .035) 100%);
+    -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(var(--lg-bri));
+    backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(var(--lg-bri));
+    box-shadow:
+      inset 0 1px 0 var(--lg-hi), inset 0 -1px 0 var(--lg-lo), inset 0 0 0 1px var(--lg-rim),
+      inset 1px 0 0 var(--lg-fringe-a), inset -1px 0 0 var(--lg-fringe-b),
+      0 0 0 1px var(--lg-ring), 0 24px 48px -22px var(--lg-sh);
+  }
+}
+/* Campos del buscador (cápsulas dentro del cristal): relleno + filo, sin movimiento (listas y campos permanecen estables) */
+.hero-search__select {
+  border-color: transparent;
+  transition: background-color var(--lg-t) var(--lg-ease), box-shadow var(--lg-t) var(--lg-ease);
+}
+.hero-search__select:hover:not(:disabled), .hero-search__select.is-active, .hero-search__select[aria-expanded="true"] {
+  background-color: rgba(245, 242, 238, .12); border-color: transparent;
+  box-shadow: var(--lg-campo-sombra), inset 0 0 0 1px rgba(245, 242, 238, .30);
+}
+.hero-search__select:focus-visible { box-shadow: var(--lg-campo-sombra), 0 0 0 2px #0A0A0A, 0 0 0 4px #F5F2EE; border-color: transparent; }
+.prop-buscador__select { border-color: transparent; }
+.prop-buscador__select:hover:not(:disabled) { background-color: rgba(255, 255, 255, .72); }
+.prop-buscador__select:focus-visible { border-color: transparent; box-shadow: var(--lg-campo-sombra), var(--mk-focus); }
+
+/* Panel móvil/tablet (< 1024): panel independiente, por encima de todo el contenido de la página.
+   script.js lo traslada a <body> mientras está abierto (así ningún contenedor del Hero lo recorta ni lo tapa) y bloquea el fondo. */
+.hero-search__panel.hero-search__panel-portal {
+  background-color: var(--lg-fill);
+  background-image:
+    radial-gradient(80% 60% at var(--lgx, 50%) -10%, var(--lg-spec) 0%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, .08) 0%, rgba(255, 255, 255, 0) 40%);
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(var(--lg-bri));
+  backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(var(--lg-bri));
+  box-shadow: none; border: 0; border-radius: 0;
+  display: flex; flex-direction: column; gap: 16px;
+  position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 400;
+  height: 100vh; height: 100dvh;
+  padding: max(16px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
+  overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  --lg-fill: rgba(10, 10, 10, .80); --lg-blur: 26px;
+  animation: hero-panel-in 280ms var(--lg-ease) both;
+}
+@keyframes hero-panel-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@media (min-width: 640px) and (max-width: 1023.98px) {
+  .hero-search__panel.hero-search__panel-portal { padding-inline: max(24px, calc((100% - 520px) / 2)); }
+}
+.hero-search__panel-portal .hero-search__panel-head { position: sticky; top: 0; z-index: 2; padding-block: 4px; }
+.hero-search__panel-portal .hero-search__form { padding-bottom: 8px; }
+.hero-search__panel-portal :focus-visible { outline: 2px solid var(--color-blanco); outline-offset: 2px; }
+.hero-search__panel-portal .hero-search__label { color: var(--lg-ink); }
+.hero-search__panel-portal .hero-search__panel-title { color: var(--lg-ink); }
+html.hero-search-lock { overflow: hidden; }
+body.hero-search-fijo { position: fixed; left: 0; right: 0; width: 100%; overflow: hidden; }
+/* El menú móvil abierto o el panel de búsqueda: el desplegable en línea se desplaza dentro del panel */
+@media (max-width: 1023.98px) {
+  .mk-multi--hero .mk-multi__panel { position: static; width: 100%; max-width: none; margin-top: 8px; transform-origin: 50% 0; animation-name: mk-multi-in; }
+  .mk-multi--hero .mk-multi__list { max-height: min(calc(var(--mk-item) * 5 + 16px), 46dvh); }
+}
+
+/* Botón de cierre: círculo de cristal como las redes del footer, con la X centrada geométricamente (dos filetes, no un glifo) */
+.hero-search__close {
+  --tx: 0px; --ty: 0px; --sx: 1; --sy: 1; --gl: 0; --lx: 32%; --ly: 26%;
+  position: relative; isolation: isolate; flex: none; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%;
+  background: none; font-size: 0; line-height: 0; color: var(--lg-ink); cursor: pointer;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+}
+.hero-search__close::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 50%; pointer-events: none; will-change: transform;
+  transform: translate3d(var(--tx), var(--ty), 0) scale(var(--sx), var(--sy));
+  background-color: rgba(245, 242, 238, .07);
+  background-image:
+    radial-gradient(52% 52% at var(--lx) var(--ly), rgba(255, 255, 255, calc(.13 + .26 * var(--gl))) 0%, rgba(255, 255, 255, 0) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, .15) 0%, rgba(255, 255, 255, 0) 48%, rgba(255, 255, 255, .05) 100%);
+  border: 1px solid rgba(245, 242, 238, .28);
+  -webkit-backdrop-filter: blur(8px) saturate(1.5); backdrop-filter: blur(8px) saturate(1.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .42), inset 0 -7px 10px -8px rgba(255, 255, 255, .22), 0 10px 20px -12px rgba(0, 0, 0, .9);
+  transition: border-color var(--lg-t) var(--lg-ease), box-shadow var(--lg-t) var(--lg-ease);
+}
+.hero-search__close > span { position: absolute; inset: 0; display: block; pointer-events: none; font-size: 0; transform: translate3d(calc(var(--tx) * 1.3), calc(var(--ty) * 1.3), 0) scale(var(--sx), var(--sy)); }
+.hero-search__close > span::before, .hero-search__close > span::after {
+  content: ""; position: absolute; left: calc(50% - 9px); top: calc(50% - .75px); width: 18px; height: 1.5px; border-radius: 1px; background: currentColor;
+}
+.hero-search__close > span::before { transform: rotate(45deg); }
+.hero-search__close > span::after { transform: rotate(-45deg); }
+.hero-search__close:hover::before { border-color: rgba(245, 242, 238, .5); }
+.hero-search__close.is-press::before { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .4), inset 0 0 12px rgba(255, 255, 255, .4), 0 5px 12px -8px rgba(0, 0, 0, .9); }
+.hero-search__close:hover { border-color: transparent; }
+.hero-search__close:focus-visible { outline: 2px solid var(--color-blanco); outline-offset: 3px; }
+
+/* Botón «Buscar propiedades» del Hero en móvil: misma receta de cristal humo */
+.hero-search__trigger { border: 0; color: var(--lg-ink); }
+.hero-search__trigger:hover { border-color: transparent; box-shadow: inset 0 1px 0 var(--lg-hi), inset 0 -1px 0 var(--lg-lo), inset 0 0 0 1px rgba(245, 242, 238, .30), inset 1px 0 0 var(--lg-fringe-a), inset -1px 0 0 var(--lg-fringe-b), 0 0 0 1px var(--lg-ring), 0 22px 44px -22px var(--lg-sh); }
+
+/* ====================================================================
+   E · Menú móvil — con el menú abierto, la barra pasa a marfil: logotipo oscuro y X de carbón (antes eran blancos sobre marfil)
+   .is-menu-open lo pone script.js; el resto de reglas de la barra siguen intactas.
+   ==================================================================== */
+.header.is-menu-open .header__logo-svg--neg { display: none; }
+.header.is-menu-open .header__logo-svg--pos { display: block; animation: mk-logo-in 260ms var(--lg-ease) both; }
+@keyframes mk-logo-in { from { opacity: 0; } to { opacity: 1; } }
+.header.is-menu-open .hamburger .hamburger__bar,
+.header.is-menu-open .hamburger[aria-expanded="true"] .hamburger__bar { background-color: var(--color-negro); }
+.hamburger__bar { transition: transform var(--dur-medium) var(--ease), opacity var(--dur-medium) var(--ease), background-color 260ms var(--ease); }
+.header.is-menu-open .header__inner { transition: background-color 260ms var(--ease); }
+.hamburger { position: relative; }
+.hamburger:focus-visible { outline: 2px solid var(--color-negro); outline-offset: 2px; border-radius: 10px; }
+.header.is-menu-open .hamburger:focus-visible { outline-color: var(--color-negro); }
+@media (max-width: 1023.98px) {
+  .hamburger { width: 44px; height: 44px; padding: 11px 10px; }
+}
+
+/* ====================================================================
+   F · Formulario de contacto — campos en cápsula y selector de cristal
+   La lógica, los mensajes, los campos obligatorios y el envío no cambian. «¿Qué necesita?» conserva su <select> nativo como
+   fuente de verdad (valor, validación, envío); script.js añade encima un selector accesible de cristal y oculta el nativo.
+   ==================================================================== */
+/* El cristal de la tarjeta vive en ::before (no en el formulario): así el selector desplegable, que es hijo, puede desenfocar lo que tiene detrás. */
+.contact-form { isolation: isolate; background: none; border: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.contact-form::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+  background-color: rgba(245, 242, 238, .06);
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(1.4); backdrop-filter: blur(var(--lg-blur)) saturate(1.4);
+  box-shadow: inset 0 1px 0 var(--lg-hi), inset 0 -1px 0 var(--lg-lo), inset 0 0 0 1px rgba(245, 242, 238, .10), inset 1px 0 0 var(--lg-fringe-a), inset -1px 0 0 var(--lg-fringe-b), 0 28px 56px -30px rgba(0, 0, 0, .7);
+}
+.contact-form .form-field__input {
+  min-height: 54px; padding: 14px 24px; border: 1px solid transparent; border-radius: 9999px;
+  background-color: var(--lg-fill-campo); color: var(--color-blanco);
+  transition: background-color var(--lg-t) var(--lg-ease), box-shadow var(--lg-t) var(--lg-ease), border-color var(--lg-t) var(--lg-ease);
+}
+.contact-form .form-field__input:hover { border-color: transparent; background-color: rgba(245, 242, 238, .11); box-shadow: var(--lg-campo-sombra), inset 0 0 0 1px rgba(245, 242, 238, .30); }
+.contact-form .form-field__input:focus, .contact-form .form-field__input:focus-visible {
+  border-color: transparent; background-color: rgba(245, 242, 238, .12);
+  box-shadow: var(--lg-campo-sombra), inset 0 0 0 1px rgba(245, 242, 238, .34), 0 0 0 3px rgba(181, 71, 42, .55);
+}
+.contact-form .form-field__input.is-error, .contact-form .form-field__input.is-error:hover, .contact-form .form-field__input.is-error:focus {
+  border-color: transparent; box-shadow: var(--lg-campo-sombra), inset 0 0 0 1.5px var(--color-error);
+}
+.contact-form .form-field__label { padding-left: 24px; }
+.contact-form .form-field__error { padding-left: 24px; }
+.contact-form .form-field__select { padding-right: 52px; background-position: right 24px center; }
+
+/* Selector accesible de cristal (reemplaza al desplegable nativo, que Safari dibuja gris y no admite estilos) */
+.mk-select { position: relative; }
+.mk-select__native { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); opacity: 0; pointer-events: none; white-space: nowrap; }
+.contact-form .mk-select__trigger {
+  display: flex; align-items: center; width: 100%; min-height: 54px; padding: 14px 52px 14px 24px; border: 1px solid transparent; border-radius: 9999px; text-align: left;
+  font-family: inherit; font-size: inherit; font-weight: inherit; line-height: 1.3; color: var(--color-blanco); cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23F5F2EE' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 24px center; background-size: 10px 6px;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--lg-t) var(--lg-ease), box-shadow var(--lg-t) var(--lg-ease);
+}
+.contact-form .mk-select__trigger:hover, .contact-form .mk-select__trigger[aria-expanded="true"] { background-color: rgba(245, 242, 238, .11); box-shadow: var(--lg-campo-sombra), inset 0 0 0 1px rgba(245, 242, 238, .30); }
+.contact-form .mk-select__trigger:focus-visible { outline: none; background-color: rgba(245, 242, 238, .12); box-shadow: var(--lg-campo-sombra), inset 0 0 0 1px rgba(245, 242, 238, .34), 0 0 0 3px rgba(181, 71, 42, .55); }
+.contact-form .mk-select__trigger.is-vacio .mk-select__valor { opacity: .72; }
+.contact-form .form-field__select.is-error ~ .mk-select .mk-select__trigger, .contact-form .mk-select__trigger.is-error { box-shadow: var(--lg-campo-sombra), inset 0 0 0 1.5px var(--color-error); }
+.mk-select__valor { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.contact-form .mk-select__trigger[aria-expanded="true"] { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 5l4-4 4 4' fill='none' stroke='%23F5F2EE' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+.mk-select__panel {
+  position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 8px); padding: 8px; max-height: min(calc(5 * 48px + 16px), 52dvh); overflow-y: auto; overscroll-behavior: contain;
+  border-radius: 26px; scrollbar-width: thin; transform-origin: 50% 0; animation: mk-multi-in 200ms cubic-bezier(.2, 1.1, .3, 1) both;
+  background-color: rgba(12, 12, 12, .72);
+  background-image: radial-gradient(80% 130% at var(--lgx, 50%) -25%, var(--lg-spec) 0%, rgba(255, 255, 255, 0) 62%), linear-gradient(180deg, rgba(255, 255, 255, .14) 0%, rgba(255, 255, 255, 0) 46%);
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(var(--lg-bri)); backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(var(--lg-bri));
+  box-shadow: inset 0 1px 0 var(--lg-hi), inset 0 -1px 0 var(--lg-lo), inset 0 0 0 1px var(--lg-rim), inset 1px 0 0 var(--lg-fringe-a), inset -1px 0 0 var(--lg-fringe-b), 0 0 0 1px var(--lg-ring), 0 22px 44px -22px var(--lg-sh);
+}
+.mk-select__panel[hidden] { display: none; }
+.mk-select__panel.mk-select__panel--arriba { top: auto; bottom: calc(100% + 8px); transform-origin: 50% 100%; }
+.mk-select__opcion {
+  display: flex; align-items: center; min-height: 48px; padding: 8px 18px; border-radius: 9999px; color: var(--color-blanco); font-size: 15px; font-weight: 300; line-height: 1.3; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  transition: background-color var(--lg-t) var(--lg-ease), box-shadow var(--lg-t) var(--lg-ease);
+}
+.mk-select__opcion:hover, .mk-select__opcion:focus { outline: none; background-color: var(--lg-hover); box-shadow: inset 0 0 0 1px rgba(245, 242, 238, .22); }
+.mk-select__opcion:focus-visible { box-shadow: inset 0 0 0 2px var(--color-blanco); }
+.mk-select__opcion[aria-selected="true"] { font-weight: 400; background-color: rgba(245, 242, 238, .13); }
+.mk-select__opcion[aria-selected="true"]::after { content: ""; flex: none; width: 5px; height: 10px; margin-left: auto; border: solid var(--color-blanco); border-width: 0 1.6px 1.6px 0; transform: rotate(45deg) translate(-2px, -2px); }
+.mk-select__opcion:active { transform: scale(.985); }
+@media (prefers-reduced-motion: reduce) { .mk-select__panel, .hero-search__panel.hero-search__panel-portal, .mk-multi__panel { animation: none !important; } }

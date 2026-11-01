@@ -44,13 +44,20 @@ document.addEventListener('DOMContentLoaded', function () {
     '[tabindex]:not([tabindex="-1"])'
   ].join(', ');
 
+  // Etiqueta accesible del botón en cada estado (antes quedaba siempre en español, también en /en/).
+  var menuEn = (document.documentElement.lang || '').toLowerCase().indexOf('en') === 0;
+  var etiquetaMenuAbrir = menuEn ? 'Open navigation menu' : 'Abrir menú de navegación';
+  var etiquetaMenuCerrar = menuEn ? 'Close navigation menu' : 'Cerrar menú de navegación';
+  var cabecera = document.getElementById('header');
+
   function openMobileMenu() {
     mobileMenuOpen = true;
     mobileMenu.classList.add('is-open');
     mobileMenu.setAttribute('aria-hidden', 'false');
     mobileOverlay.classList.add('is-visible');
     hamburger.setAttribute('aria-expanded', 'true');
-    hamburger.setAttribute('aria-label', 'Cerrar menú de navegación');
+    hamburger.setAttribute('aria-label', etiquetaMenuCerrar);
+    if (cabecera) cabecera.classList.add('is-menu-open');   // la barra pasa a marfil: logotipo oscuro y X de carbón (CSS §34.13-E)
     document.body.style.overflow = 'hidden';
 
     // Focus first focusable element
@@ -66,7 +73,8 @@ document.addEventListener('DOMContentLoaded', function () {
     mobileMenu.setAttribute('aria-hidden', 'true');
     mobileOverlay.classList.remove('is-visible');
     hamburger.setAttribute('aria-expanded', 'false');
-    hamburger.setAttribute('aria-label', 'Abrir menú de navegación');
+    hamburger.setAttribute('aria-label', etiquetaMenuAbrir);
+    if (cabecera) cabecera.classList.remove('is-menu-open');
     document.body.style.overflow = '';
     // Devuelve el foco al botón solo si es visible (en escritorio el botón está oculto: no hay a dónde devolverlo).
     if (hamburger.offsetParent !== null) hamburger.focus();
@@ -561,10 +569,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ============================================================
      5c. VIDRIO LÍQUIDO — respuesta magnética y elástica (sin librerías)
-     Se usa SOLO en cuatro sitios: las flechas de la galería de fichas, los
-     botones de redes del footer, la lente que indica la miniatura activa y la
-     lente compartida de la barra de navegación principal.
-     Nada más del sitio (CTA terracota, botones, tarjetas) lo usa.
+     Se usa en los controles de cristal: las flechas de la galería de fichas, los
+     botones de redes del footer, la lente que indica la miniatura activa, la
+     lente compartida de la barra de navegación principal, los botones de
+     conversación («Iniciar conversación» del Hero y «Contactar» flotante) y el
+     cierre del buscador móvil. Los CTA terracota, los campos, las listas y las
+     tarjetas permanecen estables: no lo usan.
      - resorte(): integrador de resortes amortiguados por canal. Solo corre
        con requestAnimationFrame mientras algo se mueve; en reposo no hay
        trabajo. Subamortiguado a propósito: da el rebote elástico.
@@ -621,6 +631,9 @@ document.addEventListener('DOMContentLoaded', function () {
       if (el.__mkVidrio) return;
       el.__mkVidrio = true;
       var MAG = (opciones && opciones.mag) || 3.5;
+      // Variantes de tamaño: una cápsula ancha se hunde y se estira menos que un círculo de 44 px (misma física, otra amplitud).
+      var HOVER = (opciones && opciones.hover) || 1.045, PRESS = (opciones && opciones.press) || 0.88;
+      var ESTIRA = (opciones && opciones.estira != null) ? opciones.estira : 0.05, REBOTE = (opciones && opciones.rebote) || 3.4;
       var rect = null, hover = false, press = false;
       function css(v) {
         el.style.setProperty('--tx', v.tx.toFixed(2) + 'px');
@@ -632,7 +645,7 @@ document.addEventListener('DOMContentLoaded', function () {
         el.style.setProperty('--ly', v.ly.toFixed(1) + '%');
       }
       var s = resorte({ tx: 0, ty: 0, sx: 1, sy: 1, gl: 0, lx: 32, ly: 26 }, 330, 19, css);
-      function base() { return press ? 0.88 : hover ? 1.045 : 1; }
+      function base() { return press ? PRESS : hover ? HOVER : 1; }
       function reposo() {
         var b = base();
         s.ir({ tx: 0, ty: 0, sx: b, sy: b, gl: press ? 1 : hover ? 0.55 : 0, lx: 32, ly: 26 });
@@ -651,8 +664,8 @@ document.addEventListener('DOMContentLoaded', function () {
         var b = base();
         s.ir({
           tx: nx * MAG, ty: ny * MAG,
-          sx: b + 0.05 * Math.abs(nx) - 0.022 * Math.abs(ny),   // se estira sobre el eje del cursor y se aplasta en el perpendicular
-          sy: b + 0.05 * Math.abs(ny) - 0.022 * Math.abs(nx),
+          sx: b + ESTIRA * Math.abs(nx) - ESTIRA * 0.44 * Math.abs(ny),   // se estira sobre el eje del cursor y se aplasta en el perpendicular
+          sy: b + ESTIRA * Math.abs(ny) - ESTIRA * 0.44 * Math.abs(nx),
           gl: press ? 1 : 0.55,
           lx: 32 + nx * 14, ly: 26 + ny * 14                    // el reflejo acompaña al cursor, sin pasar por el icono
         });
@@ -669,7 +682,7 @@ document.addEventListener('DOMContentLoaded', function () {
         el.classList.remove('is-press');
         if (reducir.matches) return;
         reposo();
-        s.empujar({ sx: 3.4, sy: 3.4 });                        // rebote elástico al recuperar
+        s.empujar({ sx: REBOTE, sy: REBOTE });                  // rebote elástico al recuperar
       }
       el.addEventListener('pointerdown', function (e) {
         if (e.button && e.pointerType === 'mouse') return;
@@ -1034,8 +1047,15 @@ document.addEventListener('DOMContentLoaded', function () {
     var navPrincipal = document.querySelector('.header__nav');
     if (navPrincipal) navegacion(navPrincipal);
 
-    // Redes del footer (todas las páginas): único uso fuera de la galería.
+    // Redes del footer (todas las páginas): la referencia aprobada de la interacción magnética, elástica y de pulsación.
     Array.prototype.slice.call(document.querySelectorAll('.footer__social-link')).forEach(function (a) { boton(a, { mag: 3 }); });
+    // Botones de conversación (cápsulas anchas: misma física, menor amplitud) y cierre circular del buscador móvil.
+    ['hero-contact-toggle', 'floating-contact-toggle'].forEach(function (id) {
+      var b = document.getElementById(id);
+      if (b) boton(b, { mag: 3, hover: 1.025, press: 0.955, estira: 0.03, rebote: 2.2 });
+    });
+    var cierreBuscador = document.getElementById('hero-search-close');
+    if (cierreBuscador) boton(cierreBuscador, { mag: 3 });
 
     return { boton: boton, lente: lente, navegacion: navegacion, resorte: resorte };
   })();
@@ -1730,6 +1750,154 @@ document.addEventListener('DOMContentLoaded', function () {
     fieldServicio.addEventListener('change', function () {
       if (this.value !== '') clearError('field-servicio', 'field-servicio-error');
     });
+  }
+
+  /* ============================================================
+     7a. SELECTOR DE CRISTAL — «¿Qué necesita?»
+     Safari dibuja el <select> nativo en gris y no admite estilos. El <select> sigue en el formulario como fuente de verdad
+     (valor, validación, envío, opciones); aquí se le añade encima un selector accesible (patrón «listbox» con foco real
+     en las opciones, teclado completo y búsqueda por letra) que lo actualiza y dispara su evento «change». Sin JavaScript,
+     el desplegable nativo se conserva. Solo se usa en el formulario de contacto del Home (ES y EN).
+  ============================================================ */
+  if (fieldServicio && contactForm && contactForm.contains(fieldServicio)) {
+    (function (nativo) {
+      var campo = nativo.closest('.form-field');
+      var etiqueta = campo ? campo.querySelector('label[for="' + nativo.id + '"]') : null;
+      if (!campo) return;
+      function crear(tag, cls) { var n = document.createElement(tag); if (cls) n.className = cls; return n; }
+
+      var opciones = Array.prototype.slice.call(nativo.options).filter(function (o) { return o.value !== '' && !o.disabled; });
+      var marcador = nativo.options[0] && nativo.options[0].value === '' ? nativo.options[0].text : '';
+      var idBase = nativo.id;
+      var envoltorio = crear('div', 'mk-select');
+      var disparador = crear('button', 'mk-select__trigger');
+      disparador.type = 'button';
+      disparador.id = idBase + '-trigger';
+      var valor = crear('span', 'mk-select__valor');
+      valor.id = idBase + '-valor';
+      disparador.appendChild(valor);
+      var panel = crear('div', 'mk-select__panel');
+      panel.id = idBase + '-lista';
+      panel.setAttribute('role', 'listbox');
+      panel.hidden = true;
+      if (etiqueta) {
+        if (!etiqueta.id) etiqueta.id = idBase + '-etiqueta';
+        panel.setAttribute('aria-labelledby', etiqueta.id);
+        disparador.setAttribute('aria-labelledby', etiqueta.id + ' ' + valor.id);
+        etiqueta.setAttribute('for', disparador.id);   // pulsar la etiqueta enfoca el selector visible
+      }
+      disparador.setAttribute('aria-haspopup', 'listbox');
+      disparador.setAttribute('aria-expanded', 'false');
+      disparador.setAttribute('aria-controls', panel.id);
+      if (nativo.required) disparador.setAttribute('aria-required', 'true');
+      if (nativo.getAttribute('aria-describedby')) disparador.setAttribute('aria-describedby', nativo.getAttribute('aria-describedby'));
+
+      var filas = opciones.map(function (o, i) {
+        var f = crear('div', 'mk-select__opcion');
+        f.id = idBase + '-o' + i;
+        f.setAttribute('role', 'option');
+        f.tabIndex = -1;
+        f.setAttribute('data-valor', o.value);
+        f.textContent = o.text;
+        panel.appendChild(f);
+        return f;
+      });
+      envoltorio.appendChild(disparador);
+      envoltorio.appendChild(panel);
+
+      // El nativo queda como fuente de verdad, fuera de la vista y del árbol de accesibilidad.
+      nativo.classList.add('mk-select__native');
+      nativo.tabIndex = -1;
+      nativo.setAttribute('aria-hidden', 'true');
+      nativo.parentNode.insertBefore(envoltorio, nativo.nextSibling);
+      // La validación existente enfoca el campo con error: ese foco va al selector visible.
+      nativo.focus = function () { disparador.focus(); };
+
+      var abierto = false, busqueda = '', temporizador = 0;
+      function pintar() {
+        var v = nativo.value, elegida = null;
+        filas.forEach(function (f) {
+          var es = f.getAttribute('data-valor') === v;
+          f.setAttribute('aria-selected', es ? 'true' : 'false');
+          if (es) elegida = f;
+        });
+        valor.textContent = elegida ? elegida.textContent : marcador;
+        disparador.classList.toggle('is-vacio', !elegida);
+      }
+      function abrir() {
+        if (abierto) return;
+        abierto = true;
+        panel.hidden = false;
+        disparador.setAttribute('aria-expanded', 'true');
+        var r = disparador.getBoundingClientRect();
+        var alto = panel.offsetHeight;
+        var abajo = window.innerHeight - r.bottom, arriba = r.top;
+        panel.classList.toggle('mk-select__panel--arriba', abajo < alto + 16 && arriba > abajo);
+        var actual = filas.filter(function (f) { return f.getAttribute('aria-selected') === 'true'; })[0] || filas[0];
+        if (actual) actual.focus({ preventScroll: true });
+        if (actual && actual.scrollIntoView) actual.scrollIntoView({ block: 'nearest' });
+        var reducido = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        panel.scrollIntoView({ block: 'nearest', behavior: reducido ? 'auto' : 'smooth' });
+      }
+      function cerrar(devolverFoco) {
+        if (!abierto) return;
+        abierto = false;
+        panel.hidden = true;
+        disparador.setAttribute('aria-expanded', 'false');
+        if (devolverFoco) disparador.focus();
+      }
+      function elegir(f) {
+        nativo.value = f.getAttribute('data-valor');
+        pintar();
+        nativo.dispatchEvent(new Event('change', { bubbles: true }));
+        cerrar(true);
+      }
+      function mover(desde, delta) {
+        var i = filas.indexOf(desde);
+        var d = filas[(i + delta + filas.length) % filas.length];
+        if (d) d.focus();
+      }
+
+      disparador.addEventListener('click', function () { if (abierto) cerrar(false); else abrir(); });
+      disparador.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); abrir(); }
+        else if (e.key === 'Escape' && abierto) { e.preventDefault(); e.stopPropagation(); cerrar(false); }
+      });
+      panel.addEventListener('keydown', function (e) {
+        var f = e.target.closest ? e.target.closest('.mk-select__opcion') : null;
+        if (!f) return;
+        var k = e.key;
+        if (k === 'ArrowDown') { e.preventDefault(); mover(f, 1); }
+        else if (k === 'ArrowUp') { e.preventDefault(); mover(f, -1); }
+        else if (k === 'Home') { e.preventDefault(); filas[0].focus(); }
+        else if (k === 'End') { e.preventDefault(); filas[filas.length - 1].focus(); }
+        else if (k === 'Enter' || k === ' ') { e.preventDefault(); elegir(f); }
+        else if (k === 'Escape') { e.preventDefault(); e.stopPropagation(); cerrar(true); }
+        else if (k === 'Tab') { cerrar(false); }
+        else if (k.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          window.clearTimeout(temporizador);
+          busqueda += k.toLowerCase();
+          temporizador = window.setTimeout(function () { busqueda = ''; }, 700);
+          var hit = filas.filter(function (x) { return x.textContent.toLowerCase().indexOf(busqueda) === 0; })[0];
+          if (hit) hit.focus();
+        }
+      });
+      panel.addEventListener('click', function (e) {
+        var f = e.target.closest ? e.target.closest('.mk-select__opcion') : null;
+        if (f) elegir(f);
+      });
+      document.addEventListener('pointerdown', function (e) { if (abierto && !envoltorio.contains(e.target)) cerrar(false); });
+      document.addEventListener('focusin', function (e) { if (abierto && !envoltorio.contains(e.target)) cerrar(false); });
+      // Estado de error y reinicios: el selector visible sigue al nativo.
+      new MutationObserver(function () {
+        var err = nativo.classList.contains('is-error');
+        disparador.classList.toggle('is-error', err);
+        if (err) disparador.setAttribute('aria-invalid', 'true'); else disparador.removeAttribute('aria-invalid');
+      }).observe(nativo, { attributes: true, attributeFilter: ['class'] });
+      nativo.addEventListener('change', pintar);
+      contactForm.addEventListener('reset', function () { window.setTimeout(pintar, 0); });
+      pintar();
+    })(fieldServicio);
   }
 
   /* ============================================================
@@ -3005,23 +3173,17 @@ document.addEventListener('DOMContentLoaded', function () {
       return l ? l.textContent : '';
     }
 
-    // Los desplegables se abren hacia arriba y pueden caer sobre los CTA del Hero («Ver propiedades»,
-    // «Iniciar conversación»). Si el panel los invade, se eleva hasta quedar justo por encima de ellos
-    // (10 px de aire); si no los toca, queda pegado a la barra como siempre. Solo en escritorio: en
-    // móvil/tablet el panel se abre en línea dentro del panel de búsqueda.
-    function ctasDelHero() {
-      // Solo los CTA visibles (no las opciones del menú de contacto, que están ocultas hasta abrirlo).
-      return Array.prototype.slice.call(document.querySelectorAll('.hero__actions > a, .hero__actions .hero-contact__button')).map(function (n) {
-        return n.getBoundingClientRect();
-      }).filter(function (r) { return r.width > 0 && r.height > 0; });
+    // Anclaje de los desplegables en escritorio: cada lista nace pegada a SU control (CSS: alineada a su borde, abierta hacia
+    // arriba porque la barra vive en el borde inferior del Hero). Aquí solo se ajusta a lo que cabe en el viewport:
+    //  - en horizontal: si la lista se saldría por la derecha o la izquierda, se desplaza lo justo (--mk-dx);
+    //  - en vertical: si no cabe entre el control y el header fijo, la lista (no la cabecera) se acorta y se desplaza por dentro.
+    // En móvil/tablet el desplegable se abre en línea dentro del panel desplazable y solo se lleva a la vista.
+    function liberarAnclaje(m) {
+      m.panel.style.removeProperty('--mk-dx');
+      m.panel.style.removeProperty('--mk-lista-max');
     }
-    function liberarCtas(m) {
-      m.panel.style.bottom = '';
-      var lista = m.panel.querySelector('.mk-multi__list');
-      if (lista) lista.style.maxHeight = '';
-    }
-    function apartarDeCtas(m) {
-      liberarCtas(m);
+    function anclar(m) {
+      liberarAnclaje(m);
       if (mobileQuery.matches) {
         // Panel en línea dentro del panel de búsqueda desplazable: se lleva a la vista completo.
         var reducido = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -3029,28 +3191,27 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
       var p = m.panel;
-      var pr = p.getBoundingClientRect();
+      var lista = p.querySelector('.mk-multi__list');
       var wr = m.el.getBoundingClientRect();
-      var tope = null;
-      ctasDelHero().forEach(function (c) {
-        if (c.right > pr.left && c.left < pr.right && c.bottom > pr.top && c.top < pr.bottom) {
-          tope = tope === null ? c.top : Math.min(tope, c.top);
-        }
-      });
-      if (tope === null) return;
-      p.style.bottom = Math.max(wr.bottom - (tope - 10), wr.height + 12) + 'px';
-      // Sin salirse por arriba (bajo el header fijo): si no cabe, la lista se acorta.
-      var arriba = p.getBoundingClientRect().top;
-      var minimo = 84;
-      if (arriba < minimo) {
-        var lista = p.querySelector('.mk-multi__list');
-        if (lista) lista.style.maxHeight = Math.max(88, lista.clientHeight - (minimo - arriba)) + 'px';
+      var pr = p.getBoundingClientRect();
+      var margen = 16;
+      var dx = 0;
+      if (pr.right > window.innerWidth - margen) dx = (window.innerWidth - margen) - pr.right;
+      if (pr.left + dx < margen) dx = margen - pr.left;
+      if (dx) p.style.setProperty('--mk-dx', Math.round(dx) + 'px');
+      if (lista) {
+        var cabeza = (typeof headerH === 'number' ? headerH : 72);
+        var espacio = wr.top - 30 - (cabeza + 12);
+        var ocupado = p.offsetHeight - lista.offsetHeight;
+        var cabe = Math.floor(espacio - ocupado);
+        if (cabe < lista.offsetHeight) p.style.setProperty('--mk-lista-max', Math.max(88, cabe) + 'px');
       }
     }
+    var headerH = (function () { var h = document.getElementById('header'); return h ? Math.round(h.getBoundingClientRect().height) : 72; })();
 
     function crear(selectEl, cfg) {
-      cfg.alAbrir = apartarDeCtas;
-      cfg.alCerrar = liberarCtas;
+      cfg.alAbrir = anclar;
+      cfg.alCerrar = liberarAnclaje;
       cfg.id = selectEl.id;
       cfg.ariaLabel = etiquetaDe(selectEl);
       cfg.triggerClass = 'hero-search__select';
@@ -3279,11 +3440,51 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
+    // El panel es independiente del Hero: mientras está abierto vive como hijo directo de <body> (ningún contenedor del
+    // Hero —overflow, apilamiento, transformaciones— puede recortarlo ni dejar secciones por encima), el resto de la página
+    // queda inerte y el fondo no se desplaza (en iOS Safari «overflow: hidden» no basta: se fija el <body> en su posición).
+    var marcadorPanel = document.createComment('hero-search-panel');
+    var inertados = [];
+    var scrollGuardado = 0;
+
+    function sacarPanel() {
+      if (panel.parentNode === document.body) return;
+      panel.parentNode.insertBefore(marcadorPanel, panel);
+      document.body.appendChild(panel);
+      panel.classList.add('hero-search__panel-portal');
+      scrollGuardado = window.pageYOffset || document.documentElement.scrollTop || 0;
+      document.body.style.top = (-scrollGuardado) + 'px';
+      document.body.classList.add('hero-search-fijo');
+      Array.prototype.slice.call(document.body.children).forEach(function (n) {
+        if (n === panel || n.nodeType !== 1 || /^(SCRIPT|STYLE|LINK|SVG|NOSCRIPT)$/i.test(n.tagName) || n.hasAttribute('inert')) return;
+        n.setAttribute('inert', '');
+        inertados.push(n);
+      });
+    }
+    function devolverPanel() {
+      inertados.forEach(function (n) { n.removeAttribute('inert'); });
+      inertados = [];
+      if (panel.classList.contains('hero-search__panel-portal')) {
+        panel.classList.remove('hero-search__panel-portal');
+        if (marcadorPanel.parentNode) {
+          marcadorPanel.parentNode.insertBefore(panel, marcadorPanel);
+          marcadorPanel.parentNode.removeChild(marcadorPanel);
+        }
+        var raiz = document.documentElement, antes = raiz.style.scrollBehavior;
+        document.body.classList.remove('hero-search-fijo');
+        document.body.style.top = '';
+        raiz.style.scrollBehavior = 'auto';
+        window.scrollTo(0, scrollGuardado);
+        raiz.style.scrollBehavior = antes;
+      }
+    }
+
     function openPanel() {
       if (isOpen) return;
       isOpen = true;
       root.classList.add('is-open');
       document.documentElement.classList.add('hero-search-lock');
+      sacarPanel();
       panel.setAttribute('role', 'dialog');
       panel.setAttribute('aria-modal', 'true');
       panel.setAttribute('aria-labelledby', 'hero-search-title');
@@ -3297,6 +3498,7 @@ document.addEventListener('DOMContentLoaded', function () {
       isOpen = false;
       root.classList.remove('is-open');
       document.documentElement.classList.remove('hero-search-lock');
+      devolverPanel();
       panel.removeAttribute('role');
       panel.removeAttribute('aria-modal');
       panel.removeAttribute('aria-labelledby');
@@ -3348,6 +3550,11 @@ document.addEventListener('DOMContentLoaded', function () {
     if (mobileQuery.addEventListener) mobileQuery.addEventListener('change', onViewportChange);
     else if (mobileQuery.addListener) mobileQuery.addListener(onViewportChange);
     window.addEventListener('resize', onViewportChange);
+    // Con un desplegable abierto en escritorio, un cambio de tamaño lo vuelve a ajustar al viewport.
+    window.addEventListener('resize', function () {
+      if (mobileQuery.matches) return;
+      [mOp, mTipo, mUbic, mPrecio].forEach(function (m) { if (m && m.abierto) anclar(m); });
+    });
   })();
 
   /* ============================================================
