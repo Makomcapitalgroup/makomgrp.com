@@ -561,8 +561,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ============================================================
      5c. VIDRIO LÍQUIDO — respuesta magnética y elástica (sin librerías)
-     Se usa SOLO en tres sitios: las flechas de la galería de fichas, los
-     botones de redes del footer y la lente que indica la miniatura activa.
+     Se usa SOLO en cuatro sitios: las flechas de la galería de fichas, los
+     botones de redes del footer, la lente que indica la miniatura activa y la
+     lente compartida de la barra de navegación principal.
      Nada más del sitio (CTA terracota, botones, tarjetas) lo usa.
      - resorte(): integrador de resortes amortiguados por canal. Solo corre
        con requestAnimationFrame mientras algo se mueve; en reposo no hay
@@ -576,6 +577,9 @@ document.addEventListener('DOMContentLoaded', function () {
        (se estira con la velocidad, como en iOS), acompaña al cursor con
        atracción magnética y refracta el borde (filtro SVG como
        backdrop-filter solo en Chromium; Safari/Firefox usan el respaldo CSS).
+     - navegacion(): una sola lente que viaja entre los enlaces de la barra
+       (elástica y con atracción magnética), se hunde al pulsar, espera lo
+       mismo que el mega-menú antes de irse y acompaña al foco del teclado.
      prefers-reduced-motion: sin resortes ni seguimiento, solo el estado.
   ============================================================ */
   var mkVidrio = (function () {
@@ -817,10 +821,179 @@ document.addEventListener('DOMContentLoaded', function () {
       };
     }
 
+    // ----- Barra de navegación: una sola lente compartida entre los enlaces -----
+    // La lente es un hijo aria-hidden del <nav> (no de la lista, que solo admite <li>), detrás de los enlaces: no
+    // los mueve, no intercepta el puntero y no toca el mega-menú. Refracta el borde con un filtro SVG en Chromium;
+    // Safari y Firefox usan el cristal translúcido de respaldo (CSS).
+    var svgNav = null;
+    function filtroNav() {
+      if (!chromium || svgNav || (window.matchMedia && matchMedia('(prefers-reduced-transparency: reduce)').matches)) return;
+      var W = 120, H = 40, R = H / 2, BEZEL = 9, SCALE = 9;
+      var c = document.createElement('canvas'); c.width = W; c.height = H;
+      var x = c.getContext('2d'), im = x.createImageData(W, H), d = im.data;
+      for (var py = 0; py < H; py++) for (var px = 0; px < W; px++) {
+        var dx = px + 0.5 - W / 2, dy = py + 0.5 - H / 2, qx = Math.abs(dx) - (W / 2 - R), qy = Math.abs(dy) - (H / 2 - R);
+        var ox = Math.max(qx, 0), oy = Math.max(qy, 0), len = Math.hypot(ox, oy), sd = len + Math.min(Math.max(qx, qy), 0) - R, depth = -sd, nx = 0, ny = 0;
+        if (len > 0) { nx = (dx < 0 ? -1 : 1) * ox / len; ny = (dy < 0 ? -1 : 1) * oy / len; } else if (qx > qy) nx = dx < 0 ? -1 : 1; else ny = dy < 0 ? -1 : 1;
+        var m = depth >= 0 && depth < BEZEL ? Math.pow(1 - depth / BEZEL, 2) : 0, i = (py * W + px) * 4;
+        d[i] = 128 - nx * m * 127; d[i + 1] = 128 - ny * m * 127; d[i + 2] = 128; d[i + 3] = 255;
+      }
+      x.putImageData(im, 0, 0);
+      function canal(id, k, mat) {
+        return '<feDisplacementMap in="SourceGraphic" in2="map" scale="' + (SCALE * k) + '" xChannelSelector="R" yChannelSelector="G" result="d' + id + '"/>' +
+               '<feColorMatrix in="d' + id + '" type="matrix" values="' + mat + '" result="c' + id + '"/>';
+      }
+      var NS = 'http://www.w3.org/2000/svg';
+      svgNav = document.createElementNS(NS, 'svg');
+      svgNav.setAttribute('width', '0'); svgNav.setAttribute('height', '0'); svgNav.setAttribute('aria-hidden', 'true');
+      svgNav.style.cssText = 'position:absolute;pointer-events:none';
+      // Región = caja del elemento (0..100 %); el mapa se estira a ella, así un único filtro sirve a enlaces de distinto ancho.
+      svgNav.innerHTML = '<defs><filter id="mk-nav-lente" filterUnits="objectBoundingBox" x="0" y="0" width="1" height="1" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">' +
+        '<feImage href="' + c.toDataURL() + '" preserveAspectRatio="none" result="map"/>' +
+        canal('R', 1, '1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0') + canal('G', 0.92, '0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0') + canal('B', 0.84, '0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0') +
+        '<feBlend in="cR" in2="cG" mode="screen" result="rg"/><feBlend in="rg" in2="cB" mode="screen"/></filter></defs>';
+      document.body.appendChild(svgNav);
+      document.documentElement.classList.add('mk-nav-refracta');
+    }
+
+    function navegacion(nav) {
+      if (nav.__mkVidrio) return;
+      nav.__mkVidrio = true;
+      var enlaces = Array.prototype.slice.call(nav.querySelectorAll('.header__nav-item > .header__nav-link'))
+        .filter(function (a) { return !a.closest('.header__nav-item--lang'); });
+      if (!enlaces.length) return;
+      var trigger = nav.querySelector('.header__nav-trigger');
+      var lens = document.createElement('span');
+      lens.className = 'header__lente';
+      lens.setAttribute('aria-hidden', 'true');
+      nav.insertBefore(lens, nav.firstChild);
+      nav.classList.add('tiene-lente');
+      var PX = 3, PY = 2;
+      function css(v, r) {
+        var st = 1 + lim(Math.abs(r.vel('x')) / 2400, 0, 0.14);   // se estira con la velocidad y se aplasta en el otro eje (elasticidad)
+        lens.style.setProperty('--lx', v.x.toFixed(2) + 'px');
+        lens.style.setProperty('--ly', v.y.toFixed(2) + 'px');
+        lens.style.setProperty('--lw', Math.max(0, v.w).toFixed(2) + 'px');
+        lens.style.setProperty('--lh', Math.max(0, v.h).toFixed(2) + 'px');
+        lens.style.setProperty('--lsx', (v.sc * st).toFixed(4));
+        lens.style.setProperty('--lsy', (v.sc * (1 - (st - 1) * 0.55)).toFixed(4));
+        lens.style.setProperty('--lgx', v.gx.toFixed(1) + '%');
+        var op = lim(v.op, 0, 1);
+        lens.style.opacity = op.toFixed(3);
+        lens.style.visibility = v.op < 0.004 ? 'hidden' : 'visible';   // sin pintar (ni backdrop-filter) mientras está oculta
+      }
+      var s = resorte({ x: 0, y: 0, w: 80, h: 34, sc: 1, op: 0, gx: 50 }, 250, 20, css);
+      var sobre = null, foco = null, presionada = false, tactil = false, visible = false, cursor = null, ocultarT = 0, raf = 0, ultimo = null;
+      function rectDe(a) {
+        var nr = nav.getBoundingClientRect(), r = a.getBoundingClientRect();
+        return { x: r.left - nr.left, y: r.top - nr.top, w: r.width, h: r.height, nx: nr.left, ny: nr.top };
+      }
+      function objetivo() {
+        var a = sobre || foco;
+        if (!a) { ocultar(); return; }
+        clearTimeout(ocultarT);
+        var g = rectDe(a);
+        var tx = 0, ty = 0, gx = 50;
+        if (sobre && cursor && !reducir.matches) {                 // atracción magnética hacia el cursor
+          var cx = cursor.x - g.nx, cy = cursor.y - g.ny;
+          tx = lim((cx - (g.x + g.w / 2)) * 0.28, -g.w * 0.16, g.w * 0.16);
+          ty = lim((cy - (g.y + g.h / 2)) * 0.3, -2.5, 2.5);
+          gx = lim(50 + ((cx - (g.x + g.w / 2)) / g.w) * 70, 12, 88);
+        }
+        var geo = { x: g.x - PX + tx, y: g.y - PY + ty, w: g.w + PX * 2, h: g.h + PY * 2, gx: gx };
+        if (reducir.matches) { s.fijar({ x: geo.x, y: geo.y, w: geo.w, h: geo.h, sc: 1, op: 1, gx: 50 }); visible = true; return; }
+        if (!visible) {                                              // primera aparición: nace sobre el enlace, sin viajar desde ninguna parte
+          s.fijar({ x: geo.x, y: geo.y, w: geo.w, h: geo.h, sc: 0.86, op: 0, gx: gx });
+          visible = true;
+        }
+        s.ir({ x: geo.x, y: geo.y, w: geo.w, h: geo.h, sc: presionada ? 0.93 : 1, op: 1, gx: gx });
+      }
+      function ocultar() {
+        if (!visible) return;
+        visible = false;
+        if (reducir.matches) { s.fijar({ op: 0, sc: 1 }); return; }
+        s.ir({ op: 0, sc: 0.92 });
+      }
+      function ocultarConRetardo() {
+        // El mega-menú queda a unos píxeles bajo el enlace: la lente espera lo mismo que él (100 ms) antes de irse,
+        // así no parpadea al cruzar ese hueco, y no interviene en la apertura ni el cierre del menú.
+        clearTimeout(ocultarT);
+        ocultarT = setTimeout(function () { sobre = null; objetivo(); }, 130);
+      }
+      function enlaceBajo(t) {
+        if (!t || !t.closest) return null;
+        var a = t.closest('.header__nav-link');
+        if (a && enlaces.indexOf(a) !== -1) return a;
+        if (trigger && t.closest('.mega-menu')) return trigger;   // sobre el desplegable, la lente se queda en Servicios
+        return null;
+      }
+      function proc() {
+        raf = 0;
+        if (!ultimo) return;
+        var a = enlaceBajo(ultimo.target);
+        cursor = a && a.contains(ultimo.target) ? { x: ultimo.clientX, y: ultimo.clientY } : null;   // sobre el desplegable no hay atracción: la lente se queda quieta en Servicios
+        if (a) { clearTimeout(ocultarT); sobre = a; objetivo(); }
+        else if (sobre) ocultarConRetardo();                        // sobre ES/EN o el hueco: se retira suavemente
+      }
+      nav.addEventListener('pointermove', function (e) {
+        if (e.pointerType === 'touch') return;
+        ultimo = e;
+        if (!raf) raf = requestAnimationFrame(proc);
+      });
+      nav.addEventListener('pointerenter', function (e) { if (e.pointerType !== 'touch') clearTimeout(ocultarT); });
+      nav.addEventListener('pointerleave', function (e) {
+        if (e.pointerType === 'touch') return;
+        cursor = null;
+        if (sobre) ocultarConRetardo();
+      });
+      // Presión breve; al soltar recupera con rebote. Táctil: respuesta al toque sin depender del hover, y se retira sola.
+      function soltar() {
+        if (!presionada) return;
+        presionada = false;
+        document.removeEventListener('pointerup', soltar);
+        document.removeEventListener('pointercancel', soltar);
+        if (tactil) { setTimeout(function () { tactil = false; sobre = null; objetivo(); }, 260); }
+        if (reducir.matches) { if (!tactil) objetivo(); return; }
+        objetivo();
+        s.empujar({ sc: 2.4 });
+      }
+      nav.addEventListener('pointerdown', function (e) {
+        var a = enlaceBajo(e.target);
+        if (!a || (e.button && e.pointerType === 'mouse')) return;
+        presionada = true;
+        tactil = e.pointerType === 'touch';
+        if (tactil) { sobre = a; cursor = null; }
+        clearTimeout(ocultarT);
+        objetivo();
+        document.addEventListener('pointerup', soltar);
+        document.addEventListener('pointercancel', soltar);
+      });
+      // Teclado: la lente acompaña al foco visible (el anillo de foco del enlace sigue siendo el indicador principal).
+      nav.addEventListener('focusin', function (e) {
+        var a = enlaceBajo(e.target);
+        var visibleFoco = false;
+        try { visibleFoco = !!a && e.target.matches(':focus-visible'); } catch (err) { visibleFoco = false; }
+        foco = visibleFoco ? a : null;
+        if (!sobre) objetivo();
+      });
+      nav.addEventListener('focusout', function () { foco = null; if (!sobre) objetivo(); });
+      // La cápsula de la barra cambia de tamaño al hacer scroll: si la lente está visible, se recoloca.
+      var recoloca = 0;
+      function reco() { if (!visible || recoloca) return; recoloca = requestAnimationFrame(function () { recoloca = 0; if (visible) objetivo(); }); }
+      window.addEventListener('scroll', reco, { passive: true });
+      window.addEventListener('resize', reco);
+      var inner = nav.closest('.header__inner');
+      if (inner) inner.addEventListener('transitionend', reco);
+      filtroNav();
+      return { recalcular: objetivo };
+    }
+    var navPrincipal = document.querySelector('.header__nav');
+    if (navPrincipal) navegacion(navPrincipal);
+
     // Redes del footer (todas las páginas): único uso fuera de la galería.
     Array.prototype.slice.call(document.querySelectorAll('.footer__social-link')).forEach(function (a) { boton(a, { mag: 3 }); });
 
-    return { boton: boton, lente: lente, resorte: resorte };
+    return { boton: boton, lente: lente, navegacion: navegacion, resorte: resorte };
   })();
 
   /* ============================================================
