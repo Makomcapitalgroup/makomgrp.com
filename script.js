@@ -1056,6 +1056,52 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     var cierreBuscador = document.getElementById('hero-search-close');
     if (cierreBuscador) boton(cierreBuscador, { mag: 3 });
+    // Botones secundarios de cristal (misma física, amplitud de cápsula): .btn--outline y los enlaces «Ver todos…».
+    Array.prototype.slice.call(document.querySelectorAll('.btn--outline, .perspectivas__all-link, .proyectos__footer .link--arrow, .ficha-relacionadas__vertodas')).forEach(function (el) {
+      boton(el, { mag: 2.5, hover: 1.02, press: 0.96, estira: 0.025, rebote: 2 });
+    });
+
+    // CTA de tarjeta («Ver propiedad», «Ver proyecto», «Ver artículo», divisiones): enlace estirado sobre toda la tarjeta, así que no puede
+    // llevar transform ni backdrop-filter. El mismo resorte mueve su reflejo (--lx/--ly), su brillo (--gl) y el pulso al soltar; el resto lo da el CSS.
+    var CTA_TARJETA = 'a.property-card__cta, a.proyecto-card__cta, a.article-card__cta, a.division-card__cta';
+    var TARJETA = '.property-card, .proyecto-card, .article-card, .division-card';
+    var tarjetasVidrio = new WeakMap();
+    function cristalTarjeta(tarjeta, cta) {
+      var s = resorte({ gl: 0, lx: 32, ly: 26 }, 330, 19, function (v) {
+        cta.style.setProperty('--gl', Math.max(0, v.gl).toFixed(3));
+        cta.style.setProperty('--lx', v.lx.toFixed(1) + '%');
+        cta.style.setProperty('--ly', v.ly.toFixed(1) + '%');
+      });
+      var dentro = false, pulsada = false;
+      function objetivo(e) {
+        var r = cta.getBoundingClientRect(), nx = 0, ny = 0;
+        if (e && e.clientX != null) {
+          nx = lim((e.clientX - (r.left + r.width / 2)) / 220, -1, 1);
+          ny = lim((e.clientY - (r.top + r.height / 2)) / 220, -1, 1);
+        }
+        s.ir({ gl: pulsada ? 1 : dentro ? 0.55 : 0, lx: 32 + nx * 14, ly: 26 + ny * 14 });
+      }
+      tarjeta.addEventListener('pointermove', function (e) { if (e.pointerType === 'touch' || reducir.matches) return; dentro = true; objetivo(e); });
+      tarjeta.addEventListener('pointerleave', function () { dentro = false; pulsada = false; if (!reducir.matches) objetivo(null); });
+      tarjeta.addEventListener('pointerdown', function (e) { if (reducir.matches || (e.button && e.pointerType === 'mouse')) return; pulsada = true; objetivo(e); });
+      function soltar() { if (!pulsada) return; pulsada = false; if (reducir.matches) return; objetivo(null); s.empujar({ gl: 4 }); }
+      tarjeta.addEventListener('pointerup', soltar);
+      tarjeta.addEventListener('pointercancel', soltar);
+      return s;
+    }
+    // Un solo escuchador delegado: cada tarjeta crea su resorte la primera vez que se la toca o se pasa el cursor por encima.
+    function activarTarjeta(e) {
+      if (!e.target.closest) return;
+      var t = e.target.closest(TARJETA);
+      if (!t || tarjetasVidrio.has(t)) return;
+      var cta = t.querySelector(CTA_TARJETA);
+      if (!cta) return;
+      tarjetasVidrio.set(t, cristalTarjeta(t, cta));
+      if (e.type === 'pointermove') t.dispatchEvent(new PointerEvent('pointermove', { pointerType: e.pointerType, clientX: e.clientX, clientY: e.clientY }));
+      else if (e.type === 'pointerdown') t.dispatchEvent(new PointerEvent('pointerdown', { pointerType: e.pointerType, clientX: e.clientX, clientY: e.clientY, button: e.button }));
+    }
+    document.addEventListener('pointermove', activarTarjeta, { passive: true });
+    document.addEventListener('pointerdown', activarTarjeta, { passive: true, capture: true });
 
     return { boton: boton, lente: lente, navegacion: navegacion, resorte: resorte };
   })();
@@ -2307,6 +2353,35 @@ document.addEventListener('DOMContentLoaded', function () {
         closeFloatingPanel();
       }
     });
+  }
+
+  /* Tono del botón flotante: el cristal sigue a lo que tiene detrás, como la barra de navegación (humo sobre oscuro, marfil sobre claro).
+     Reutiliza la lectura de luminancia de la barra (window.mkTono, §17) y solo actúa mientras el botón es visible. Con histéresis, para
+     que no parpadee en el límite entre una sección clara y una oscura. No toca la lógica de aparición ni de relevo con el Hero. */
+  if (floatingContact && floatingToggle) {
+    var tonoFlotante = 'oscuro', tonoRaf = 0;
+    var calcularTono = function () {
+      tonoRaf = 0;
+      if (!window.mkTono) return;
+      if (floatingContact.hasAttribute('data-defer') && !floatingContact.classList.contains('is-active')) return;
+      var r = floatingToggle.getBoundingClientRect();
+      if (!r.width) return;
+      var suma = 0;
+      [0.15, 0.5, 0.85].forEach(function (f) {
+        var l = window.mkTono.lumAt(r.left + r.width * f, r.top + r.height / 2);
+        suma += (l[0] + l[1]) / 2;
+      });
+      var m = suma / 3;
+      var t = tonoFlotante === 'oscuro' ? (m > 0.58 ? 'claro' : 'oscuro') : (m < 0.42 ? 'oscuro' : 'claro');
+      if (t !== tonoFlotante) { tonoFlotante = t; floatingContact.setAttribute('data-tone', t); }
+    };
+    var pedirTono = function () { if (!tonoRaf) tonoRaf = window.requestAnimationFrame(calcularTono); };
+    window.addEventListener('scroll', pedirTono, { passive: true });
+    window.addEventListener('resize', pedirTono);
+    window.addEventListener('load', pedirTono);
+    window.addEventListener('pageshow', pedirTono);
+    floatingContact.addEventListener('transitionend', pedirTono);
+    pedirTono();
   }
 
   /* ============================================================
@@ -3723,6 +3798,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       return [0.95, 0.95];
     }
+    window.mkTono = { lumAt: lumAt };   // lo reutiliza el botón flotante para elegir su tono (humo/marfil)
     function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
     function measure() {
       raf = 0; last = performance.now();

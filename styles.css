@@ -4718,7 +4718,6 @@ a.article-card__cta {
 .floating-contact__button { border-radius: 14px; border: 1px solid rgba(245,242,238,.22);
   background-color: rgba(10,10,10,.82); -webkit-backdrop-filter: blur(16px) saturate(1.5); backdrop-filter: blur(16px) saturate(1.5);
   box-shadow: inset 0 1px 0 rgba(245,242,238,.14), 0 10px 28px -10px rgba(0,0,0,.5); position: relative; }
-.floating-contact__button::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: -1px; height: 1px; background: var(--color-terracota); opacity: .9; border-radius: 1px; }
 .floating-contact__button:hover { background-color: rgba(10,10,10,.92); border-color: rgba(245,242,238,.34); transform: translateY(-1px); }
 .floating-contact__panel { background-color: var(--gl-light-bg); -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5);
   border: 1px solid var(--gl-light-edge); border-radius: var(--r-glass); box-shadow: inset 0 1px 0 var(--gl-light-hi), 0 22px 48px -20px rgba(10,10,10,.4); }
@@ -5948,24 +5947,53 @@ body:not(.pagina-interior) .header:not(.header--scrolled) .mega-menu,
 .floating-contact__option:focus-visible { outline: none; box-shadow: var(--lg-campo-sombra), 0 0 0 2px var(--lg-ink); }
 
 /* ====================================================================
-   C · Botones «Iniciar conversación» (Hero) y «Contactar» (flotante) — cápsula de cristal con la interacción de las redes del footer
-   El botón (zona de clic) no se mueve: se anima su cuerpo de cristal (::after), el icono y la etiqueta (script.js §5c · boton()).
+   C · Botón secundario de cristal — UNA sola receta para todos los botones que no son terracota
+   Variante activa (cápsula con cuerpo propio y la física de las redes del footer: script.js §5c · boton()):
+     «Iniciar conversación» (Hero), «Contactar» (flotante), .btn--outline y los enlaces «Ver todos…» / «Ver todas…».
+   Variante de tarjeta (el CTA es un enlace estirado sobre toda la tarjeta: no puede llevar transform ni backdrop-filter, porque ambos
+     convertirían al CTA en el bloque contenedor de su ::before y la zona clicable dejaría de cubrir la tarjeta): mismo relleno, reflejo,
+     filo, dispersión cromática y sombra sobre el propio elemento, con el reflejo y el pulso movidos por el mismo resorte.
+   Tono: humo (sobre fotografía o negro) o marfil (sobre claro). El flotante elige el suyo según lo que tiene detrás (data-tone).
+   El botón (zona de clic) no se mueve: se anima su cuerpo de cristal, el icono y la etiqueta.
    ==================================================================== */
-.hero-contact__button, .floating-contact__button {
+:root { --lg-d-fill-boton: var(--lg-d-fill-denso); --lg-l-fill-boton: rgba(255, 255, 255, .42); --lg-l-fill-boton-hover: rgba(255, 255, 255, .72); }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { :root { --lg-l-fill-boton: rgba(255, 255, 255, .86); --lg-l-fill-boton-hover: rgba(255, 255, 255, .95); } }
+@media (prefers-reduced-transparency: reduce) { :root { --lg-l-fill-boton: rgba(255, 255, 255, .9); --lg-l-fill-boton-hover: rgba(255, 255, 255, .96); } }
+
+/* Tono humo */
+.hero-contact__button, .floating-contact__button, .division-card--dark a.division-card__cta {
+  --lg-fill-boton: var(--lg-d-fill-boton); --lg-base: 0; --lg-fa: #0A0A0A; --lg-fb: #F5F2EE;
+  --lg-spec: var(--lg-d-spec); --lg-hi: var(--lg-d-hi); --lg-lo: var(--lg-d-lo); --lg-rim: var(--lg-d-rim); --lg-ring: var(--lg-d-ring); --lg-sh: var(--lg-d-sh); --lg-ink: var(--lg-d-ink);
+}
+/* Tono marfil */
+.btn--outline, .perspectivas__all-link, .proyectos__footer .link--arrow, .ficha-relacionadas__vertodas,
+a.property-card__cta, a.article-card__cta, a.proyecto-card__cta, a.division-card__cta,
+.floating-contact[data-tone="claro"] .floating-contact__button {
+  --lg-fill-boton: var(--lg-l-fill-boton); --lg-fill-boton-hover: var(--lg-l-fill-boton-hover); --lg-base: .09; --lg-fa: #F5F2EE; --lg-fb: #0A0A0A;
+  --lg-spec: var(--lg-l-spec); --lg-hi: var(--lg-l-hi); --lg-lo: rgba(10, 10, 10, .16); --lg-rim: var(--lg-l-rim); --lg-ring: rgba(10, 10, 10, .14); --lg-sh: var(--lg-l-sh); --lg-ink: var(--lg-l-ink);
+}
+.division-card--dark a.division-card__cta { --lg-fill-boton: var(--lg-d-fill-boton); --lg-fill-boton-hover: var(--lg-d-fill-boton); }   /* gana al tono marfil de a.division-card__cta por orden y especificidad */
+
+/* --- Variante activa: zona de clic estática + cuerpo de cristal animado --- */
+.hero-contact__button, .floating-contact__button,
+.btn--outline, .perspectivas__all-link, .proyectos__footer .link--arrow, .ficha-relacionadas__vertodas {
   --tx: 0px; --ty: 0px; --sx: 1; --sy: 1; --gl: 0; --lx: 32%; --ly: 26%;
-  position: relative; isolation: isolate; border: 0; background: none; box-shadow: none; color: var(--lg-ink);
+  position: relative; isolation: isolate; background: none; box-shadow: none; color: var(--lg-ink);
   -webkit-backdrop-filter: none; backdrop-filter: none;
   touch-action: manipulation; -webkit-tap-highlight-color: transparent;
-  transition: none;
+  transition: gap var(--lg-t) var(--lg-ease);
 }
-.hero-contact__button::after, .floating-contact__button::after {
-  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; will-change: transform;
-  height: auto; opacity: 1;
+.hero-contact__button, .floating-contact__button { border: 0; }
+.btn--outline, .perspectivas__all-link, .proyectos__footer .link--arrow, .ficha-relacionadas__vertodas { border-color: transparent; }
+.hero-contact__button::after, .floating-contact__button::after,
+.btn--outline::before, .perspectivas__all-link::before, .proyectos__footer .link--arrow::before, .ficha-relacionadas__vertodas::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 9999px; pointer-events: none; will-change: transform;
+  height: auto; width: auto; opacity: 1; margin: 0; transform-origin: 50% 50%;
   transform: translate3d(var(--tx), var(--ty), 0) scale(var(--sx), var(--sy));
-  background-color: var(--lg-fill-denso);
+  background-color: var(--lg-fill-boton);
   background-image:
     radial-gradient(60% 120% at var(--lx) -30%, rgba(255, 255, 255, calc(.10 + .26 * var(--gl))) 0%, rgba(255, 255, 255, 0) 66%),
-    linear-gradient(180deg, rgba(255, 255, 255, .15) 0%, rgba(255, 255, 255, 0) 46%, rgba(255, 255, 255, .04) 100%);
+    linear-gradient(180deg, rgba(255, 255, 255, .15) 0%, rgba(255, 255, 255, 0) 46%, rgba(10, 10, 10, var(--lg-base)) 100%);
   -webkit-backdrop-filter: blur(8px) saturate(var(--lg-sat)) brightness(var(--lg-bri)); backdrop-filter: blur(8px) saturate(var(--lg-sat)) brightness(var(--lg-bri));
   box-shadow:
     inset 0 1px 0 var(--lg-hi), inset 0 -1px 0 var(--lg-lo), inset 0 0 0 1px var(--lg-rim),
@@ -5973,34 +6001,86 @@ body:not(.pagina-interior) .header:not(.header--scrolled) .mega-menu,
     0 0 0 1px var(--lg-ring), 0 12px 24px -12px var(--lg-sh);
   transition: box-shadow var(--lg-t) var(--lg-ease), background-color var(--lg-t) var(--lg-ease);
 }
-html.mk-nav-refracta .hero-contact__button::after, html.mk-nav-refracta .floating-contact__button::after {
+/* Refracción de borde (solo Chromium; el resto usa el cristal de arriba) */
+html.mk-nav-refracta .hero-contact__button::after, html.mk-nav-refracta .floating-contact__button::after,
+html.mk-nav-refracta .btn--outline::before, html.mk-nav-refracta .perspectivas__all-link::before, html.mk-nav-refracta .proyectos__footer .link--arrow::before, html.mk-nav-refracta .ficha-relacionadas__vertodas::before {
   -webkit-backdrop-filter: blur(5px) url(#mk-nav-lente) saturate(var(--lg-sat)) brightness(var(--lg-bri)); backdrop-filter: blur(5px) url(#mk-nav-lente) saturate(var(--lg-sat)) brightness(var(--lg-bri));
 }
-/* Filete terracota del flotante (acento único de la pieza), dentro del cristal */
-.floating-contact__button::after {
-  background-image:
-    linear-gradient(var(--color-terracota), var(--color-terracota)),
-    radial-gradient(60% 120% at var(--lx) -30%, rgba(255, 255, 255, calc(.10 + .26 * var(--gl))) 0%, rgba(255, 255, 255, 0) 66%),
-    linear-gradient(180deg, rgba(255, 255, 255, .15) 0%, rgba(255, 255, 255, 0) 46%, rgba(255, 255, 255, .04) 100%);
-  background-size: calc(100% - 36px) 1px, auto, auto; background-position: center calc(100% - 1px), 0 0, 0 0; background-repeat: no-repeat;
-}
+/* Iconos y flechas acompañan al cristal; el icono de conversación toma el color del texto (antes era marfil fijo) */
 .hero-contact__button::before, .floating-contact__button::before, .hero-contact__button > span, .floating-contact__button > span {
   position: relative; pointer-events: none;
   transform: translate3d(calc(var(--tx) * 1.3), calc(var(--ty) * 1.3), 0) scale(var(--sx), var(--sy));
 }
+.hero-contact__button::before, .floating-contact__button::before {
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23000' stroke-width='1.3' stroke-linejoin='round'%3E%3Cpath d='M2 3.2h12v7.6H7.4L4 13.6v-2.8H2z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23000' stroke-width='1.3' stroke-linejoin='round'%3E%3Cpath d='M2 3.2h12v7.6H7.4L4 13.6v-2.8H2z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.perspectivas__all-link::after, .proyectos__footer .link--arrow::after, .ficha-relacionadas__vertodas::after {
+  transform: translate3d(calc(var(--tx) * 1.3 + var(--flecha, 0px)), calc(var(--ty) * 1.3), 0) scale(var(--sx), var(--sy));
+}
+.perspectivas__all-link:hover, .proyectos__footer .link--arrow:hover, .ficha-relacionadas__vertodas:hover { --flecha: 3px; }
 .hero-contact__button > span, .floating-contact__label--full { display: inline-block; }
-.hero-contact__button:hover, .floating-contact__button:hover { background: none; border: 0; transform: none; }
-.hero-contact__button:hover::after, .floating-contact__button:hover::after { box-shadow: inset 0 1px 0 var(--lg-hi), inset 0 -1px 0 var(--lg-lo), inset 0 0 0 1px rgba(245, 242, 238, .30), inset 1px 0 0 var(--lg-fringe-a), inset -1px 0 0 var(--lg-fringe-b), 0 0 0 1px var(--lg-ring), 0 14px 26px -12px var(--lg-sh); }
-.hero-contact__button.is-press::after, .floating-contact__button.is-press::after { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .42), inset 0 0 12px rgba(255, 255, 255, .30), 0 0 0 1px var(--lg-ring), 0 6px 14px -9px var(--lg-sh); }
-.hero-contact__button:active, .floating-contact__button:active { transform: none; }
-.hero-contact__button:focus-visible, .floating-contact__button:focus-visible { outline: none; box-shadow: none; }
-.hero-contact__button:focus-visible::after, .floating-contact__button:focus-visible::after { box-shadow: inset 0 1px 0 var(--lg-hi), 0 0 0 2px #0A0A0A, 0 0 0 4px #F5F2EE; }
+/* Estados: reposo → hover (filo y sombra más vivos, sin cambiar de color ni de forma) → pulsación (hundido con brillo interior) → foco por teclado */
+.hero-contact__button:hover, .floating-contact__button:hover,
+.btn--outline:hover, .perspectivas__all-link:hover, .proyectos__footer .link--arrow:hover, .ficha-relacionadas__vertodas:hover { background: none; color: var(--lg-ink); border-color: transparent; box-shadow: none; transform: none; }
+.hero-contact__button:hover::after, .floating-contact__button:hover::after,
+.btn--outline:hover::before, .perspectivas__all-link:hover::before, .proyectos__footer .link--arrow:hover::before, .ficha-relacionadas__vertodas:hover::before {
+  background-color: var(--lg-fill-boton-hover, var(--lg-fill-boton));
+  box-shadow: inset 0 1px 0 var(--lg-hi), inset 0 -1px 0 var(--lg-lo), inset 0 0 0 1px var(--lg-hi), inset 1px 0 0 var(--lg-fringe-a), inset -1px 0 0 var(--lg-fringe-b), 0 0 0 1px var(--lg-ring), 0 16px 28px -12px var(--lg-sh);
+}
+.hero-contact__button.is-press::after, .floating-contact__button.is-press::after,
+.btn--outline.is-press::before, .perspectivas__all-link.is-press::before, .proyectos__footer .link--arrow.is-press::before, .ficha-relacionadas__vertodas.is-press::before {
+  box-shadow: inset 0 0 0 1px var(--lg-hi), inset 0 0 12px var(--lg-hi), 0 0 0 1px var(--lg-ring), 0 6px 14px -9px var(--lg-sh);
+}
+.hero-contact__button:active, .floating-contact__button:active, .btn--outline:active { transform: none; }
+.hero-contact__button:focus-visible, .floating-contact__button:focus-visible,
+.btn--outline:focus-visible, .perspectivas__all-link:focus-visible, .proyectos__footer .link--arrow:focus-visible, .ficha-relacionadas__vertodas:focus-visible { outline: none; box-shadow: none; }
+.hero-contact__button:focus-visible::after, .floating-contact__button:focus-visible::after,
+.btn--outline:focus-visible::before, .perspectivas__all-link:focus-visible::before, .proyectos__footer .link--arrow:focus-visible::before, .ficha-relacionadas__vertodas:focus-visible::before {
+  box-shadow: inset 0 1px 0 var(--lg-hi), 0 0 0 2px var(--lg-fa), 0 0 0 4px var(--lg-fb);
+}
+.btn--outline { min-height: 50px; }
+
+/* --- Variante de tarjeta: el CTA estirado es el propio cuerpo de cristal (sin transform ni backdrop-filter) --- */
+a.property-card__cta, a.article-card__cta, a.proyecto-card__cta, a.division-card__cta {
+  --gl: 0; --lx: 32%; --ly: 26%;
+  color: var(--lg-ink); border-color: transparent;
+  background-color: var(--lg-fill-boton);
+  background-image:
+    radial-gradient(60% 120% at var(--lx) -30%, rgba(255, 255, 255, calc(.10 + .30 * var(--gl))) 0%, rgba(255, 255, 255, 0) 66%),
+    linear-gradient(180deg, rgba(255, 255, 255, .15) 0%, rgba(255, 255, 255, 0) 46%, rgba(10, 10, 10, var(--lg-base)) 100%);
+  box-shadow:
+    inset 0 1px 0 var(--lg-hi), inset 0 -1px 0 var(--lg-lo), inset 0 0 0 1px var(--lg-rim),
+    inset 1px 0 0 var(--lg-fringe-a), inset -1px 0 0 var(--lg-fringe-b),
+    0 0 0 1px var(--lg-ring), 0 10px 20px -12px var(--lg-sh);
+  transition: box-shadow var(--lg-t) var(--lg-ease), background-color var(--lg-t) var(--lg-ease), gap var(--lg-t) var(--lg-ease);
+}
+.property-card:hover a.property-card__cta, a.property-card__cta:focus-visible,
+.article-card:hover a.article-card__cta, a.article-card__cta:focus-visible,
+.proyecto-card:hover a.proyecto-card__cta, a.proyecto-card__cta:focus-visible,
+.division-card:hover a.division-card__cta, .division-card--dark:hover a.division-card__cta, a.division-card__cta:focus-visible {
+  --gl: .55; background-color: var(--lg-fill-boton-hover, var(--lg-fill-boton)); color: var(--lg-ink); border-color: transparent;
+  box-shadow: inset 0 1px 0 var(--lg-hi), inset 0 -1px 0 var(--lg-lo), inset 0 0 0 1px var(--lg-hi), inset 1px 0 0 var(--lg-fringe-a), inset -1px 0 0 var(--lg-fringe-b), 0 0 0 1px var(--lg-ring), 0 16px 26px -12px var(--lg-sh);
+}
+.property-card:active a.property-card__cta, .article-card:active a.article-card__cta, .proyecto-card:active a.proyecto-card__cta, .division-card:active a.division-card__cta {
+  --gl: 1; box-shadow: inset 0 0 0 1px var(--lg-hi), inset 0 0 12px var(--lg-hi), 0 0 0 1px var(--lg-ring), 0 5px 12px -9px var(--lg-sh);
+}
+a.property-card__cta:focus-visible:focus-visible, a.article-card__cta:focus-visible:focus-visible, a.proyecto-card__cta:focus-visible:focus-visible, a.division-card__cta:focus-visible:focus-visible {   /* doble pseudo-clase: el anillo gana también cuando el cursor está sobre la tarjeta */
+  box-shadow: inset 0 1px 0 var(--lg-hi), 0 0 0 2px var(--lg-fa), 0 0 0 4px var(--lg-fb);
+}
+/* El hueco entre texto y flecha no cambia al pasar el cursor (la flecha ya avanza 3 px): el botón conserva su tamaño y su posición */
+a.property-card__cta:hover, .property-card:hover a.property-card__cta { gap: 8px; }
+a.article-card__cta:hover, .article-card:hover a.article-card__cta, a.proyecto-card__cta:hover, .proyecto-card:hover a.proyecto-card__cta, a.division-card__cta:hover, .division-card:hover a.division-card__cta { gap: 6px; }
+.division-card--dark a.division-card__cta::after { background-color: transparent; }
 @media (max-width: 639px) {
   .floating-contact__label--short { display: inline-block; }
   .floating-contact__label--full { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .hero-contact__button::after, .floating-contact__button::after, .hero-contact__button::before, .floating-contact__button::before, .hero-contact__button > span, .floating-contact__button > span { transform: none !important; will-change: auto; }
+  .hero-contact__button::after, .floating-contact__button::after, .hero-contact__button::before, .floating-contact__button::before, .hero-contact__button > span, .floating-contact__button > span,
+  .btn--outline::before, .perspectivas__all-link::before, .proyectos__footer .link--arrow::before, .ficha-relacionadas__vertodas::before,
+  .perspectivas__all-link::after, .proyectos__footer .link--arrow::after, .ficha-relacionadas__vertodas::after { transform: none !important; will-change: auto; }
   .floating-contact__panel, .floating-contact__panel.is-open, .floating-contact__option { transition-duration: 0ms !important; transition-delay: 0ms !important; transform: none !important; }
 }
 
