@@ -5405,3 +5405,365 @@ a.proyecto-card__cta { position: static; }          /* conserva el área clicabl
    Tratamiento local: tinte claro del mismo terracota (20 % de marfil → #C26951, 5,1:1) solo para este texto
    sobre oscuro, más una sombra suave que lo separa de la fotografía en móvil. La paleta y los demás usos del terracota no cambian. */
 .hero__tagline { color: #C26951; text-shadow: 0 1px 10px rgba(10, 10, 10, .55); }
+
+/* ---- 34.7 Filtros acumulativos: desplegables de casillas (Hero y catálogo) ---- */
+/* Operación, Tipo, Ubicación y Precio admiten varias opciones (OR dentro de un filtro, AND entre filtros).
+   El disparador reutiliza las clases de los <select> aprobados (.hero-search__select / .prop-buscador__select),
+   así que cápsula, icono, flecha y estados no cambian; aquí solo se añade el panel de casillas. */
+.mk-multi { position: relative; min-width: 0; }
+.mk-multi__trigger { display: flex; align-items: center; width: 100%; text-align: left; font-family: inherit; line-height: 1.25; }
+.mk-multi__value { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mk-multi__panel { position: absolute; z-index: 40; top: calc(100% + 8px); left: 0; display: flex; flex-direction: column;
+  width: max(100%, 272px); max-width: min(380px, calc(100vw - 32px)); overflow: hidden;
+  border-radius: 24px; animation: mk-multi-in var(--mk-fast, .18s) var(--mk-ease, ease) both; }
+.mk-multi__panel[hidden] { display: none; }
+.mk-multi__panel { scroll-margin: 16px; }
+.mk-multi--end .mk-multi__panel { left: auto; right: 0; }
+.mk-multi__list { --mk-item: 44px; --mk-fade-t: 0px; --mk-fade-b: 0px; overflow-y: auto; overscroll-behavior: contain; padding: 8px;
+  /* Máximo equivalente a CINCO opciones visibles (+ el relleno); con más opciones la lista se desplaza por dentro. */
+  max-height: calc(var(--mk-item) * 5 + 16px); scrollbar-width: thin;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--mk-fade-t), #000 calc(100% - var(--mk-fade-b)), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--mk-fade-t), #000 calc(100% - var(--mk-fade-b)), transparent 100%); }
+.mk-multi__grupo + .mk-multi__grupo { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--mk-line, rgba(10,10,10,.08)); }
+.mk-multi__item { position: relative; display: flex; align-items: center; gap: 12px; min-height: var(--mk-item, 44px); padding: 6px 12px; border-radius: 16px;
+  font-size: 14px; font-weight: 300; line-height: 1.3; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--mk-fast, .18s) var(--mk-ease, ease); }
+.mk-multi__item--hijo { padding-left: 34px; }
+.mk-multi__item--fuerte { font-weight: 400; }
+.mk-multi__item.is-disabled { opacity: .4; cursor: not-allowed; }
+.mk-multi__input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+.mk-multi__box { position: relative; flex: 0 0 18px; width: 18px; height: 18px; border-radius: 6px; border: 1.5px solid currentColor; opacity: .55;
+  transition: background-color var(--mk-fast, .18s) var(--mk-ease, ease), border-color var(--mk-fast, .18s) var(--mk-ease, ease), opacity var(--mk-fast, .18s) var(--mk-ease, ease); }
+.mk-multi__box::after { content: ""; position: absolute; left: 4.5px; top: 1.5px; width: 5px; height: 9px; border: solid transparent; border-width: 0 1.8px 1.8px 0;
+  transform: rotate(45deg) scale(.6); opacity: 0; transition: opacity var(--mk-fast, .18s) var(--mk-ease, ease), transform var(--mk-fast, .18s) var(--mk-ease, ease); }
+.mk-multi__input:checked + .mk-multi__box, .mk-multi__input:indeterminate + .mk-multi__box { opacity: 1; }
+.mk-multi__input:checked + .mk-multi__box::after { opacity: 1; transform: rotate(45deg) scale(1); }
+.mk-multi__input:indeterminate + .mk-multi__box::after { left: 3px; top: 6.5px; width: 9px; height: 0; border-width: 0 0 1.8px 0; transform: none; opacity: 1; }
+.mk-multi__head { display: flex; align-items: center; gap: 12px; flex: none; padding: 6px 8px 6px 20px; border-bottom: 1px solid var(--mk-line, rgba(10,10,10,.08)); }
+.mk-multi__titulo { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+.mk-multi__nombre { font-size: 11px; font-weight: 400; letter-spacing: .08em; text-transform: uppercase; opacity: .72; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mk-multi__nota { margin-top: 1px; font-size: 11px; line-height: 1.3; opacity: .62; }
+.mk-multi__clear { flex: none; min-height: 40px; padding: 0 10px; border-radius: 9999px; font-size: 12px; font-weight: 400; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.mk-multi__clear:disabled { opacity: .35; cursor: default; text-decoration: none; }
+@keyframes mk-multi-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .mk-multi__panel { animation: none; } }
+
+/* Catálogo: cristal claro, tinta negra */
+.prop-buscador .mk-multi__panel { color: var(--color-negro); background: rgba(245,242,238,.94); border: 1px solid rgba(255,255,255,.75);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4); backdrop-filter: blur(22px) saturate(1.4);
+  box-shadow: 0 28px 56px -28px rgba(10,10,10,.5), inset 0 1px 0 rgba(255,255,255,.8); }
+.prop-buscador .mk-multi__item:hover:not(.is-disabled) { background: rgba(10,10,10,.05); }
+.prop-buscador .mk-multi__input:checked + .mk-multi__box, .prop-buscador .mk-multi__input:indeterminate + .mk-multi__box { background: var(--color-negro); border-color: var(--color-negro); }
+.prop-buscador .mk-multi__input:checked + .mk-multi__box::after { border-color: var(--color-blanco); }
+.prop-buscador .mk-multi__input:indeterminate + .mk-multi__box::after { border-color: var(--color-blanco); }
+.prop-buscador .mk-multi__input:focus-visible + .mk-multi__box { box-shadow: var(--mk-focus); opacity: 1; }
+.prop-buscador .mk-multi__clear { color: var(--color-terracota-dark, #8F3720); }
+.prop-buscador .mk-multi__trigger.is-active { border-color: rgba(10,10,10,.55); background-color: rgba(255,255,255,.78); }
+.prop-buscador .mk-multi__trigger.is-active .mk-multi__value { font-weight: 400; }
+
+/* Hero: cristal oscuro, tinta marfil */
+.mk-multi--hero .mk-multi__panel { color: var(--color-blanco); background: rgba(18,18,18,.88); border: 1px solid rgba(245,242,238,.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.3); backdrop-filter: blur(24px) saturate(1.3);
+  box-shadow: 0 30px 60px -28px rgba(0,0,0,.75), inset 0 1px 0 rgba(245,242,238,.1); --mk-line: rgba(245,242,238,.14); }
+.mk-multi--hero .mk-multi__item:hover:not(.is-disabled) { background: rgba(245,242,238,.09); }
+.mk-multi--hero .mk-multi__input:checked + .mk-multi__box, .mk-multi--hero .mk-multi__input:indeterminate + .mk-multi__box { background: var(--color-blanco); border-color: var(--color-blanco); }
+.mk-multi--hero .mk-multi__input:checked + .mk-multi__box::after { border-color: var(--color-negro); }
+.mk-multi--hero .mk-multi__input:indeterminate + .mk-multi__box::after { border-color: var(--color-negro); }
+.mk-multi--hero .mk-multi__input:focus-visible + .mk-multi__box { box-shadow: 0 0 0 2px #121212, 0 0 0 4px #F5F2EE; opacity: 1; }
+.mk-multi--hero .mk-multi__clear { color: var(--color-blanco); }
+.mk-multi--hero .mk-multi__trigger.is-active { border-color: rgba(245,242,238,.5); background-color: rgba(245,242,238,.14); }
+.mk-multi--hero .mk-multi__trigger.is-active .mk-multi__value { font-weight: 400; }
+/* Panel móvil/tablet del Hero (< 1024): el desplegable se abre en línea, dentro del panel desplazable */
+@media (max-width: 1023.98px) {
+  .mk-multi--hero .mk-multi__panel { position: static; width: 100%; max-width: none; margin-top: 8px; }
+}
+/* Barra del Hero (≥ 1024): vive pegada al borde inferior, así que los desplegables se abren hacia arriba */
+@media (min-width: 1024px) {
+  .mk-multi--hero .mk-multi__panel { top: auto; bottom: calc(100% + 12px); animation-name: mk-multi-in-up; }
+}
+@keyframes mk-multi-in-up { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+/* El contenido del Hero (z-index 2) quedaba por encima de la barra: con un desplegable abierto la barra pasa al frente */
+.hero__search:has(.mk-multi.is-open) { z-index: 6; }
+@media (min-width: 1024px) {
+  .mk-multi--hero .mk-multi__panel { width: max(100%, 310px); background: rgba(14,14,14,.985); }
+}
+
+/* ---- 34.8 Carrusel directo en las fichas de propiedades ---- */
+/* Una pista con scroll-snap horizontal: deslizar con el dedo o el trackpad es nativo y no bloquea el scroll vertical.
+   Cada diapositiva conserva el botón y la proporción aprobados (.galeria-ficha__principal): mismas dimensiones, bordes y fotografías. */
+.galeria-ficha__visor { position: relative; border-radius: var(--d-r-card); }
+.galeria-ficha__pista { display: flex; overflow-x: auto; overflow-y: hidden; border-radius: var(--d-r-card);
+  scroll-snap-type: x mandatory; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.galeria-ficha__pista::-webkit-scrollbar { display: none; }
+.galeria-ficha__slide { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; }
+.galeria-ficha__slide .galeria-ficha__principal { background-color: rgba(10,10,10,.06); }
+.galeria-ficha__slide .galeria-ficha__principal:focus-visible { outline: none; box-shadow: inset 0 0 0 3px var(--color-blanco), inset 0 0 0 5px var(--color-negro); }
+/* Flechas: vidrio líquido discreto, solo con puntero fino (en táctil se desliza); en los extremos se ocultan.
+   La zona de clic (el botón) es estática; el cristal que se anima es su ::before y el icono, así que al hundirse o
+   estirarse el borde nunca se aleja del cursor. Respuesta magnética/elástica: script.js §5c (--tx/--ty/--sx/--sy/--gl/--lx/--ly). */
+.galeria-ficha__flecha { --tx: 0px; --ty: 0px; --sx: 1; --sy: 1; --gl: 0; --lx: 32%; --ly: 26%;
+  position: absolute; top: 50%; z-index: 2; display: none; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 9999px;
+  background: none; color: var(--color-blanco); cursor: pointer; opacity: .96; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  transform: translateY(-50%);
+  transition: opacity var(--mk-fast) var(--mk-ease), visibility var(--mk-fast) var(--mk-ease); }
+.galeria-ficha__flecha::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; will-change: transform;
+  transform: translate3d(var(--tx), var(--ty), 0) scale(var(--sx), var(--sy));
+  background-color: rgba(10,10,10,.66);
+  background-image:
+    radial-gradient(44% 44% at var(--lx) var(--ly), rgba(255,255,255,calc(.12 + .12 * var(--gl))) 0%, rgba(255,255,255,0) 100%),
+    linear-gradient(180deg, rgba(255,255,255,.15) 0%, rgba(255,255,255,0) 40%, rgba(255,255,255,.05) 100%);
+  border: 1px solid rgba(245,242,238,.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.7); backdrop-filter: blur(14px) saturate(1.7);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.62), inset 0 -8px 12px -9px rgba(255,255,255,.3), 0 0 0 1px rgba(10,10,10,.34), 0 12px 26px -12px rgba(0,0,0,.72);
+  transition: box-shadow var(--mk-fast) var(--mk-ease); }
+.galeria-ficha__flecha svg { position: relative; pointer-events: none; filter: drop-shadow(0 1px 2px rgba(0,0,0,.7));
+  transform: translate3d(calc(var(--tx) * 1.3), calc(var(--ty) * 1.3), 0) scale(var(--sx), var(--sy)); }
+.galeria-ficha__flecha--anterior { left: 16px; }
+.galeria-ficha__flecha--siguiente { right: 16px; }
+@media (hover: hover) and (pointer: fine) { .galeria-ficha__flecha { display: grid; } }
+.galeria-ficha__flecha:disabled { opacity: 0; visibility: hidden; }
+.galeria-ficha__flecha.is-press::before { box-shadow: inset 0 0 0 1px rgba(255,255,255,.5), inset 0 0 6px rgba(255,255,255,.4), 0 0 0 1px rgba(10,10,10,.34), 0 6px 14px -8px rgba(0,0,0,.7); }
+.galeria-ficha__flecha:focus-visible { outline: none; opacity: 1; }
+.galeria-ficha__flecha:focus-visible::before { box-shadow: inset 0 1px 0 rgba(255,255,255,.62), 0 0 0 2px #0A0A0A, 0 0 0 4px #F5F2EE; }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .galeria-ficha__flecha::before { background-color: rgba(10,10,10,.82); } }
+.galeria-ficha__vivo { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* Miniatura de la foto que se está viendo */
+.galeria-ficha__miniatura[aria-current="true"] { opacity: 1; border-color: var(--color-blanco); box-shadow: 0 0 0 2px rgba(245,242,238,.32); }
+.galeria-ficha__miniaturas.tiene-lente .galeria-ficha__miniatura[aria-current="true"] { border-color: rgba(245,242,238,.25); box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { .galeria-ficha__pista { scroll-behavior: auto; } }
+
+/* ---- 34.9 Pendientes menores (accesibilidad y desbordamiento) ---- */
+/* Enlace del idioma inactivo (ES | EN): con opacity .55 sobre el header claro llegaba a 4,19–4,28:1; con .66 supera 4,5:1
+   sobre claro y sobre oscuro. El idioma activo (opacity 1), la posición y el tamaño no cambian. */
+.header__lang-link:not(.header__lang-link--active) { opacity: .66; }
+.header__lang-link:not(.header__lang-link--active):hover { opacity: .9; }
+/* Una URL larga sin espacios en el texto de un artículo (p. ej. la fuente de «Turismo récord…») ensanchaba la columna y
+   la página desbordaba 30 px a 375 px. Solo actúa cuando hay una cadena que no cabe; el resto del texto no cambia. */
+.ficha-propiedad__descripcion { overflow-wrap: anywhere; }
+
+/* ---- 34.10 Vidrio líquido: lente de miniaturas y botones de redes del footer ---- */
+/* Lente (inspirada en el indicador de pestañas de iOS): cristal translúcido, un poco mayor que la miniatura, con aro
+   fino claro/oscuro y refracción de borde (Chromium: filtro SVG; resto: respaldo de cristal translúcido). Solo indica la
+   selección: las fotografías no se deforman, solo se curva su borde bajo la lente. */
+.galeria-ficha__miniaturas { position: absolute; }
+.galeria-ficha__lente { --lx: 0px; --ly: 0px; --lw: 78px; --lh: 61px; --lsx: 1; --lsy: 1;
+  position: absolute; left: 0; top: 0; z-index: 2; width: var(--lw); height: var(--lh); border-radius: 19px; pointer-events: none; opacity: 0;
+  transform: translate3d(var(--lx), var(--ly), 0) scale(var(--lsx), var(--lsy)); transform-origin: 50% 50%; will-change: transform, opacity;
+  background-color: rgba(255,255,255,.1);
+  background-image: linear-gradient(180deg, rgba(255,255,255,.34) 0%, rgba(255,255,255,.07) 38%, rgba(255,255,255,0) 62%, rgba(255,255,255,.16) 100%);
+  -webkit-backdrop-filter: saturate(1.4) brightness(1.07); backdrop-filter: saturate(1.4) brightness(1.07);   /* sin desenfoque: la miniatura sigue nítida y reconocible */
+  box-shadow: 0 0 0 1px rgba(10,10,10,.4), inset 0 1px 0 rgba(255,255,255,.95), inset 0 0 0 1.5px rgba(255,255,255,.4), inset 0 -9px 14px -10px rgba(255,255,255,.55), 0 10px 20px -10px rgba(0,0,0,.65); }
+.mk-lente-refracta .galeria-ficha__lente { -webkit-backdrop-filter: url(#mk-lente) saturate(1.45) brightness(1.06); backdrop-filter: url(#mk-lente) saturate(1.45) brightness(1.06); }
+.galeria-ficha__miniaturas.tiene-lente .galeria-ficha__miniatura { opacity: .8; }
+.galeria-ficha__miniaturas.tiene-lente .galeria-ficha__miniatura:hover, .galeria-ficha__miniaturas.tiene-lente .galeria-ficha__miniatura[aria-current="true"],
+.galeria-ficha__miniaturas.tiene-lente .galeria-ficha__miniatura:focus-visible { opacity: 1; transform: none; }
+.galeria-ficha__miniaturas.tiene-lente .galeria-ficha__miniatura:focus-visible { outline: none; border-color: rgba(245,242,238,.5); }
+@media (max-width: 639px) { .galeria-ficha__lente { border-radius: 17px; } }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .galeria-ficha__lente { background-color: rgba(255,255,255,.22); } }
+@media (prefers-reduced-transparency: reduce) { .galeria-ficha__lente { -webkit-backdrop-filter: none; backdrop-filter: none; background-color: rgba(255,255,255,.2); } }
+
+/* Redes del footer: mismo cristal que las flechas, adaptado al fondo oscuro. Mismo tamaño (44 px), íconos y enlaces.
+   El enlace (zona de clic) no se mueve; se anima su ::before y el icono. */
+.footer__social-link { --tx: 0px; --ty: 0px; --sx: 1; --sy: 1; --gl: 0; --lx: 32%; --ly: 26%;
+  position: relative; touch-action: manipulation; -webkit-tap-highlight-color: transparent; opacity: .94;
+  background: none; border: 0; transition: opacity var(--mk-fast) var(--mk-ease); }
+.footer__social-link::before { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; will-change: transform;
+  transform: translate3d(var(--tx), var(--ty), 0) scale(var(--sx), var(--sy));
+  background-color: rgba(245,242,238,.07);
+  background-image:
+    radial-gradient(52% 52% at var(--lx) var(--ly), rgba(255,255,255,calc(.13 + .26 * var(--gl))) 0%, rgba(255,255,255,0) 100%),
+    linear-gradient(180deg, rgba(255,255,255,.15) 0%, rgba(255,255,255,0) 48%, rgba(255,255,255,.05) 100%);
+  border: 1px solid rgba(245,242,238,.28);
+  -webkit-backdrop-filter: blur(8px) saturate(1.5); backdrop-filter: blur(8px) saturate(1.5);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.42), inset 0 -7px 10px -8px rgba(255,255,255,.22), 0 10px 20px -12px rgba(0,0,0,.9);
+  transition: border-color var(--mk-fast) var(--mk-ease), box-shadow var(--mk-fast) var(--mk-ease), background-color var(--mk-fast) var(--mk-ease); }
+.footer__social-link svg { position: relative; pointer-events: none; filter: drop-shadow(0 1px 1px rgba(0,0,0,.5));
+  transform: translate3d(calc(var(--tx) * 1.3), calc(var(--ty) * 1.3), 0) scale(var(--sx), var(--sy)); }
+.footer__social-link:hover { opacity: 1; }
+.footer__social-link:hover::before { border-color: rgba(245,242,238,.5); background-color: rgba(245,242,238,.1); }
+.footer__social-link.is-press::before { box-shadow: inset 0 0 0 1px rgba(255,255,255,.4), inset 0 0 12px rgba(255,255,255,.4), 0 5px 12px -8px rgba(0,0,0,.9); }
+.footer__social-link:focus-visible { outline: 2px solid var(--color-blanco); outline-offset: 3px; border-radius: 50%; }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .footer__social-link::before { background-color: rgba(245,242,238,.12); } }
+
+/* Movimiento reducido: el cristal se queda quieto (sin resortes ni seguimiento); solo cambia el estado visual. */
+@media (prefers-reduced-motion: reduce) {
+  .galeria-ficha__flecha::before, .footer__social-link::before, .galeria-ficha__flecha svg, .footer__social-link svg { transform: none !important; will-change: auto; }
+  .galeria-ficha__lente { transition: none; will-change: auto; }
+}
+
+/* ---- 34.11 Barra de navegación: lente de cristal compartida ----
+   Una sola cápsula (la crea script.js § 5c) viaja detrás de los enlaces. Es un hijo aria-hidden del <nav>: no mueve los
+   enlaces, no intercepta el puntero y queda bajo el texto (z-index 0 frente a 1) y bajo el mega-menú (z-index 200).
+   El tono sigue al del texto de cada estado: oscuro sobre el Hero (texto marfil) o con la cápsula en tono oscuro; claro en el resto. */
+.header__nav { position: relative; }
+.header__nav-link { position: relative; z-index: 1; }
+.header__lente {
+  --lt-bg: rgba(255, 255, 255, .34);
+  --lt-spec: rgba(255, 255, 255, .62);
+  --lt-hi: rgba(255, 255, 255, .95);
+  --lt-lo: rgba(10, 10, 10, .10);
+  --lt-ring: rgba(10, 10, 10, .07);
+  --lt-sh: rgba(10, 10, 10, .30);
+  position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none;
+  width: var(--lw, 0px); height: var(--lh, 0px); border-radius: 999px;
+  opacity: 0; visibility: hidden; will-change: transform, opacity;
+  transform: translate3d(var(--lx, 0px), var(--ly, 0px), 0) scale(var(--lsx, 1), var(--lsy, 1));
+  background-color: var(--lt-bg);
+  background-image:
+    radial-gradient(80% 130% at var(--lgx, 50%) -25%, var(--lt-spec) 0%, rgba(255, 255, 255, 0) 62%),   /* reflejo que acompaña al cursor, solo arriba */
+    linear-gradient(180deg, rgba(255, 255, 255, .20) 0%, rgba(255, 255, 255, 0) 46%, rgba(10, 10, 10, .035) 100%);
+  -webkit-backdrop-filter: saturate(1.6) brightness(1.05); backdrop-filter: saturate(1.6) brightness(1.05);
+  box-shadow:
+    inset 0 1px 0 var(--lt-hi),
+    inset 0 -1px 0 var(--lt-lo),
+    inset 0 0 0 1px rgba(255, 255, 255, .30),
+    inset 1px 0 0 rgba(150, 190, 255, .20), inset -1px 0 0 rgba(255, 160, 110, .20),   /* leve dispersión cromática en los extremos */
+    0 0 0 1px var(--lt-ring),
+    0 9px 18px -9px var(--lt-sh), 0 2px 5px rgba(10, 10, 10, .08);
+}
+html.mk-nav-refracta .header__lente { -webkit-backdrop-filter: url(#mk-nav-lente) saturate(1.6) brightness(1.05); backdrop-filter: url(#mk-nav-lente) saturate(1.6) brightness(1.05); }
+/* Tono oscuro: texto marfil (Hero sin scroll) o cápsula oscura */
+body:not(.pagina-interior) .header:not(.header--scrolled) .header__lente,
+.header--scrolled[data-tone="dark"] .header__lente {
+  --lt-bg: rgba(10, 10, 10, .26);   /* oscurece un poco en vez de aclarar: el texto marfil gana contraste bajo la lente, nunca lo pierde */
+  --lt-spec: rgba(255, 255, 255, .26);
+  --lt-hi: rgba(245, 242, 238, .50);
+  --lt-lo: rgba(245, 242, 238, .14);
+  --lt-ring: rgba(245, 242, 238, .16);
+  --lt-sh: rgba(0, 0, 0, .55);
+}
+/* El texto no se atenúa bajo la lente: con ella, el hover ya lo señala (el CTA «Contacto» conserva su relleno terracota) */
+.header__nav.tiene-lente .header__nav-link:not(.header__nav-link--cta):hover,
+.header--scrolled .header__nav.tiene-lente .header__nav-link:not(.header__nav-link--cta):hover { opacity: 1; }
+/* «Contacto» al pasar el cursor: relleno terracota con texto marfil, igual que sobre el Hero. En la cápsula con scroll una regla de tono
+   (especificidad 0,3,0, posterior) lo anulaba y dejaba texto marfil sobre fondo casi blanco: ilegible. */
+.header--scrolled[data-tone] .header__nav-link--cta:hover { background: var(--color-terracota); border-color: var(--color-terracota); color: var(--color-blanco); text-shadow: none; opacity: 1; }
+/* «Contacto»: no usa la lente compartida (se detiene antes de él). Su cristal es SU PROPIA cápsula: el ::before, entre el fondo del botón y el texto,
+   lleva el terracota aprobado con brillo, filo de luz y leve dispersión cromática, y se estira/pulsa con resortes (script.js § 5c). Una sola cápsula,
+   sin fondos superpuestos que compitan: al pasar el cursor el botón sigue siendo terracota con texto marfil, ahora con material de cristal. */
+.header__nav-link--cta { --clx: 50%; --cgl: 0; --csx: 1; --csy: 1; }
+.header__nav-link--cta::before {
+  content: ""; position: absolute; inset: -1px; z-index: -1; border-radius: inherit; pointer-events: none;
+  opacity: 0; transform: scale(var(--csx), var(--csy)); will-change: transform;
+  background-color: var(--color-terracota);
+  background-image:
+    radial-gradient(55% 70% at var(--clx) -50%, rgba(255, 255, 255, calc(.05 + .17 * var(--cgl))) 0%, rgba(255, 255, 255, 0) 70%),   /* reflejo que acompaña al cursor: solo en el borde superior, lejos del texto */
+    linear-gradient(180deg, rgba(255, 255, 255, .08) 0%, rgba(255, 255, 255, 0) 18%, rgba(10, 10, 10, .06) 40%, rgba(10, 10, 10, .14) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .50),
+    inset 0 -1px 0 rgba(10, 10, 10, .22),
+    inset 1px 0 0 rgba(150, 190, 255, .26), inset -1px 0 0 rgba(255, 190, 150, .30),
+    0 9px 16px -9px rgba(181, 71, 42, .55);
+  transition: opacity var(--mk-fast) var(--mk-ease);
+}
+.header__nav-link--cta:hover::before, .header__nav-link--cta.is-on::before { opacity: 1; }
+.header .header__nav-link--cta.is-on, .header--scrolled[data-tone] .header__nav-link--cta.is-on {
+  background: var(--color-terracota); border-color: var(--color-terracota); color: var(--color-blanco); text-shadow: none; opacity: 1; }
+/* Selector ES/EN: tratamiento discreto, sin lente — solo un subrayado fino al pasar el cursor */
+.header__lang-link { text-decoration: underline 1px transparent; text-underline-offset: 5px; transition: opacity var(--mk-fast) var(--mk-ease), text-decoration-color var(--mk-fast) var(--mk-ease); }
+a.header__lang-link:hover { opacity: .95; text-decoration-color: currentColor; }
+/* Respaldos */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .header__lente { background-color: rgba(255, 255, 255, .5); } }
+@media (prefers-reduced-transparency: reduce) { .header__lente { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; } }
+@media (prefers-reduced-motion: reduce) { .header__lente { will-change: auto; transition: none; } .header__nav-link--cta::before { transform: none !important; will-change: auto; transition: none; } }
+@media (max-width: 1023px) { .header__lente { display: none; } }
+
+/* ---- 34.12 MAKOM Editorial Signature: páginas interiores de artículos de Perspectivas ----
+   Cabecera asimétrica (titular a la izquierda, fecha y autor a la derecha), portada protagonista dentro de un marco
+   redondeado que nunca recorta la imagen (object-fit: contain), columna de lectura con la tarjeta de contacto en el margen
+   izquierdo y «Continuar explorando» al final. Mismo marfil, mismos tokens y misma tipografía que el resto del sitio.
+   El texto lo maqueta el filtro articuloHtml (.eleventy.js): subtítulos, entradilla, frases destacadas, listas, citas y fuentes. */
+.articulo { background: var(--color-blanco); padding-top: calc(var(--header-height) + 36px); }
+
+/* Cabecera */
+.articulo__cabecera { padding-bottom: clamp(26px, 3.4vw, 44px); }
+.articulo__migas { display: flex; align-items: baseline; gap: 6px; min-width: 0; padding-bottom: 18px; margin-bottom: clamp(26px, 4vw, 48px);
+  border-bottom: 1px solid var(--color-arena-40); font-size: 13px; font-weight: var(--font-weight-light); color: var(--color-negro-70); }
+.articulo__migas a { flex: none; transition: color var(--mk-fast) var(--mk-ease); }
+.articulo__migas a:hover { color: var(--color-negro); text-decoration: underline; text-underline-offset: 4px; }
+.articulo__migas [aria-current="page"] { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-negro); }   /* el texto completo sigue en el HTML; aquí solo se abrevia a una línea */
+.articulo__titular { display: grid; gap: 26px; }
+.articulo__categoria { margin: 0 0 20px; }
+.articulo__categoria .article-card__category { padding: 7px 14px; font-size: 12px; }
+.articulo__titulo { margin: 0; font-size: clamp(32px, 4.6vw, 60px); font-weight: var(--font-weight-regular); line-height: 1.06; letter-spacing: -.028em; text-wrap: balance; color: var(--color-negro); overflow-wrap: break-word; }
+.articulo__datos { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 0; margin: 0; padding-top: 16px; border-top: 1px solid var(--color-arena-40); font-size: 14px; line-height: 1.5; letter-spacing: .01em; color: var(--color-negro-70); }
+.articulo__fecha { color: var(--color-negro); }
+.articulo__autor { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+.articulo__datos-sep { padding-inline: 8px; }
+@media (min-width: 900px) {
+  .articulo__titular { grid-template-columns: minmax(0, 8fr) minmax(0, 3.2fr); column-gap: clamp(32px, 5vw, 88px); align-items: end; }
+  .articulo__datos { flex-direction: column; align-items: flex-start; gap: 8px; padding: 2px 0 6px 24px; border-top: 0; border-left: 1px solid var(--color-arena-40); }
+  .articulo__datos-sep { display: none; }
+}
+
+/* Portada: protagonista, ancho completo, esquinas redondeadas y sin recortes */
+.articulo__portada { margin: 0 0 clamp(34px, 5vw, 60px); }
+.articulo__portada-marco { display: flex; justify-content: center; overflow: hidden; border: 1px solid var(--d-edge-warm); border-radius: var(--r-media);
+  background: rgba(201, 185, 154, .14); box-shadow: var(--d-sh-2); }
+.articulo__portada img { display: block; width: 100%; height: auto; max-height: min(74vh, 700px); object-fit: contain; }
+
+/* Lectura */
+.articulo__cuerpo { display: grid; gap: 36px; padding-bottom: clamp(64px, 8vw, 104px); }
+.articulo__texto { min-width: 0; max-width: 700px; width: 100%; margin-inline: auto; font-size: 18px; line-height: 1.78; font-weight: var(--font-weight-regular); color: var(--color-negro-90); overflow-wrap: break-word; }
+.articulo__texto p { margin: 0 0 1.4em; }
+.articulo__texto > :last-child { margin-bottom: 0; }
+.articulo__texto .articulo__entradilla { margin-bottom: 1.5em; font-size: clamp(20px, 2.1vw, 25px); line-height: 1.55; letter-spacing: -.006em; color: var(--color-negro); }
+.articulo__subtitulo { margin: 2.1em 0 .75em; padding-top: 1.1em; border-top: 1px solid var(--color-arena-40); font-size: clamp(22px, 2.3vw, 28px); font-weight: var(--font-weight-medium); line-height: 1.25; letter-spacing: -.016em; color: var(--color-negro); text-wrap: balance; }
+.articulo__texto > .articulo__subtitulo:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.articulo__texto .articulo__destacado { margin: 1.7em 0; padding-left: 22px; border-left: 2px solid var(--color-arena); font-size: clamp(19px, 1.9vw, 22px); line-height: 1.55; font-weight: var(--font-weight-regular); color: var(--color-negro); }
+.articulo__texto strong { font-weight: var(--font-weight-medium); color: var(--color-negro); }
+.articulo__lista { margin: 0 0 1.7em; padding: 20px 24px; list-style: none; border: 1px solid var(--d-edge-warm); border-radius: var(--r-card); background: var(--d-surface); box-shadow: var(--d-sh-1); counter-reset: art; }
+.articulo__lista li { position: relative; padding-left: 28px; font-size: 17px; font-weight: var(--font-weight-regular); line-height: 1.6; counter-increment: art; }
+.articulo__lista li + li { margin-top: .75em; padding-top: .75em; border-top: 1px solid var(--color-arena-20); }
+ul.articulo__lista li::before { content: ""; position: absolute; left: 2px; top: .86em; width: 10px; height: 1px; background: var(--color-negro); }
+ul.articulo__lista li + li::before { top: calc(.75em + .86em + 1px); }
+ol.articulo__lista li::before { content: counter(art, decimal-leading-zero); position: absolute; left: 0; top: .22em; font-size: 12px; font-weight: var(--font-weight-medium); letter-spacing: .06em; color: var(--color-negro-70); }
+ol.articulo__lista li + li::before { top: calc(.75em + .22em + 1px); }
+.articulo__cita { margin: 1.9em 0; padding: 2px 0 2px 26px; border-left: 2px solid var(--color-arena); }
+.articulo__cita p { margin: 0; font-size: clamp(20px, 2vw, 25px); line-height: 1.5; font-style: italic; color: var(--color-negro); }
+.articulo__texto a { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; text-decoration-color: rgba(10, 10, 10, .38); overflow-wrap: anywhere;
+  transition: color var(--mk-fast) var(--mk-ease), text-decoration-color var(--mk-fast) var(--mk-ease); }
+.articulo__texto a:hover { color: var(--color-terracota-dark); text-decoration-color: currentColor; }
+.articulo__texto a:focus-visible { outline: none; border-radius: 4px; box-shadow: var(--mk-focus); }
+.articulo__fuente, .articulo__fuentes-titulo { color: var(--color-negro-70); font-size: 13px; line-height: 1.65; letter-spacing: .01em; }
+.articulo__texto .articulo__fuente { margin: -.5em 0 2em; padding-top: .8em; border-top: 1px solid var(--color-arena-20); }
+.articulo__fuente strong, .articulo__fuente em { font-weight: inherit; font-style: normal; color: inherit; }
+.articulo__texto .articulo__fuentes-titulo { margin: 2.4em 0 .5em; padding-top: 1.1em; border-top: 1px solid var(--color-arena-40); font-size: 11.5px; font-weight: var(--font-weight-medium); letter-spacing: .14em; text-transform: uppercase; }
+.articulo__fuentes-titulo + .articulo__fuente { margin-top: 0; padding-top: 0; border-top: 0; }
+
+/* Tarjeta de contacto: en el margen izquierdo (fija al desplazarse) y, en móvil, al final del texto */
+.articulo__contacto { display: grid; gap: 18px; padding: 26px 24px 24px; border: 1px solid var(--d-edge-warm); border-radius: var(--d-r-card); background: var(--d-surface); box-shadow: var(--d-sh-1); }
+.articulo__contacto-lema { margin: 0; font-size: 15px; line-height: 1.45; letter-spacing: -.005em; color: var(--color-negro); text-wrap: balance; }
+.articulo__contacto-btn { width: 100%; }
+@media (min-width: 1024px) {
+  .articulo__cuerpo { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; align-items: start; }
+  .articulo__texto { grid-column: 5 / span 7; grid-row: 1; margin-inline: 0; }
+  .articulo__lateral { grid-column: 1 / span 3; grid-row: 1; position: sticky; top: calc(var(--header-height) + 32px); align-self: start; }
+  .articulo__texto { font-size: 19px; }
+}
+
+/* Continuar explorando */
+.articulo-explorar { padding: clamp(52px, 6.5vw, 88px) 0 clamp(88px, 10vw, 136px); border-top: 1px solid var(--color-arena-40); background: linear-gradient(180deg, rgba(201, 185, 154, .12) 0%, rgba(201, 185, 154, 0) 100%); }
+.articulo-explorar__cabecera { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 14px 24px; margin-bottom: clamp(26px, 3.4vw, 44px); }
+.articulo-explorar__titulo { margin: 0; font-size: clamp(26px, 3vw, 40px); font-weight: var(--font-weight-regular); line-height: 1.1; letter-spacing: -.022em; }
+.articulo-explorar__todas { margin-top: 0; }
+.articulo-explorar__grid { display: grid; gap: 20px; }
+.articulo-explorar__card { grid-column: auto; }
+@media (min-width: 900px) {
+  .articulo-explorar__grid { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 24px; }
+  .articulo-explorar__card { grid-column: span 6; }
+  /* 3 artículos: el primero a todo el ancho (titular a la izquierda, resumen a la derecha) y dos medios debajo.
+     2 artículos: 7 + 5, asimétrico. 1 artículo: 8 columnas. */
+  .articulo-explorar__card:nth-child(1) { background: rgba(201, 185, 154, .16); }
+  .articulo-explorar__card:nth-child(1):nth-last-child(3) { grid-column: 1 / -1; padding: 44px 48px 40px; display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); grid-template-areas: "meta extract" "title extract" "title cta"; column-gap: 56px; row-gap: 14px; align-items: start; }
+  .articulo-explorar__card:nth-child(1):nth-last-child(3) .article-card__meta { grid-area: meta; }
+  .articulo-explorar__card:nth-child(1):nth-last-child(3) .article-card__title { grid-area: title; }
+  .articulo-explorar__card:nth-child(1):nth-last-child(3) .article-card__extract { grid-area: extract; align-self: end; }
+  .articulo-explorar__card:nth-child(1):nth-last-child(3) .article-card__cta { grid-area: cta; align-self: end; justify-self: start; margin-top: 8px; }
+  .articulo-explorar__card:nth-child(1):nth-last-child(2) { grid-column: span 7; padding: 40px 44px 36px; }
+  .articulo-explorar__card:nth-child(2):last-child { grid-column: span 5; }
+  .articulo-explorar__card:nth-child(1) .article-card__title { font-size: clamp(26px, 2.6vw, 36px); line-height: 1.12; }
+  .articulo-explorar__card:nth-child(1) .article-card__extract { font-size: 16.5px; max-width: 56ch; }
+  .articulo-explorar__card:only-child { grid-column: 1 / span 8; }
+}
+@media (prefers-reduced-motion: reduce) { .articulo-explorar__card, .articulo__texto a { transition: none; } }

@@ -56,12 +56,12 @@
       </div>
 
       {% if todos.length > 0 %}
-      <div class="perspectivas__col-right" role="list" aria-label="{{ 'Insight articles' if esEn else 'Listado de perspectivas' }}">
+      <div class="perspectivas__col-right" role="group" aria-label="{{ 'Insight articles' if esEn else 'Listado de perspectivas' }}">
         {% for a in todos %}
         {% set tituloA = (a.tituloEn or a.titulo) if esEn else a.titulo %}
         {% set extractoA = (a.extractoEn or a.extracto) if esEn else a.extracto %}
         {% if not loop.first %}<hr class="perspectivas__divider" aria-hidden="true" />{% endif %}
-        <article class="article-card" role="listitem" aria-labelledby="persp-{{ a.slug }}-title">
+        <article class="article-card" aria-labelledby="persp-{{ a.slug }}-title">
           <div class="article-card__meta">
             {% if a.categoria %}<span class="article-card__category">{{ a.categoria | categoriaPerspectiva(lang, categoriasPerspectivas) }}</span>{% endif %}
             {% if a.categoria and a.fecha %}<span class="article-card__sep">·</span>{% endif %}

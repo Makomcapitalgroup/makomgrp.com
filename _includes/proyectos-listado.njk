@@ -61,12 +61,12 @@
       </div>
 
       {% if todos.length > 0 %}
-      <div class="propiedades__grid" role="list" aria-label="{{ 'Project listings' if esEn else 'Listado de proyectos' }}">
+      <div class="propiedades__grid" role="group" aria-label="{{ 'Project listings' if esEn else 'Listado de proyectos' }}">
         {% for p in todos %}
         {% set tituloP = (p.tituloEn or p.titulo) if esEn else p.titulo %}
         {% set ubicacionP = (p.ubicacionEn or p.ubicacion) if esEn else p.ubicacion %}
         {% set extractoP = (p.extractoEn or p.extracto) if esEn else p.extracto %}
-        <article class="proyecto-card proyecto-card--small" role="listitem" aria-labelledby="proy-{{ p.slug }}-name">
+        <article class="proyecto-card proyecto-card--small" aria-labelledby="proy-{{ p.slug }}-name">
           <div class="proyecto-card__image" {% if not p.imagenPrincipal %}style="background-color:#1a1a1a"{% endif %}>
             {% if p.imagenPrincipal %}
               <img class="proyecto-card__image-inner" src="{{ p.imagenPrincipal }}" alt="{{ tituloP }}" loading="lazy" />
