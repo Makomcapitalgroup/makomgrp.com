@@ -463,6 +463,137 @@ module.exports = function (eleventyConfig) {
       .join("\n");
   });
 
+  // Presentación editorial de los artículos de Perspectivas ("Editorial Signature").
+  // El CMS guarda Markdown básico; "descripcionHtml" (Propiedades) lo interpreta solo a medias y, en
+  // artículos, dejaba asteriscos y enlaces sin activar a la vista. Este filtro es exclusivo de los
+  // artículos: no cambia ni una palabra del texto, solo cómo se dibuja:
+  //   - párrafo solo en negrita y corto, sin punto final  → subtítulo <h2>
+  //   - párrafo solo en negrita y largo o con punto final → frase destacada
+  //   - «Fuente(s):» / «Source(s):» y «FUENTES CONSULTADAS»  → nota de fuente
+  //   - "- ", "* ", "+ " y "1. "                            → listas; "> " → cita; "#" → subtítulo
+  //   - un punto "* 1. Título" suelto (un solo elemento numerado, sin punto final) → subtítulo
+  //   - [texto](https://…) y URL sueltas                    → enlaces (solo http/https, rel seguro)
+  //   - una barra invertida al final de línea (salto del editor) separa párrafos
+  // El primer párrafo del artículo lleva la clase de entradilla. Siempre se escapa el texto ANTES de
+  // envolverlo en etiquetas: nunca se interpreta HTML arbitrario del CMS.
+  eleventyConfig.addFilter("articuloHtml", (texto) => {
+    if (!texto) return "";
+    const escapar = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    const enLinea = (crudo) => {
+      const piezas = [];
+      const guardar = (html) => `\u0000${piezas.push(html) - 1}\u0000`;
+      let t = String(crudo);
+      t = t.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, etiqueta, url) =>
+        guardar(`<a href="${escapar(url)}" target="_blank" rel="noopener noreferrer">${escapar(etiqueta)}</a>`));
+      t = t.replace(/https?:\/\/[^\s<>"]+/g, (url) => {
+        const m = /[.,;:!?)”"]+$/.exec(url);
+        const cola = m ? m[0] : "";
+        const limpia = cola ? url.slice(0, -cola.length) : url;
+        return guardar(`<a href="${escapar(limpia)}" target="_blank" rel="noopener noreferrer">${escapar(limpia)}</a>`) + escapar(cola);
+      });
+      t = escapar(t).replace(/\u0000(\d+)\u0000/g, (_, i) => `\u0000${i}\u0000`);
+      t = t
+        .replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>")
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+        .replace(/(^|[\s(¿¡])\*(?!\s)([^*]+?)(?<!\s)\*(?=$|[\s.,;:!?)])/g, "$1<em>$2</em>")
+        .replace(/(^|[\s(¿¡])_(?!\s)(.+?)(?<!\s)_(?=$|[\s.,;:!?)])/g, "$1<em>$2</em>");
+      return t.replace(/\u0000(\d+)\u0000/g, (_, i) => piezas[Number(i)]);
+    };
+    const soloNegrita = (l) => {
+      const m = /^\*\*(?!\*)(.+?)\*\*$/.exec(l);
+      return m && !m[1].includes("**") ? m[1].trim() : null;
+    };
+    const textoSinMarcas = (l) => l.replace(/[*_]/g, "").trim();
+    const esFuente = (l) => /^(fuentes?|sources?)\s*:/i.test(textoSinMarcas(l));
+    const esTituloFuentes = (l) => /^(fuentes?|sources?)\b[^.:]{0,30}$/i.test(textoSinMarcas(l)) && textoSinMarcas(l) === textoSinMarcas(l).toUpperCase();
+
+    // 1) bloques y líneas; la barra invertida final marca un corte de párrafo
+    const lineas = [];
+    texto.replace(/\r/g, "").split("\n").forEach((cruda) => {
+      let l = cruda.trim();
+      const corte = /\\$/.test(l);
+      l = l.replace(/\\+$/, "").trim();
+      if (l === "") { lineas.push(null); return; }
+      lineas.push(l);
+      if (corte) lineas.push(null);
+    });
+
+    // 2) agrupa líneas contiguas del mismo tipo
+    const bloques = [];
+    let actual = null;
+    const cerrar = () => { if (actual) bloques.push(actual); actual = null; };
+    lineas.forEach((l) => {
+      if (l === null) { cerrar(); return; }
+      let tipo = "p", cuerpo = l;
+      let m;
+      if ((m = /^#{1,6}\s+(.+)$/.exec(l))) { tipo = "h"; cuerpo = m[1]; }
+      else if ((m = /^>\s?(.*)$/.exec(l))) { tipo = "q"; cuerpo = m[1]; }
+      else if ((m = /^[-*+]\s+(.+)$/.exec(l))) { tipo = "ul"; cuerpo = m[1]; }
+      else if ((m = /^\d+[.)]\s+(.+)$/.exec(l))) { tipo = "ol"; cuerpo = m[1]; }
+      else if (soloNegrita(l) !== null && !esFuente(l)) { tipo = "b"; cuerpo = l; }
+      const separado = tipo === "h" || tipo === "b";   // subtítulos y frases en negrita: siempre su propio bloque
+      if (actual && actual.tipo === tipo && !separado) actual.lineas.push(cuerpo);
+      else { cerrar(); actual = { tipo, lineas: [cuerpo] }; }
+    });
+    cerrar();
+
+    // 3) HTML
+    let primerParrafo = true;
+    let enFuentes = false;   // tras «FUENTES CONSULTADAS», lo que sigue son notas de fuente
+    return bloques.map((b) => {
+      if (b.tipo === "h") return `<h2 class="articulo__subtitulo">${enLinea(b.lineas[0])}</h2>`;
+      if (b.tipo === "b") {
+        const t = soloNegrita(b.lineas[0]);
+        if (esTituloFuentes(t)) { enFuentes = true; return `<p class="articulo__fuentes-titulo">${enLinea(t)}</p>`; }
+        if (esFuente(b.lineas[0])) return `<p class="articulo__fuente">${enLinea(b.lineas[0])}</p>`;
+        const corto = t.length <= 110 && !/[.:;]$/.test(t);
+        primerParrafo = false;
+        return corto ? `<h2 class="articulo__subtitulo">${enLinea(t)}</h2>` : `<p class="articulo__destacado">${enLinea(t)}</p>`;
+      }
+      if (b.tipo === "ul" || b.tipo === "ol") {
+        if (b.tipo === "ul" && b.lineas.length === 1 && /^\d+\.\s/.test(b.lineas[0]) && b.lineas[0].length <= 110 && !/[.:;!?]$/.test(b.lineas[0])) {
+          primerParrafo = false;
+          return `<h2 class="articulo__subtitulo">${enLinea(b.lineas[0])}</h2>`;
+        }
+        const items = b.lineas.map((l) => `<li>${enLinea(l)}</li>`).join("");
+        primerParrafo = false;
+        return `<${b.tipo} class="articulo__lista">${items}</${b.tipo}>`;
+      }
+      if (b.tipo === "q") { primerParrafo = false; return `<blockquote class="articulo__cita"><p>${b.lineas.map(enLinea).join("<br>")}</p></blockquote>`; }
+      // párrafo
+      const crudo = b.lineas.join(" ");
+      if (enFuentes || esFuente(b.lineas[0])) return `<p class="articulo__fuente">${b.lineas.map(enLinea).join("<br>")}</p>`;
+      if (esTituloFuentes(b.lineas[0])) { enFuentes = true; return `<p class="articulo__fuentes-titulo">${enLinea(b.lineas[0])}</p>`; }
+      const clase = primerParrafo && crudo.length <= 380 ? ' class="articulo__entradilla"' : "";   // una entradilla es breve: un primer párrafo largo queda como texto normal
+      primerParrafo = false;
+      return `<p${clase}>${b.lineas.map(enLinea).join("<br>")}</p>`;
+    }).join("\n");
+  });
+
+  // Hasta tres artículos distintos del actual para "Continuar explorando". Primero los que comparten
+  // categoría (la categoría admite varias separadas por comas), luego el orden editorial habitual
+  // (ordenHome ascendente y, si no, fecha descendente). Sale del mismo contenido del CMS: nada inventado.
+  eleventyConfig.addFilter("perspectivasRelacionadas", (lista, actual, max) => {
+    const tope = max || 3;
+    const claves = (c) => String(c || "").split(",").map((x) => normalizarCategoria(x)).filter(Boolean);
+    const mias = new Set(claves(actual && actual.categoria));
+    const ordenadas = (lista || []).slice().sort((a, b) => {
+      const aOrden = typeof a.ordenHome === "number" ? a.ordenHome : null;
+      const bOrden = typeof b.ordenHome === "number" ? b.ordenHome : null;
+      if (aOrden !== null && bOrden !== null && aOrden !== bOrden) return aOrden - bOrden;
+      if (aOrden !== null && bOrden === null) return -1;
+      if (aOrden === null && bOrden !== null) return 1;
+      return (b.fecha || "").localeCompare(a.fecha || "");
+    });
+    const otras = ordenadas.filter((p) => p.slug && p.slug !== (actual && actual.slug));
+    const comparten = (p) => claves(p.categoria).filter((k) => mias.has(k)).length;
+    return otras
+      .map((p, i) => ({ p, i, c: comparten(p) }))
+      .sort((a, b) => (b.c - a.c) || (a.i - b.i))
+      .slice(0, tope)
+      .map((x) => x.p);
+  });
+
   // Determina la foto de portada de una galería: la marcada
   // explícitamente con portada:true (la PRIMERA marcada, si hubiera más
   // de una por error — .find() ya es determinista en ese sentido), o
