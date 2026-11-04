@@ -1,0 +1,83 @@
+{
+  "amenidades": [
+    "piscina",
+    "gimnasio",
+    "lobby",
+    "elevadores",
+    "cancha-deportiva"
+  ],
+  "ubicacionPublicaEn": "Costa del Este",
+  "tituloEn": "270 m² residences | Costa del Este | Apartments from $787,500",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 787500
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/regalia-cde-6.jpg"
+      },
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/regalia-cde-5.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/regalia-cde-4.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/regalia-cde-3-.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/regalia-cde-2.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/regalia-cde-.jpg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 3,
+    "banos": 3,
+    "estacionamientos": 2,
+    "metrajeInterno": "",
+    "metrajeTotal": 270
+  },
+  "mostrarEnHome": false,
+  "zona": "ciudad-de-panama-general",
+  "descripcion": "Residencias de proporciones generosas en Costa del Este, sobre la Avenida Paseo del Mar, con acabados importados.\n\n**Residencias desde $787,500**\nDesde 270 m² con balcón, 3 recámaras, den, sala familiar, cuarto y baño de empleada, 2 walk-in closets, techos de 3 metros y 2 estacionamientos.\n\n**Amenidades**\nLobby de doble altura, seguridad las 24 horas, 4 elevadores de alta velocidad, piscinas para adultos y niños, gimnasio, área de yoga y cancha de racquetball.\n\n**Ubicación**\nCosta del Este, con vistas al mar o a la ciudad según el modelo.\n\nSu asesor MAKOM le presentará la disponibilidad vigente y, para quienes prefieren vivir la experiencia antes de decidir, la posibilidad de un alquiler con opción a compra.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "sector": "Costa del Este",
+    "direccionInterna": "Avenida Paseo del Mar, Costa del Este"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "Residences of generous proportions in Costa del Este, on Avenida Paseo del Mar, with imported finishes.\n\n**Residences from $787,500**\nFrom 270 m² with balcony, 3 bedrooms, den, family room, maid's room with bath, 2 walk-in closets, 3-meter ceilings and 2 parking spaces.\n\n**Amenities**\nDouble-height lobby, 24-hour security, 4 high-speed elevators, pools for adults and children, gym, yoga area and racquetball court.\n\n**Location**\nCosta del Este, with sea or city views depending on the model.\n\nYour MAKOM advisor will share current availability and, for those who prefer to live the experience before deciding, the possibility of a rent-to-own arrangement.",
+  "operacion": "venta",
+  "ubicacionPublica": "Costa del Este",
+  "titulo": "Residencias de 270 m² | Costa del Este |",
+  "fechaEntrega": "inmediata",
+  "detalles": [
+    "cuarto-empleada",
+    "lavanderia",
+    "walk-in-closet",
+    "den",
+    "balcon"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
