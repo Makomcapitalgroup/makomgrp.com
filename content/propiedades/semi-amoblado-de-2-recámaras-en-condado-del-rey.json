@@ -18,7 +18,7 @@
     "precision": "aproximada",
     "nivelZoom": 15
   },
-  "estado": "disponible",
+  "estado": "alquilada",
   "precio": {
     "moneda": "USD",
     "monto": 1150,
