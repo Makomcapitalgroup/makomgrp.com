@@ -57,6 +57,7 @@
     "metrajeInterno": 63
   },
   "mostrarEnHome": true,
+  "zona": "albrook",
   "ordenHome": 4,
   "descripcion": "Despierta rodeado de naturaleza sin salir de la ciudad: este apartamento de esquina en PH Forest Gate, Albrook, ofrece **vista al bosque**, **balcón propio** y **63 m² bien distribuidos** en 2 recámaras y 1 baño. De pronta entrega.\n\nAcabados de calidad: closets con puertas corredizas, cocina con muebles modulares hidrófugos, sobre de cuarzo, fregador undermount, puertas HOPSA, cerraduras Kwikset y **cerradura digital en la entrada principal.**\n\nEl proyecto cuenta con **piscina con área para eventos**, BBQ/grill, parque infantil, área para mascotas, lounge social/coworking y **gimnasio de alto rendimiento**, además de un club deportivo al natural con cancha multiuso iluminada, **cancha de pádel techada e iluminada**, área de chill out y mesa de ping pong.\n\nAgenda tu visita y conoce este apartamento.",
   "ubicacionInterna": {
@@ -69,7 +70,8 @@
   "descripcionEn": "Wake up surrounded by nature without leaving the city: this corner apartment at PH Forest Gate, Albrook, offers a **forest view**, a **private balcony**, and **63 well-distributed m²** across 2 bedrooms and 1 bathroom. Ready for prompt delivery.\n\nQuality finishes: sliding-door closets, kitchen with moisture-resistant modular cabinets, quartz countertop, undermount sink, HOPSA doors, Kwikset locks, and a **digital lock at the main entrance.**\n\nThe project features a **pool with an event area**, BBQ/grill, playground, pet area, social/coworking lounge, and a **high-performance gym**, plus an outdoor sports club with a lit multi-use court, a **covered, lit paddle court**, a chill-out area, and a ping pong table.\n\nSchedule your visit and see this apartment for yourself.",
   "operacion": "venta",
   "ubicacionPublica": "Albrook, Ciudad de Panamá",
-  "titulo": "APARTAMENTO RODEADO DE NATURALEZA / ALBROOK",
+  "titulo": "Apartamento Rodeado de Naturaleza / 2 recámaras /  Albrook ",
+  "fechaEntrega": "inmediata",
   "detalles": [
     "lavanderia",
     "balcon",
@@ -78,6 +80,5 @@
   ],
   "seo": {
     "noIndex": false
-  },
-  "zona": "albrook"
+  }
 }
