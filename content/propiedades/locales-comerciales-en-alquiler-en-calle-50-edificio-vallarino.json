@@ -46,6 +46,7 @@
     ]
   },
   "mostrarEnHome": false,
+  "zona": "ciudad-de-panama-general",
   "descripcion": "**Locales y oficinas en alquiler en el Edificio Vallarino, sobre Calle 50, Ciudad de Panamá.**\n\n**Datos principales:** opciones de 50 a 485 m², desde $594 al mes (tarifa de $12 por m²), con 1 estacionamiento por cada 40 m².\n\n**Características:** aires centrales en todas las oficinas. Ideales para despachos de abogados, contadores, oficinas administrativas y logística.\n\n¿Quieres conocer disponibilidad y metrajes actuales? Contáctanos y un asesor de MAKOM te muestra las opciones.",
   "ubicacionInterna": {
     "provincia": "Panamá",
@@ -64,6 +65,9 @@
     "aires-acondicionados"
   ],
   "seo": {
-    "noIndex": false
+    "noIndex": false,
+    "titulo": "Alquiler de locales comerciales en Calle 50, Panamá | MAKOM",
+    "descripcion": "CALLE 50 OFICINA 1.png (oficina con ventanales y vista a la ciudad)",
+    "imagenSocial": "/assets/propiedades/uploads/calle-50-pb.jpeg"
   }
 }
