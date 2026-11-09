@@ -19,7 +19,9 @@
   "mapa": {
     "activo": true,
     "precision": "aproximada",
-    "nivelZoom": 15
+    "nivelZoom": 15,
+    "longitud": -79.557635,
+    "latitud": 8.987691
   },
   "estado": "disponible",
   "precio": {
