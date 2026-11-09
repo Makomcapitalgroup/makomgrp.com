@@ -1,0 +1,81 @@
+{
+  "amenidades": [
+    "gimnasio",
+    "piscina",
+    "garita-seguridad",
+    "area-social",
+    "pet-friendly",
+    "estacionamientos-visitas"
+  ],
+  "tituloEn": "Apartments near Omar Park for sale in San Francisco, Panama City",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 240190
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/the-x-5.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/the-x-4.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/the-x-3.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/the-x-2.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/the-x-1.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/xtower-losa23_fachada.png"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 1,
+    "banos": 2,
+    "estacionamientos": 1,
+    "anoConstruccion": 2027
+  },
+  "mostrarEnHome": false,
+  "descripcion": "**Complejo de apartamentos de estilo moderno en el centro de la ciudad**, en San Francisco.\n\n**Datos principales:** apartamentos de 1 recámara y opciones de más recámaras, desde **$240,190**. Metrajes de 67 a 120 m², con balcón y cocina italiana. Incluyen 1 estacionamiento.\n\n**Amenidades destacadas:** piscina en rooftop, gimnasio, cancha de pádel, salón de fiestas y área de juegos para niños.\n\n**Ubicación:** San Francisco, con el Parque Omar a pocos pasos y acceso fácil al Corredor Sur.\n\n¿Quieres conocer disponibilidad y precio actualizado? Contáctanos y un asesor de MAKOM te muestra las opciones según tu presupuesto.",
+  "ubicacionInterna": {
+    "provincia": " Panamá",
+    "distrito": " Panamá",
+    "sector": "San Francisco",
+    "edificioPH": "X The Building",
+    "direccionInterna": "Calle 73, San Francisco"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "**Modern apartment complex in the heart of the city**, in San Francisco.\n\n**Key details:** 1-bedroom apartments and options with more bedrooms, from **$240,190**. Sizes from 67 to 120 m², with balcony and Italian kitchen. Each includes 1 parking space.\n\n**Featured amenities:** rooftop pool, gym, padel court, party room and kids' play area.\n\n**Location:** San Francisco, with Omar Park a few steps away and easy access to Corredor Sur.\n\nWant to know current availability and pricing? Contact us and a MAKOM advisor will show you options that fit your budget.",
+  "operacion": "venta",
+  "ubicacionPublica": "San Francisco, cerca del Parque Omar",
+  "titulo": "Apartamentos cerca del Parque Omar en venta en San Francisco, Panamá",
+  "fechaEntrega": "futura",
+  "detalles": [
+    "vista-ciudad"
+  ],
+  "seo": {
+    "noIndex": false,
+    "descripcion": "Apartamentos de 67 y 90 m² en venta en San Francisco, a pasos del Parque Omar. Piscina rooftop, pádel y balcón. Solicita precios y agenda tu visita.",
+    "titulo": "Apartamentos en venta en San Francisco, Panamá desde $240K",
+    "imagenSocial": "/assets/propiedades/uploads/xtower-losa23_fachada.png"
+  }
+}
