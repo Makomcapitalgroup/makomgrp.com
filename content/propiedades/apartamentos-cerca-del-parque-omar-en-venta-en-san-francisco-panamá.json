@@ -10,7 +10,7 @@
   "tituloEn": "Apartments near Omar Park for sale in San Francisco, Panama City",
   "referenciaMakom": "MKW-RE-032",
   "mapa": {
-    "activo": false,
+    "activo": true,
     "precision": "aproximada",
     "nivelZoom": 15
   },
@@ -77,6 +77,6 @@
     "noIndex": false,
     "descripcion": "Apartamentos de 67 y 90 m² en venta en San Francisco, a pasos del Parque Omar. Piscina rooftop, pádel y balcón. Solicita precios y agenda tu visita.",
     "titulo": "Apartamentos en venta en San Francisco, Panamá desde $240K",
-    "imagenSocial": "/assets/propiedades/uploads/xtower-losa23_fachada.png"
+    "imagenSocial": "/assets/propiedades/uploads/captura-de-pantalla-2026-11-09-a-la-s-12.19.06 p. m..png"
   }
 }
