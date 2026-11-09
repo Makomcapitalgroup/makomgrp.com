@@ -1,0 +1,81 @@
+{
+  "amenidades": [
+    "piscina",
+    "gimnasio",
+    "garita-seguridad",
+    "pet-friendly",
+    "coworking",
+    "rooftop",
+    "cancha-deportiva"
+  ],
+  "tituloEn": "Furnished 1-bedroom apartment for sale in San Francisco, Panama City | PH Quatrium",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 168000
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/01_quatrium_sala-tv.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/07_quatrium_recamara.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/10_quatrium_bano-lavamanos.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/16_quatrium_ph-cine.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/cocina-moderna-con-ollas-rojas-y-refrigerador-gris.png"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/lavandería-moderna-con-reloj-minimalista.png"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitaciones": 1,
+    "banos": 1,
+    "estacionamientos": 1,
+    "metrajeTotal": 46,
+    "anoConstruccion": 2023
+  },
+  "mostrarEnHome": false,
+  "zona": "ciudad-de-panama-general",
+  "descripcion": "Apartamento full amoblado en venta en San Francisco, Ciudad de Panamá, listo para mudarte y sin gastar en amueblar.\n\nPrecio: $168,000, con el mobiliario incluido.\n\nCaracterísticas:\n- 46 m²\n- 1 recámara y 1 baño\n- 1 estacionamiento y 2 depósitos\n- Totalmente amoblado\n- Cocina con estufa a gas\n- Lavandería eléctrica\n\nAmenidades del PH:\n- Piscina\n- Salón social con barra\n- Terraza social techada con vista a la ciudad\n- Zona verde con juegos infantiles\n- Cancha deportiva\n\nUbicado estratégicamente en San Francisco, en la Calle 62 Bis, Carrasquilla.\n\nEscríbenos para agendar tu visita.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "sector": "San Francisco, Calle 62 Bis, Carrasquilla"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "Furnished 1-bedroom, 1-bathroom apartment of **46 m²**, for sale at **$168,000** in San Francisco.\n\nSold **fully furnished, with the furniture included in the price**, 1 parking space and 2 storage rooms. The kitchen has a gas stove and the laundry is electric.\n\nThe building offers a **social lounge with bar, a covered social terrace with city views, a green area with children's playground and a sports court**.\n\nStrategically located in San Francisco, on Calle 62 Bis, Carrasquilla.\n\nWant to see it? Message us and schedule your visit with a MAKOM advisor.",
+  "operacion": "venta",
+  "ubicacionPublica": "San Francisco, Calle 62 Bis, Carrasquilla",
+  "titulo": "Apartamento amoblado de 1 recámara en venta | San Francisco, Panamá ",
+  "fechaEntrega": "inmediata",
+  "detalles": [
+    "deposito",
+    "lavanderia",
+    "vista-ciudad"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
