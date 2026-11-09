@@ -26,8 +26,8 @@
         "archivo": "/assets/propiedades/uploads/the-x-5.jpg"
       },
       {
-        "portada": false,
-        "archivo": "/assets/propiedades/uploads/the-x-4.jpg"
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/captura-de-pantalla-2026-11-09-a-la-s-12.19.21 p. m..png"
       },
       {
         "portada": false,
@@ -43,7 +43,7 @@
       },
       {
         "portada": false,
-        "archivo": "/assets/propiedades/uploads/xtower-losa23_fachada.png"
+        "archivo": "/assets/propiedades/uploads/captura-de-pantalla-2026-11-09-a-la-s-12.19.06 p. m..png"
       }
     ]
   },
@@ -53,7 +53,7 @@
     "estacionamientos": 1,
     "anoConstruccion": 2027
   },
-  "mostrarEnHome": false,
+  "mostrarEnHome": true,
   "zona": "ciudad-de-panama-general",
   "descripcion": "**Complejo de apartamentos de estilo moderno en el centro de la ciudad**, en San Francisco.\n\n**Datos principales:** apartamentos de 1 recámara y opciones de más recámaras, desde **$240,190**. Metrajes de 67 a 120 m², con balcón y cocina italiana. Incluyen 1 estacionamiento.\n\n**Amenidades destacadas:** piscina en rooftop, gimnasio, cancha de pádel, salón de fiestas y área de juegos para niños.\n\n**Ubicación:** San Francisco, con el Parque Omar a pocos pasos y acceso fácil al Corredor Sur.\n\n¿Quieres conocer disponibilidad y precio actualizado? Contáctanos y un asesor de MAKOM te muestra las opciones según tu presupuesto.",
   "ubicacionInterna": {
