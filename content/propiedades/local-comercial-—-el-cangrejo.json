@@ -2,6 +2,8 @@
   "amenidades": [
     "estacionamientos-techados"
   ],
+  "ubicacionPublicaEn": "Calle Eusebio Morales, El Cangrejo",
+  "tituloEn": "Commercial Space — El Cangrejo",
   "referenciaMakom": "MKW-RE-016",
   "mapa": {
     "activo": false,
@@ -11,7 +13,7 @@
   "estado": "disponible",
   "precio": {
     "moneda": "USD",
-    "monto": 1550,
+    "monto": 1300,
     "periodicidad": "mensual"
   },
   "fotografias": {
@@ -46,6 +48,7 @@
     "piso": "Planta baja"
   },
   "mostrarEnHome": false,
+  "zona": "el-cangrejo",
   "descripcion": "Local comercial de 52 m² ubicado en Vía Eusebio Morales, El Cangrejo, en la planta baja de un edificio de hotel, sobre una vía principal de alto tráfico.\n\nDatos principales\n\n**52 m²** de área · 4 espacios internos con divisiones ya hechas · cocineta con fregadero (espacio para microondas y similares) · 1 baño · 2 puestos de estacionamiento fijo, más acceso directo a estacionamientos de visita.\n\nCaracterísticas\n\n- Local ya dividido en 4 espacios independientes, listo para adaptar según el negocio.\n- Cocineta con fregadero, ideal para preparar café o alimentos ligeros para el personal o los clientes.\n- Baño propio.\n- 2 puestos de estacionamiento exclusivos, además de acceso directo a los estacionamientos de visita del edificio.\n\nUbicación\n\nSobre Vía Eusebio Morales, El Cangrejo — una de las vías más transitadas de la zona, en la planta baja de un edificio de hotel, con alta visibilidad para cualquier negocio.\n\n¿Para quién puede funcionar esta propiedad?\n\nPuede funcionar para oficinas, consultorios o cualquier negocio que busque visibilidad y fácil acceso en una zona corporativa de alto tráfico, con estacionamiento asegurado para clientes y personal.\n\n¿Quieres conocer más detalles o coordinar una visita? Contáctanos y con gusto te damos toda la información.",
   "ubicacionInterna": {
     "provincia": "Panamá",
@@ -57,14 +60,12 @@
   "descripcionEn": "Commercial space of 52 m² located on Vía Eusebio Morales, El Cangrejo, on the ground floor of a hotel building, on a busy main road.\n\nKey facts\n\n**52 m²** of area · 4 interior spaces already partitioned · kitchenette with sink (space for a microwave and similar appliances) · 1 bathroom · 2 assigned parking spaces, plus direct access to visitor parking.\n\nFeatures\n\n- Space already divided into 4 independent areas, ready to adapt to your business.\n- Kitchenette with sink, ideal for preparing coffee or light meals for staff or clients.\n- Private bathroom.\n- 2 exclusive parking spaces, plus direct access to the building's visitor parking.\n\nLocation\n\nOn Vía Eusebio Morales, El Cangrejo — one of the busiest roads in the area, on the ground floor of a hotel building, with high visibility for any business.\n\nWho is this property ideal for?\n\nIt can work as offices, consultation rooms, or any business seeking visibility and easy access in a high-traffic corporate area, with secured parking for clients and staff.\n\nWant more details or to schedule a visit? Contact us and we'll gladly provide all the information.",
   "operacion": "alquiler",
   "ubicacionPublica": "Calle Eusebio Morales, El Cangrejo. ",
-  "ubicacionPublicaEn": "Calle Eusebio Morales, El Cangrejo",
   "titulo": "LOCAL COMERCIAL — EL CANGREJO",
-  "tituloEn": "Commercial Space — El Cangrejo",
+  "fechaEntrega": "inmediata",
   "detalles": [
     "aires-acondicionados"
   ],
   "seo": {
     "noIndex": false
-  },
-  "zona": "el-cangrejo"
+  }
 }
