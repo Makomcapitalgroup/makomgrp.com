@@ -1,0 +1,4 @@
+{# Macros de la ficha de propiedad. Uso: {% from "macros-propiedad.njk" import icono %} … {{ icono("piscina", iconosPropiedad) }} #}
+{% macro icono(valor, mapa) -%}
+<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#ic-{{ valor | iconoDe(mapa) }}"/></svg>
+{%- endmacro %}

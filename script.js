@@ -2964,6 +2964,12 @@ document.addEventListener('DOMContentLoaded', function () {
       var img = boton.querySelector('img');
       return { src: mejorSrcDe(img), alt: img.getAttribute('alt') || '' };
     });
+    // Planos (opcionales): imágenes ocultas del HTML que se abren en el mismo visor, con su etiqueta como pie.
+    var planosLightbox = Array.from(galeriaFicha.querySelectorAll('[data-galeria-planos] img')).map(function (img) {
+      return { src: mejorSrcDe(img), alt: img.getAttribute('alt') || '', pie: img.getAttribute('data-etiqueta') || '' };
+    });
+    var listaLightbox = fotosLightbox;
+    var modoLightbox = 'fotos';
 
     // ----- Carrusel -----
     var indiceCarrusel = 0;
@@ -3075,25 +3081,30 @@ document.addEventListener('DOMContentLoaded', function () {
           '<img class="lightbox__imagen" src="" alt="" />' +
           '<button type="button" class="lightbox__siguiente" aria-label="Fotografía siguiente">&rarr;</button>' +
           '<span class="lightbox__contador"></span>' +
+          '<span class="lightbox__pie" aria-live="polite"></span>' +
         '</div>';
       document.body.appendChild(el);
       return el;
     }
 
     function actualizarLightbox() {
-      var foto = fotosLightbox[indiceActual];
+      var foto = listaLightbox[indiceActual];
       var imgEl = lightbox.querySelector('.lightbox__imagen');
       imgEl.src = foto.src;
       imgEl.alt = foto.alt;
       lightbox.querySelector('.lightbox__contador').textContent =
-        (indiceActual + 1) + ' / ' + fotosLightbox.length;
-      var mostrarNav = fotosLightbox.length > 1;
+        (indiceActual + 1) + ' / ' + listaLightbox.length;
+      lightbox.querySelector('.lightbox__pie').textContent = foto.pie || '';
+      lightbox.setAttribute('aria-label', modoLightbox === 'planos' ? (esEnGaleria ? 'Floor plans' : 'Planos') : (esEnGaleria ? 'Photo gallery' : 'Galería de fotografías'));
+      var mostrarNav = listaLightbox.length > 1;
       lightbox.querySelector('.lightbox__anterior').style.display = mostrarNav ? '' : 'none';
       lightbox.querySelector('.lightbox__siguiente').style.display = mostrarNav ? '' : 'none';
     }
 
-    function abrirLightbox(indice, disparador) {
+    function abrirLightbox(indice, disparador, lista, modo) {
       if (!lightbox) lightbox = crearLightbox();
+      listaLightbox = lista || fotosLightbox;
+      modoLightbox = modo || 'fotos';
       indiceActual = indice;
       disparadorActual = disparador;
       actualizarLightbox();
@@ -3108,7 +3119,7 @@ document.addEventListener('DOMContentLoaded', function () {
       document.removeEventListener('keydown', onTeclaLightbox);
       // El carrusel queda en la última fotografía vista en el visor, y el
       // foco vuelve a esa foto (que ahora es la actual).
-      if (pistaGaleria && slidesGaleria.length > 1 && indiceActual !== indiceCarrusel) {
+      if (modoLightbox === 'fotos' && pistaGaleria && slidesGaleria.length > 1 && indiceActual !== indiceCarrusel) {
         irAFoto(indiceActual, { instantaneo: true });
         disparadorActual = botonesGaleria[indiceActual];
       }
@@ -3116,12 +3127,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function siguienteFoto() {
-      indiceActual = (indiceActual + 1) % fotosLightbox.length;
+      indiceActual = (indiceActual + 1) % listaLightbox.length;
       actualizarLightbox();
     }
 
     function anteriorFoto() {
-      indiceActual = (indiceActual - 1 + fotosLightbox.length) % fotosLightbox.length;
+      indiceActual = (indiceActual - 1 + listaLightbox.length) % listaLightbox.length;
       actualizarLightbox();
     }
 
@@ -3157,6 +3168,112 @@ document.addEventListener('DOMContentLoaded', function () {
       else if (e.target.closest('.lightbox__anterior')) anteriorFoto();
       else if (e.target === lightbox) cerrarLightbox();
     });
+
+    // ----- Fichas «Video» y «Planos» junto a las miniaturas -----
+    // Video: el reproductor (iframe de YouTube/Vimeo sin cookies, o <video> para un .mp4/.webm) se crea SOLO al pulsar
+    // la ficha y se destruye al cerrar, así que no se descarga nada ni se envían datos a terceros antes de pedirlo.
+    var visorVideo = null;
+    var disparadorVideo = null;
+
+    function cerrarVisorVideo() {
+      if (!visorVideo) return;
+      visorVideo.hidden = true;
+      var caja = visorVideo.querySelector('.lightbox__video');
+      if (caja) caja.innerHTML = '';
+      document.removeEventListener('keydown', onTeclaVideo);
+      if (disparadorVideo) disparadorVideo.focus();
+    }
+
+    function onTeclaVideo(e) {
+      if (e.key === 'Escape') { e.preventDefault(); cerrarVisorVideo(); }
+    }
+
+    function abrirVisorVideo(boton) {
+      var tipo = boton.getAttribute('data-video-tipo');
+      var src = boton.getAttribute('data-video-src');
+      var titulo = boton.getAttribute('data-video-titulo') || (esEnGaleria ? 'Property tour video' : 'Video del recorrido');
+      if (!src || !/^(https:\/\/|\/assets\/)/.test(src)) return;
+      if (!visorVideo) {
+        visorVideo = document.createElement('div');
+        visorVideo.className = 'lightbox lightbox--video';
+        visorVideo.setAttribute('role', 'dialog');
+        visorVideo.setAttribute('aria-modal', 'true');
+        visorVideo.hidden = true;
+        visorVideo.innerHTML = '<div class="lightbox__figura"><button type="button" class="lightbox__cerrar" aria-label="' + (esEnGaleria ? 'Close video' : 'Cerrar video') + '">&times;</button><div class="lightbox__video"></div></div>';
+        document.body.appendChild(visorVideo);
+        visorVideo.addEventListener('click', function (ev) {
+          if (ev.target.closest('.lightbox__cerrar') || ev.target === visorVideo || ev.target.classList.contains('lightbox__figura')) cerrarVisorVideo();
+        });
+      }
+      visorVideo.setAttribute('aria-label', titulo);
+      var caja = visorVideo.querySelector('.lightbox__video');
+      caja.innerHTML = '';
+      var medio;
+      if (tipo === 'archivo') {
+        medio = document.createElement('video');
+        medio.controls = true;
+        medio.setAttribute('playsinline', '');
+        medio.preload = 'metadata';
+        medio.autoplay = true;
+        var poster = boton.getAttribute('data-video-poster');
+        if (poster) medio.poster = poster;
+        medio.src = src;
+        medio.setAttribute('aria-label', titulo);
+      } else {
+        medio = document.createElement('iframe');
+        medio.src = src;
+        medio.title = titulo;
+        medio.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture; encrypted-media');
+        medio.setAttribute('allowfullscreen', '');
+        medio.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+        medio.setAttribute('loading', 'eager');
+      }
+      caja.appendChild(medio);
+      disparadorVideo = boton;
+      visorVideo.hidden = false;
+      visorVideo.querySelector('.lightbox__cerrar').focus();
+      document.addEventListener('keydown', onTeclaVideo);
+    }
+
+    Array.from(galeriaFicha.querySelectorAll('[data-galeria-extra]')).forEach(function (boton) {
+      var tipo = boton.getAttribute('data-galeria-extra');
+      boton.addEventListener('click', function () {
+        if (tipo === 'video') abrirVisorVideo(boton);
+        else if (tipo === 'planos' && planosLightbox.length) abrirLightbox(0, boton, planosLightbox, 'planos');
+      });
+    });
+  }
+
+  /* ============================================================
+     16b. BARRA INFERIOR DE CONTACTO — FICHA DE PROPIEDAD (móvil y tableta)
+     La barra fija con WhatsApp (mensaje y referencia de ESTA propiedad) aparece al terminar la primera pantalla y se retira
+     mientras la tarjeta de contacto o el pie de página están a la vista, para no duplicar botones ni tapar contenido. En
+     escritorio no existe (display:none): ahí la tarjeta de contacto acompaña el desplazamiento (CSS: position: sticky).
+  ============================================================ */
+  var barraFicha = document.querySelector('[data-ficha-barra]');
+  if (barraFicha && 'IntersectionObserver' in window) {
+    var mqBarra = window.matchMedia('(max-width: 1023.98px)');
+    var superoPrimeraPantalla = false, tarjetaVisible = false, pieVisible = false;
+    var tarjetaContacto = document.querySelector('.ficha-propiedad__cta');
+    var pieDePagina = document.querySelector('footer');
+    // Cálculo directo (un solo classList.toggle): no depende de requestAnimationFrame, que el navegador pausa en pestañas ocultas.
+    function pedirBarra() {
+      barraFicha.classList.toggle('is-visible', mqBarra.matches && superoPrimeraPantalla && !tarjetaVisible && !pieVisible);
+    }
+    function medirPrimeraPantalla() { superoPrimeraPantalla = window.pageYOffset > window.innerHeight * 0.6; pedirBarra(); }
+    var observadorBarra = new IntersectionObserver(function (entradas) {
+      entradas.forEach(function (en) {
+        if (en.target === tarjetaContacto) tarjetaVisible = en.isIntersecting;
+        else if (en.target === pieDePagina) pieVisible = en.isIntersecting;
+      });
+      pedirBarra();
+    }, { threshold: 0.01 });
+    if (tarjetaContacto) observadorBarra.observe(tarjetaContacto);
+    if (pieDePagina) observadorBarra.observe(pieDePagina);
+    window.addEventListener('scroll', medirPrimeraPantalla, { passive: true });
+    window.addEventListener('resize', medirPrimeraPantalla);
+    if (mqBarra.addEventListener) mqBarra.addEventListener('change', pedirBarra);
+    medirPrimeraPantalla();
   }
 
   /* ============================================================
@@ -3179,7 +3296,9 @@ document.addEventListener('DOMContentLoaded', function () {
       var zoom = parseInt(contenedorMapa.getAttribute('data-zoom'), 10) || 15;
 
       if (!isNaN(lat) && !isNaN(lng)) {
-        L.Icon.Default.imagePath = '/assets/vendor/leaflet/images/';
+        // Zona aproximada: SOLO un círculo (nunca un marcador). El centro que llega en el HTML ya está desplazado y redondeado en el
+        // build (scripts/ficha-propiedad.js): no es la ubicación exacta de la propiedad.
+        var radioZona = parseFloat(contenedorMapa.getAttribute('data-radio')) || 450;
 
         var mapaLeaflet = L.map(contenedorMapa, {
           scrollWheelZoom: false,
@@ -3196,7 +3315,17 @@ document.addEventListener('DOMContentLoaded', function () {
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
         }).addTo(mapaLeaflet);
 
-        L.marker([lat, lng]).addTo(mapaLeaflet);
+        var zonaAproximada = L.circle([lat, lng], {
+          radius: radioZona,
+          color: '#B5472A',
+          weight: 1.5,
+          dashArray: '5 5',
+          fillColor: '#B5472A',
+          fillOpacity: 0.16,
+          interactive: false,
+        }).addTo(mapaLeaflet);
+        zonaAproximada.bindTooltip((document.documentElement.lang || '').toLowerCase().indexOf('en') === 0 ? 'Approximate area' : 'Zona aproximada', { permanent: true, direction: 'center', className: 'mapa-zona-etiqueta', interactive: false });
+        try { mapaLeaflet.fitBounds(zonaAproximada.getBounds(), { padding: [28, 28], maxZoom: zoom }); } catch (e2) { /* se conserva la vista inicial */ }
       }
     } catch (err) {
       // Silencioso a propósito: un fallo del mapa (tiles bloqueados,

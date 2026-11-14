@@ -9,6 +9,7 @@
   Todo lo demás (fotos, precio, referencia, mapa, datos cuantitativos,
   estado) es UN SOLO dato compartido — nunca se duplica por idioma.
 #}
+{%- from "macros-propiedad.njk" import icono -%}
 {% set lang = lang or "es" %}
 {% set esEn = lang == "en" %}
 {% set tituloMostrado = (propiedad.tituloEn or propiedad.titulo) if esEn else propiedad.titulo %}
@@ -54,9 +55,27 @@
   "tituloMostrado" ya resuelto en inglés más arriba.
 #}
 {% set tituloSeo = (propiedad.seo.titulo if not esEn else propiedad.seo.tituloEn) or (tituloMostrado + " | MAKOM") %}
-{% set descripcionSeo = propiedad.seo.descripcion or (descripcionMostrada | resumenSeo(155)) %}
+{#
+  Descripción SEO por idioma: "seo.descripcion" (ES) y "seo.descripcionEn" (EN) son independientes. Antes la
+  ficha en inglés reutilizaba el override en español; ahora cae a un resumen de la descripción en inglés.
+#}
+{% set descripcionSeo = (propiedad.seo.descripcionEn if esEn else propiedad.seo.descripcion) or (descripcionMostrada | resumenSeo(155)) %}
 {% set portada = propiedad.fotografias.galeria | portadaDe %}
-{% set mapaPublico = propiedad.mapa | mapaPublico %}
+{% set mapaPublico = propiedad.mapa | mapaPublico(propiedad.referenciaMakom or propiedad.slug) %}
+{#
+  Mejoras de ficha: todo opcional. Sin dato, no se muestra nada (nunca se inventa contenido).
+  - asesor: perfil de content/asesores/<slug>.json asignado en el CMS; sin asesor, contacto corporativo.
+  - video / planos: se muestran como fichas junto a las miniaturas de la galería.
+  - fechaPrecio / preciosEsp: línea bajo el precio solo si MAKOM confirmó la fecha / los precios.
+#}
+{% set asesor = collections.asesores | asesorDe(propiedad.asesor, lang) %}
+{% set video = propiedad.videoRecorrido | videoDe %}
+{% set planos = propiedad.planos | planosValidos %}
+{% set fechaPrecio = propiedad.precio | fechaReferenciaTexto(lang) %}
+{% set preciosEsp = propiedad.precio | preciosEspecificosTexto(lang) %}
+{% set numeroWhatsapp = asesor.whatsapp if (asesor and asesor.whatsapp) else "50763534377" %}
+{% set mensajeWhatsapp = (('Hi, I am interested in property ' + propiedad.referenciaMakom + ' — ' + tituloMostrado) if esEn else ('Hola, estoy interesado/a en la propiedad ' + propiedad.referenciaMakom + ' — ' + tituloMostrado)) %}
+{% set urlWhatsapp = "https://wa.me/" + numeroWhatsapp + "?text=" + (mensajeWhatsapp | urlencode) %}
 {#
   UX-2: "También podría interesarte" / "You may also be interested in".
   Se calcula una sola vez aquí (misma variable para el bloque de la
@@ -108,10 +127,18 @@
   <meta property="og:locale" content="{{ 'en_US' if esEn else 'es_PA' }}" />
   <meta property="og:url" content="{{ urlCanonica }}" />
   <meta property="og:image" content="{{ imagenOgUrl }}" />
+  {% if propiedad._imagenOgUrl and propiedad._imagenOgAncho %}
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="{{ propiedad._imagenOgAncho }}" />
+  <meta property="og:image:height" content="{{ propiedad._imagenOgAlto }}" />
+  <meta property="og:image:alt" content="{{ tituloMostrado }}" />
+  {% endif %}
+  <meta property="og:site_name" content="MAKOM CAPITAL GROUP" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="{{ tituloSeo }}" />
   <meta name="twitter:description" content="{{ descripcionSeo }}" />
   <meta name="twitter:image" content="{{ imagenOgUrl }}" />
+  {% if propiedad._imagenOgUrl %}<meta name="twitter:image:alt" content="{{ tituloMostrado }}" />{% endif %}
   <link rel="stylesheet" href="/styles.css" />
   {% if mapaPublico %}<link rel="stylesheet" href="/assets/vendor/leaflet/leaflet.css" />{% endif %}
   {% if esIndexable %}
@@ -120,8 +147,9 @@
   {% endif %}
   {% include "meta-pixel.njk" %}
 </head>
-<body class="pagina-interior" data-meta-event="ViewContent" data-meta-content-id="{{ propiedad.referenciaMakom or propiedad.slug }}" data-meta-content-name="{{ tituloMostrado }}" data-meta-content-type="product">
+<body class="pagina-interior pagina-ficha-propiedad" data-meta-event="ViewContent" data-meta-content-id="{{ propiedad.referenciaMakom or propiedad.slug }}" data-meta-content-name="{{ tituloMostrado }}" data-meta-content-type="product">
 
+{% include "iconos-propiedad.njk" %}
 {% include "header.njk" %}
 
 <main id="main" role="main">
@@ -147,6 +175,12 @@
         </div>
         <h1 class="ficha-propiedad__titulo" id="ficha-titulo">{{ tituloMostrado }}</h1>
         <p class="ficha-propiedad__precio">{{ propiedad.precio | precioFormato(propiedad.operacion, lang) }}</p>
+        {% if fechaPrecio %}<p class="ficha-propiedad__precio-nota">{{ fechaPrecio }}</p>{% endif %}
+        {% if preciosEsp.length > 0 %}
+        <ul class="ficha-propiedad__precios-esp" aria-label="{{ 'Prices by type' if esEn else 'Precios por tipología' }}">
+          {% for t in preciosEsp %}<li>{{ t }}</li>{% endfor %}
+        </ul>
+        {% endif %}
         <p class="ficha-propiedad__ubicacion">{{ ubicacionMostrada }}</p>
       </div>
 
@@ -194,7 +228,7 @@
               <p class="galeria-ficha__vivo" data-galeria-vivo role="status" aria-live="polite"></p>
               {% endif %}
             </div>
-            {% if galeria.miniaturas.length > 0 %}
+            {% if galeria.miniaturas.length > 0 or video or planos.length > 0 %}
             <div class="galeria-ficha__miniaturas" role="group" aria-label="{{ 'Photo thumbnails' if esEn else 'Miniaturas de fotografías' }}">
               {% for foto in galeria.miniaturas %}
                 <button type="button" class="galeria-ficha__miniatura" data-galeria-ir="{{ loop.index }}" aria-label="{{ 'View photo' if esEn else 'Ver fotografía' }} {{ loop.index + 1 }}">
@@ -207,6 +241,35 @@
                     decoding="async"
                   />
                 </button>
+              {% endfor %}
+              {% if video %}
+                <button type="button" class="galeria-ficha__extra" data-galeria-extra="video"
+                  data-video-tipo="{{ video.tipo }}" data-video-src="{{ video.embedUrl or video.src }}"{% if video.poster %} data-video-poster="{{ video.poster }}"{% endif %}
+                  data-video-titulo="{{ video.titulo or ('Property tour video' if esEn else 'Video del recorrido') }}"
+                  aria-haspopup="dialog" aria-label="{{ 'Play property tour video' if esEn else 'Reproducir el video del recorrido' }}">
+                  <svg class="galeria-ficha__extra-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.500z"/></svg>
+                  <span>Video</span>
+                </button>
+              {% endif %}
+              {% if planos.length > 0 %}
+                <button type="button" class="galeria-ficha__extra" data-galeria-extra="planos" aria-haspopup="dialog"
+                  aria-label="{{ 'View floor plans' if esEn else 'Ver los planos' }}">
+                  <svg class="galeria-ficha__extra-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1.500"/><path d="M4 11h7V4M11 15v5M15 11h5M15 15h5"/></svg>
+                  <span>{{ 'Plans' if esEn else 'Planos' }}</span>
+                </button>
+              {% endif %}
+            </div>
+            {% endif %}
+            {% if planos.length > 0 %}
+            {#
+              Planos: imágenes ocultas (no se descargan hasta abrir el visor) que pasan por la misma optimización
+              de imagen que las fotografías. script.js las abre en el visor ampliado con su etiqueta.
+            #}
+            <div class="galeria-ficha__planos" data-galeria-planos hidden>
+              {% for plano in planos %}
+              <img src="{{ plano.archivo }}" alt="{{ (plano.etiquetaEn or plano.etiqueta) if esEn else (plano.etiqueta or plano.etiquetaEn) }}"
+                data-etiqueta="{{ (plano.etiquetaEn or plano.etiqueta) if esEn else (plano.etiqueta or plano.etiquetaEn) }}"
+                eleventy:widths="1600" sizes="100vw" loading="lazy" decoding="async" />
               {% endfor %}
             </div>
             {% endif %}
@@ -230,14 +293,17 @@
 
           <div class="ficha-propiedad__seccion" data-reveal>
             <h2 class="ficha-propiedad__seccion-titulo">{{ "Details" if esEn else "Detalles" }}</h2>
+            {% set dq = propiedad.detallesCuantitativos %}
+            {% set habitacionesTxt = dq.habitaciones | rangoDetalle(dq.habitacionesMaximo, dq.habitacionesDesde, lang) %}
+            {% set banosTxt = dq.banos | rangoDetalle(dq.banosMaximo, dq.banosDesde, lang) %}
             <ul class="ficha-propiedad__specs">
-              {% if propiedad.detallesCuantitativos.habitaciones != null %}<li><span>{{ "Bedrooms" if esEn else "Habitaciones" }}</span><strong>{{ propiedad.detallesCuantitativos.habitaciones }}</strong></li>{% endif %}
-              {% if propiedad.detallesCuantitativos.banos != null %}<li><span>{{ "Bathrooms" if esEn else "Baños" }}</span><strong>{{ propiedad.detallesCuantitativos.banos }}</strong></li>{% endif %}
-              {% if propiedad.detallesCuantitativos.estacionamientos != null %}<li><span>{{ "Parking" if esEn else "Estacionamientos" }}</span><strong>{{ propiedad.detallesCuantitativos.estacionamientos }}</strong></li>{% endif %}
-              {% if propiedad.detallesCuantitativos.metrajeInterno != null %}<li><span>{{ "Interior area" if esEn else "Metraje interno" }}</span><strong>{{ propiedad.detallesCuantitativos.metrajeInterno }} m²</strong></li>{% endif %}
-              {% if propiedad.detallesCuantitativos.metrajeTotal != null %}<li><span>{{ "Total area" if esEn else "Metraje total" }}</span><strong>{{ propiedad.detallesCuantitativos.metrajeTotal }} m²</strong></li>{% endif %}
-              {% if propiedad.detallesCuantitativos.anoConstruccion != null %}<li><span>{{ "Year built" if esEn else "Año de construcción" }}</span><strong>{{ propiedad.detallesCuantitativos.anoConstruccion }}</strong></li>{% endif %}
-              {% if propiedad.detallesCuantitativos.piso != null %}<li><span>{{ "Floor" if esEn else "Piso" }}</span><strong>{{ propiedad.detallesCuantitativos.piso }}</strong></li>{% endif %}
+              {% if habitacionesTxt != null %}<li>{{ icono("habitaciones", iconosPropiedad) }}<span>{{ "Bedrooms" if esEn else "Habitaciones" }}</span><strong>{{ habitacionesTxt }}</strong></li>{% endif %}
+              {% if banosTxt != null %}<li>{{ icono("banos", iconosPropiedad) }}<span>{{ "Bathrooms" if esEn else "Baños" }}</span><strong>{{ banosTxt }}</strong></li>{% endif %}
+              {% if dq.estacionamientos != null %}<li>{{ icono("estacionamientos", iconosPropiedad) }}<span>{{ "Parking" if esEn else "Estacionamientos" }}</span><strong>{{ dq.estacionamientos }}</strong></li>{% endif %}
+              {% if dq.metrajeInterno != null %}<li>{{ icono("metrajeInterno", iconosPropiedad) }}<span>{{ "Interior area" if esEn else "Metraje interno" }}</span><strong>{{ dq.metrajeInterno }} m²</strong></li>{% endif %}
+              {% if dq.metrajeTotal != null %}<li>{{ icono("metrajeTotal", iconosPropiedad) }}<span>{{ "Total area" if esEn else "Metraje total" }}</span><strong>{{ dq.metrajeTotal }} m²</strong></li>{% endif %}
+              {% if dq.anoConstruccion != null %}<li>{{ icono("anoConstruccion", iconosPropiedad) }}<span>{{ "Year built" if esEn else "Año de construcción" }}</span><strong>{{ dq.anoConstruccion }}</strong></li>{% endif %}
+              {% if dq.piso != null and dq.piso !== "" %}<li>{{ icono("piso", iconosPropiedad) }}<span>{{ "Floor" if esEn else "Piso" }}</span><strong>{{ dq.piso }}</strong></li>{% endif %}
             </ul>
           </div>
 
@@ -246,7 +312,7 @@
             <h2 class="ficha-propiedad__seccion-titulo">{{ "Property Details" if esEn else "Detalles de la propiedad" }}</h2>
             <ul class="ficha-propiedad__checklist">
               {% for valor in propiedad.detalles %}
-                <li>{{ (valor | etiquetaEn(propiedadesConfig.detalles)) if esEn else (valor | etiqueta(propiedadesConfig.detalles)) }}</li>
+                <li>{{ icono(valor, iconosPropiedad) }}<span>{{ (valor | etiquetaEn(propiedadesConfig.detalles)) if esEn else (valor | etiqueta(propiedadesConfig.detalles)) }}</span></li>
               {% endfor %}
             </ul>
           </div>
@@ -257,7 +323,7 @@
             <h2 class="ficha-propiedad__seccion-titulo">{{ "Features / Amenities" if esEn else "Características / Amenidades" }}</h2>
             <ul class="ficha-propiedad__checklist">
               {% for valor in propiedad.amenidades %}
-                <li>{{ (valor | etiquetaEn(propiedadesConfig.amenidades)) if esEn else (valor | etiqueta(propiedadesConfig.amenidades)) }}</li>
+                <li>{{ icono(valor, iconosPropiedad) }}<span>{{ (valor | etiquetaEn(propiedadesConfig.amenidades)) if esEn else (valor | etiqueta(propiedadesConfig.amenidades)) }}</span></li>
               {% endfor %}
             </ul>
           </div>
@@ -273,6 +339,7 @@
                 data-lat="{{ mapaPublico.lat }}"
                 data-lng="{{ mapaPublico.lng }}"
                 data-zoom="{{ mapaPublico.zoom }}"
+                data-radio="{{ mapaPublico.radio }}"
                 role="img"
                 aria-label="{{ 'Approximate location' if esEn else 'Mapa de ubicación aproximada' }} — {{ ubicacionMostrada }}"
               ></div>
@@ -287,11 +354,26 @@
         <aside class="ficha-propiedad__lateral">
           <div class="ficha-propiedad__cta" data-reveal>
             <p class="ficha-propiedad__cta-precio">{{ propiedad.precio | precioFormato(propiedad.operacion, lang) }}</p>
+            {% if asesor %}
+            <div class="ficha-asesor">
+              {% if asesor.foto %}
+              <img class="ficha-asesor__foto" src="{{ asesor.foto }}" alt="{{ asesor.nombre }}" eleventy:widths="160" sizes="56px" loading="lazy" decoding="async" />
+              {% else %}
+              <span class="ficha-asesor__monograma" aria-hidden="true">{{ asesor.iniciales }}</span>
+              {% endif %}
+              <div class="ficha-asesor__datos">
+                <p class="ficha-asesor__nombre">{{ asesor.nombre }}</p>
+                {% if asesor.cargo %}<p class="ficha-asesor__cargo">{{ asesor.cargo }}</p>{% endif %}
+                {% if asesor.idoneidad %}<p class="ficha-asesor__idoneidad">{{ "License No." if esEn else "Idoneidad N.º" }} {{ asesor.idoneidad }}</p>{% endif %}
+              </div>
+            </div>
+            {% endif %}
             <a
               class="btn btn--primary ficha-propiedad__cta-btn"
-              href="https://wa.me/50763534377?text={{ (('Hi, I am interested in property ' + propiedad.referenciaMakom + ' — ' + tituloMostrado) if esEn else ('Hola, estoy interesado/a en la propiedad ' + propiedad.referenciaMakom + ' — ' + tituloMostrado)) | urlencode }}"
+              href="{{ urlWhatsapp }}"
               target="_blank" rel="noopener noreferrer"
-            >WhatsApp</a>
+              data-ficha-whatsapp
+            >WhatsApp{% if asesor and asesor.whatsapp %}<span class="visually-hidden"> — {{ asesor.nombre }}</span>{% endif %}</a>
             <a class="btn btn--outline ficha-propiedad__cta-btn" href="{{ '/en/#contacto' if esEn else '/#contacto' }}">{{ "Request information" if esEn else "Solicitar información" }}</a>
             <p class="ficha-propiedad__referencia">Ref. {{ propiedad.referenciaMakom }}</p>
           </div>
@@ -337,6 +419,16 @@
     </div>
   </section>
 </main>
+
+{#
+  Barra inferior fija (solo móvil/tableta): WhatsApp con el mensaje y la referencia de ESTA propiedad (al número del
+  asesor asignado, si lo hay). script.js la muestra al terminar la primera pantalla y la oculta cuando la tarjeta de
+  contacto o el pie de página ya están a la vista, para no duplicar botones ni tapar contenido.
+#}
+<div class="ficha-barra" data-ficha-barra role="region" aria-label="{{ 'Contact' if esEn else 'Contacto' }}">
+  <a class="btn btn--primary ficha-barra__whatsapp" href="{{ urlWhatsapp }}" target="_blank" rel="noopener noreferrer" data-ficha-whatsapp>WhatsApp</a>
+  <a class="btn btn--outline ficha-barra__info" href="{{ '/en/#contacto' if esEn else '/#contacto' }}">{{ "Request info" if esEn else "Solicitar" }}</a>
+</div>
 
 {% include "footer.njk" %}
 
