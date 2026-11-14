@@ -1,0 +1,30 @@
+---
+pagination:
+  data: collections.propiedadesRedireccion
+  size: 1
+  alias: redir
+permalink: "/propiedades/{{ redir.slugAntiguo }}/"
+eleventyExcludeFromCollections: true
+---
+{#
+  Dirección histórica de una propiedad que ahora tiene «Enlace limpio» (slugPublico).
+  GitHub Pages no puede devolver un HTTP 301: esto es una redirección SUAVE e inmediata
+  (meta refresh + JavaScript) con enlace canónico a la dirección nueva y noindex. Conserva
+  los enlaces ya compartidos; NO es un 301 real.
+#}
+{% set destino = "https://makomgrp.com/propiedades/" + redir.slugNuevo + "/" %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Esta propiedad se movió | MAKOM</title>
+  <meta name="robots" content="noindex, follow" />
+  <link rel="canonical" href="{{ destino }}" />
+  <meta http-equiv="refresh" content="0; url=/propiedades/{{ redir.slugNuevo }}/" />
+  <script>window.location.replace("/propiedades/{{ redir.slugNuevo }}/" + window.location.search + window.location.hash);</script>
+</head>
+<body>
+  <p>Esta propiedad ahora está en <a href="/propiedades/{{ redir.slugNuevo }}/">makomgrp.com/propiedades/{{ redir.slugNuevo }}/</a>.</p>
+</body>
+</html>
