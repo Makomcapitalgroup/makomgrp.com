@@ -49,7 +49,9 @@
     { "valor": "cargador-electrico", "etiqueta": "Cargador para vehículo eléctrico", "etiquetaEn": "EV charger" },
     { "valor": "concierge", "etiqueta": "Concierge", "etiquetaEn": "Concierge" },
     { "valor": "administracion-sitio", "etiqueta": "Administración en sitio", "etiquetaEn": "On-site management" },
-    { "valor": "accesibilidad", "etiqueta": "Acceso para personas con movilidad reducida", "etiquetaEn": "Accessible for reduced mobility" }
+    { "valor": "accesibilidad", "etiqueta": "Acceso para personas con movilidad reducida", "etiquetaEn": "Accessible for reduced mobility" },
+    { "valor": "lounge-social", "etiqueta": "Lounge social", "etiquetaEn": "Social lounge" },
+    { "valor": "area-scooter", "etiqueta": "Área de scooter", "etiquetaEn": "Scooter area" }
   ],
   "tipos": [
     { "valor": "apartamento", "etiqueta": "Apartamento", "etiquetaEn": "Apartment" },

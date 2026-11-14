@@ -1,0 +1,24 @@
+---
+pagination:
+  data: collections.propiedadesRedireccion
+  size: 1
+  alias: redir
+permalink: "/en/properties/{{ redir.slugAntiguo }}/"
+eleventyExcludeFromCollections: true
+---
+{% set destino = "https://makomgrp.com/en/properties/" + redir.slugNuevo + "/" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>This property has moved | MAKOM</title>
+  <meta name="robots" content="noindex, follow" />
+  <link rel="canonical" href="{{ destino }}" />
+  <meta http-equiv="refresh" content="0; url=/en/properties/{{ redir.slugNuevo }}/" />
+  <script>window.location.replace("/en/properties/{{ redir.slugNuevo }}/" + window.location.search + window.location.hash);</script>
+</head>
+<body>
+  <p>This property is now at <a href="/en/properties/{{ redir.slugNuevo }}/">makomgrp.com/en/properties/{{ redir.slugNuevo }}/</a>.</p>
+</body>
+</html>

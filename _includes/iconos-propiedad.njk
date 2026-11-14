@@ -1,0 +1,56 @@
+{#
+  Íconos de línea fina (24 × 24, trazo 1,5) de la ficha de propiedad: mismo estilo que los íconos en línea
+  que ya usa el sitio (trazo redondeado, sin relleno). Se incluyen UNA vez por página como sprite oculto y
+  se usan con <svg class="ico"><use href="#ic-NOMBRE"/></svg>. El color lo da CSS (terracota). Todo valor sin
+  ícono propio usa #ic-generico. El id de cada valor del CMS está en _data/iconosPropiedad.json.
+#}
+<svg class="iconos-sprite" width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <g id="ic-base" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></g>
+    <symbol id="ic-generico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></symbol>
+    <symbol id="ic-cama" viewBox="0 0 24 24"><path d="M3 19V7M3 15h18v4M21 15v-2.5a3 3 0 0 0-3-3h-7V15"/><circle cx="7" cy="11.5" r="1.6"/></symbol>
+    <symbol id="ic-banera" viewBox="0 0 24 24"><path d="M4 12h16v1.5a4.5 4.5 0 0 1-4.5 4.5h-7A4.5 4.5 0 0 1 4 13.5V12zM6 12V7.5A2.5 2.5 0 0 1 10 5.8M8 18l-1 2M16 18l1 2"/></symbol>
+    <symbol id="ic-parking" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M10 17V7.5h3.2a2.8 2.8 0 0 1 0 5.6H10"/></symbol>
+    <symbol id="ic-piso" viewBox="0 0 24 24"><path d="M12 4l8 4-8 4-8-4 8-4zM4 12l8 4 8-4M4 16l8 4 8-4"/></symbol>
+    <symbol id="ic-metraje" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+    <symbol id="ic-calendario" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></symbol>
+    <symbol id="ic-caja" viewBox="0 0 24 24"><path d="M4 8l8-4 8 4v9l-8 4-8-4V8zM4 8l8 4 8-4M12 12v9"/></symbol>
+    <symbol id="ic-lavanderia" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><circle cx="12" cy="14" r="4"/><path d="M8.5 7h.01M11.5 7h.01"/></symbol>
+    <symbol id="ic-balcon" viewBox="0 0 24 24"><path d="M7 11V7a5 5 0 0 1 10 0v4M4 11h16M6.5 11v9M10 11v9M14 11v9M17.5 11v9M4 20h16"/></symbol>
+    <symbol id="ic-terraza" viewBox="0 0 24 24"><path d="M3 11.5L12 4l9 7.5M5.5 10v10h13V10M9.5 20v-5h5v5"/></symbol>
+    <symbol id="ic-planta" viewBox="0 0 24 24"><path d="M12 21v-9M12 12c0-4-3-6-6.500-6 0 4 2.500 6 6.500 6zM12 15c0-3 2.500-5 6-5 0 3.500-2.500 5-6 5z"/></symbol>
+    <symbol id="ic-escritorio" viewBox="0 0 24 24"><path d="M4 9h16M6 9v11M18 9v11M4 9l1-4h14l1 4M9.5 14h5"/></symbol>
+    <symbol id="ic-sofa" viewBox="0 0 24 24"><path d="M5 12V9a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v3M3 14.500a2 2 0 0 1 4 0V16h10v-1.500a2 2 0 0 1 4 0V19H3v-4.500zM6 19v1.500M18 19v1.500"/></symbol>
+    <symbol id="ic-percha" viewBox="0 0 24 24"><path d="M12 8a2 2 0 1 0-2-2M12 8v1.500L20.500 15a1.500 1.500 0 0 1-.9 2.700H4.400A1.500 1.500 0 0 1 3.500 15L12 9.500"/></symbol>
+    <symbol id="ic-cocina" viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="2"/><path d="M4 13h16M8 6.500c0 1-1 1-1 2M12 6.500c0 1-1 1-1 2M16 6.500c0 1-1 1-1 2"/></symbol>
+    <symbol id="ic-nevera" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M6 10h12M9 6.500v1M9 13v3"/></symbol>
+    <symbol id="ic-aire" viewBox="0 0 24 24"><path d="M12 3v18M4.200 7.500l15.600 9M19.800 7.500l-15.600 9M9.500 4.500L12 6.500l2.500-2M9.500 19.500l2.500-2 2.500 2"/></symbol>
+    <symbol id="ic-olas" viewBox="0 0 24 24"><circle cx="16.500" cy="7.500" r="2.500"/><path d="M3 14c1.500 0 1.500-1.500 3-1.500S7.500 14 9 14s1.500-1.500 3-1.500S13.500 14 15 14s1.500-1.500 3-1.500S19.500 14 21 14M3 18.500c1.500 0 1.500-1.500 3-1.500s1.500 1.500 3 1.500 1.500-1.500 3-1.500 1.500 1.500 3 1.500 1.500-1.500 3-1.500 1.500 1.500 3 1.500"/></symbol>
+    <symbol id="ic-edificios" viewBox="0 0 24 24"><path d="M4 21V10h6v11M10 21V4h6v17M16 21v-8h4v8M3 21h18M12.500 8h1M12.500 12h1M12.500 16h1"/></symbol>
+    <symbol id="ic-arbol" viewBox="0 0 24 24"><path d="M12 21v-6M12 15c-4 0-6-2.500-6-5 0-3 2.500-5.500 6-6.500 3.500 1 6 3.500 6 6.500 0 2.500-2 5-6 5z"/></symbol>
+    <symbol id="ic-flecha-arriba" viewBox="0 0 24 24"><path d="M12 20V6M7 11l5-5 5 5M5 21h14"/></symbol>
+    <symbol id="ic-elevador" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M12 3v18M8.500 10l1.500-2 1.500 2M12.500 14l1.500 2 1.500-2"/></symbol>
+    <symbol id="ic-piscina" viewBox="0 0 24 24"><path d="M8 10V6a2 2 0 0 1 4 0M14 10V6a2 2 0 0 1 4 0M8 8h6M3 14c1.500 0 1.500 1 3 1s1.500-1 3-1 1.500 1 3 1 1.500-1 3-1 1.500 1 3 1 1.500-1 3-1M3 18.500c1.500 0 1.500 1 3 1s1.500-1 3-1 1.500 1 3 1 1.500-1 3-1 1.500 1 3 1 1.500-1 3-1"/></symbol>
+    <symbol id="ic-pesas" viewBox="0 0 24 24"><path d="M6.500 8v8M3.500 10v4M17.500 8v8M20.500 10v4M6.500 12h11"/></symbol>
+    <symbol id="ic-puerta" viewBox="0 0 24 24"><path d="M6 21V4h12v17M4 21h16M14.500 12.500v.01"/></symbol>
+    <symbol id="ic-escudo" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.500-3 8-7 10-4-2-7-5.500-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></symbol>
+    <symbol id="ic-garita" viewBox="0 0 24 24"><path d="M5 20V9l7-5 7 5v11M3 20h18M9.500 20v-6h5v6"/></symbol>
+    <symbol id="ic-tarjeta" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M12 16.500v.01"/></symbol>
+    <symbol id="ic-candado" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="ic-rayo" viewBox="0 0 24 24"><path d="M13 3L5 13.500h6L10 21l8-10.500h-6L13 3z"/></symbol>
+    <symbol id="ic-gota" viewBox="0 0 24 24"><path d="M12 3c3.500 4.500 6 7.200 6 10.500a6 6 0 0 1-12 0C6 10.200 8.500 7.500 12 3z"/></symbol>
+    <symbol id="ic-personas" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.300 2.700-6 6-6s6 2.700 6 6M16 5.500a3 3 0 0 1 0 5.500M18 14.500c2 .7 3 2.500 3 5.500"/></symbol>
+    <symbol id="ic-estrella" viewBox="0 0 24 24"><path d="M12 4l2.200 4.800 5.300.6-3.900 3.600 1.100 5.200-4.700-2.600-4.700 2.600 1.100-5.200-3.900-3.600 5.300-.6L12 4z"/></symbol>
+    <symbol id="ic-laptop" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="10" rx="1.500"/><path d="M3 19h18"/></symbol>
+    <symbol id="ic-columpio" viewBox="0 0 24 24"><path d="M5 20L9 4h6l4 16M7 11h10M9.500 11v5M14.500 11v5"/></symbol>
+    <symbol id="ic-balon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16M6.300 6.300c3 2.400 3 8.900 0 11.400M17.700 6.300c-3 2.400-3 8.900 0 11.400"/></symbol>
+    <symbol id="ic-azotea" viewBox="0 0 24 24"><path d="M5 21V8h9v13M14 12h5v9M3 21h18M8 11h3M8 14h3M8 17h3M2 8h14"/></symbol>
+    <symbol id="ic-parrilla" viewBox="0 0 24 24"><path d="M5 10h14a7 7 0 0 1-14 0zM9 17l-2 4M15 17l2 4M9 7c0-1.500 1.500-1.500 1.500-3M13.500 7c0-1.500 1.500-1.500 1.500-3"/></symbol>
+    <symbol id="ic-huella" viewBox="0 0 24 24"><circle cx="7" cy="10" r="1.700"/><circle cx="12" cy="7" r="1.700"/><circle cx="17" cy="10" r="1.700"/><path d="M12 12c-3 0-5.500 3-4.500 5.200 1 2 3 1.300 4.500 1.300s3.500.7 4.500-1.300C17.500 15 15 12 12 12z"/></symbol>
+    <symbol id="ic-enchufe" viewBox="0 0 24 24"><path d="M9 3v5M15 3v5M6 8h12v3a6 6 0 0 1-12 0V8zM12 17v4"/></symbol>
+    <symbol id="ic-campana" viewBox="0 0 24 24"><path d="M4 17h16M6 17a6 6 0 0 1 12 0M12 8V6M10 6h4M3 20h18"/></symbol>
+    <symbol id="ic-portapapeles" viewBox="0 0 24 24"><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V4h6v1M9 11h6M9 15h4"/></symbol>
+    <symbol id="ic-accesible" viewBox="0 0 24 24"><circle cx="10" cy="4.500" r="1.500"/><path d="M10 7v6h5l2.500 5M10 10h4.500M8 13.500a4.500 4.500 0 1 0 5 6.500"/></symbol>
+    <symbol id="ic-scooter" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2.500"/><circle cx="18" cy="18" r="2.500"/><path d="M6 18h6l3-9h3M15 9l-1-3h-2"/></symbol>
+  </defs>
+</svg>

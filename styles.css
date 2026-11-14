@@ -6353,3 +6353,95 @@ body.hero-search-fijo { position: fixed; left: 0; right: 0; width: 100%; overflo
 .mk-select__opcion[aria-selected="true"]::after { content: ""; flex: none; width: 5px; height: 10px; margin-left: auto; border: solid var(--color-blanco); border-width: 0 1.6px 1.6px 0; transform: rotate(45deg) translate(-2px, -2px); }
 .mk-select__opcion:active { transform: scale(.985); }
 @media (prefers-reduced-motion: reduce) { .mk-select__panel, .hero-search__panel.hero-search__panel-portal, .mk-multi__panel { animation: none !important; } }
+
+/* ---- 34.14 Ficha de propiedad: mejoras solicitadas por Loyra (iconos, fecha del precio, video y planos, asesor, contacto siempre visible, mapa de zona) ----
+   Todo lo nuevo es opcional: una ficha antigua sin esos datos se ve igual que antes (salvo los iconos junto a cada dato y amenidad).
+   Mismos tokens y fórmula Liquid Glass (--lg-*) del resto del sitio. */
+
+/* Iconos de línea fina con acento terracota. Siempre acompañan a un texto: son decorativos (aria-hidden). */
+.ico { flex: none; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; color: var(--color-terracota); }
+.iconos-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* Datos principales (habitaciones, baños, estacionamientos, piso…): icono + valor, etiqueta debajo */
+.ficha-propiedad__specs li { display: grid; grid-template-columns: 26px minmax(0, 1fr); grid-template-areas: "ico valor" "ico etiqueta"; column-gap: 12px; row-gap: 2px; align-items: center; }
+.ficha-propiedad__specs li .ico { grid-area: ico; align-self: center; width: 24px; height: 24px; }
+.ficha-propiedad__specs li strong { grid-area: valor; line-height: 1.2; }
+.ficha-propiedad__specs li span { grid-area: etiqueta; }
+
+/* Amenidades y detalles de la propiedad: icono + nombre (el cuadro terracota anterior pasa al icono) */
+.ficha-propiedad__checklist li { display: flex; align-items: center; gap: 10px; padding-left: 0; }
+.ficha-propiedad__checklist li::before { content: none; }
+.ficha-propiedad__checklist li .ico { width: 20px; height: 20px; }
+
+/* Fecha de referencia del precio y precios específicos */
+.ficha-propiedad__precio-nota { margin: -2px 0 8px; font-size: 13px; line-height: 1.4; color: var(--color-negro-70); }
+.ficha-propiedad__precios-esp { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 0 0 10px; padding: 0; list-style: none; font-size: 14px; color: var(--color-negro); }
+.ficha-propiedad__precios-esp li { position: relative; }
+.ficha-propiedad__precios-esp li + li::before { content: ""; position: absolute; left: -10px; top: 50%; width: 3px; height: 3px; margin-top: -1.5px; border-radius: 50%; background: var(--color-terracota); }
+
+/* Fichas «Video» y «Planos» junto a las miniaturas (cristal humo, igual que la bandeja de miniaturas) */
+.galeria-ficha__extra {
+  --lg-hi: var(--lg-d-hi); --lg-lo: var(--lg-d-lo); --lg-rim: var(--lg-d-rim);
+  flex: none; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-width: 62px; height: 51px; padding: 0 8px;
+  border: 0; border-radius: 12px; cursor: pointer; color: var(--color-blanco); font: inherit; font-size: 11px; letter-spacing: .04em; line-height: 1;
+  background-color: rgba(245, 242, 238, .10);
+  box-shadow: inset 0 1px 0 var(--lg-hi), inset 0 -1px 0 var(--lg-lo), inset 0 0 0 1px var(--lg-rim), inset 1px 0 0 var(--lg-fringe-a), inset -1px 0 0 var(--lg-fringe-b);
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--lg-t) var(--lg-ease), box-shadow var(--lg-t) var(--lg-ease), transform var(--lg-t) var(--lg-ease);
+}
+.galeria-ficha__extra:hover { background-color: rgba(245, 242, 238, .2); }
+.galeria-ficha__extra:active { transform: scale(.96); }
+.galeria-ficha__extra:focus-visible { outline: none; box-shadow: inset 0 1px 0 var(--lg-hi), 0 0 0 2px #0A0A0A, 0 0 0 4px #F5F2EE; }
+.galeria-ficha__extra-ico { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.galeria-ficha__extra[data-galeria-extra="video"] .galeria-ficha__extra-ico path { fill: currentColor; }
+@media (max-width: 639px) {
+  .galeria-ficha__extra { min-width: 51px; padding: 0; }
+  .galeria-ficha__extra span { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }   /* en móvil solo el icono; el nombre sigue disponible para lectores de pantalla */
+}
+.galeria-ficha__planos { display: none; }
+@media (prefers-reduced-motion: reduce) { .galeria-ficha__extra { transition: none; } }
+
+/* Visor de video (reutiliza el visor ampliado .lightbox) y pie de los planos */
+.lightbox__video { position: relative; width: min(92vw, 1100px); aspect-ratio: 16 / 9; max-height: 82vh; border-radius: var(--r-panel); overflow: hidden; background: #000; }
+.lightbox__video iframe, .lightbox__video video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000; }
+.lightbox__pie { position: absolute; left: 50%; bottom: 64px; transform: translateX(-50%); max-width: 86vw; padding: 6px 14px; border-radius: 9999px; font-size: 13px; color: var(--color-blanco); background-color: rgba(10, 10, 10, .55); -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); box-shadow: inset 0 1px 0 rgba(245, 242, 238, .14), 0 0 0 1px rgba(245, 242, 238, .16); }
+.lightbox__pie:empty { display: none; }
+
+/* Asesor asignado dentro de la tarjeta de contacto */
+.ficha-asesor { display: flex; align-items: center; gap: 14px; margin: 0 0 18px; padding: 12px 14px; border-radius: 18px; background-color: rgba(255, 255, 255, .5); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8), inset 0 0 0 1px var(--color-arena-20); }
+.ficha-asesor__foto, .ficha-asesor__monograma { flex: none; width: 56px; height: 56px; border-radius: 50%; }
+.ficha-asesor__foto { object-fit: cover; }
+.ficha-asesor__monograma { display: grid; place-items: center; font-size: 17px; font-weight: var(--font-weight-medium); letter-spacing: .04em; color: var(--color-blanco); background: var(--color-negro); }
+.ficha-asesor__datos { min-width: 0; }
+.ficha-asesor__nombre { margin: 0; font-size: 15px; font-weight: var(--font-weight-medium); line-height: 1.25; color: var(--color-negro); }
+.ficha-asesor__cargo, .ficha-asesor__idoneidad { margin: 2px 0 0; font-size: 12.5px; line-height: 1.35; color: var(--color-negro-70); }
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* Mapa: zona aproximada (círculo); sin marcador. El texto «Ubicación aproximada» ya existe bajo el mapa. */
+.ficha-propiedad__mapa .leaflet-interactive { cursor: default; }
+.mapa-zona-etiqueta.leaflet-tooltip { padding: 4px 12px; border: 0; border-radius: 9999px; font-family: var(--font-primary); font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: #8F3720; background: rgba(245, 242, 238, .92); box-shadow: 0 0 0 1px rgba(181, 71, 42, .35), 0 6px 14px -8px rgba(10, 10, 10, .4); pointer-events: none; }
+.mapa-zona-etiqueta.leaflet-tooltip::before { display: none; }
+
+/* Barra inferior fija de contacto (móvil y tableta). Cristal marfil con la receta compartida. Aparece tras la primera pantalla y
+   se retira cuando la tarjeta de contacto o el pie de página ya están a la vista (script.js · §16b). Respeta el área segura del iPhone. */
+.ficha-barra { display: none; }
+@media (max-width: 1023.98px) {
+  .ficha-barra {
+    --lg-fill: var(--lg-l-fill-denso); --lg-spec: var(--lg-l-spec); --lg-hi: var(--lg-l-hi); --lg-lo: var(--lg-l-lo); --lg-rim: var(--lg-l-rim); --lg-ring: var(--lg-l-ring); --lg-sh: var(--lg-l-sh);
+    position: fixed; z-index: 85; left: max(10px, env(safe-area-inset-left)); right: max(10px, env(safe-area-inset-right)); bottom: max(10px, env(safe-area-inset-bottom));
+    display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 9999px;
+    background-color: var(--lg-fill);
+    background-image: radial-gradient(80% 130% at 50% -25%, var(--lg-spec) 0%, rgba(255, 255, 255, 0) 62%), linear-gradient(180deg, rgba(255, 255, 255, .16) 0%, rgba(255, 255, 255, 0) 46%, rgba(10, 10, 10, .035) 100%);
+    -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(var(--lg-bri)); backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat)) brightness(var(--lg-bri));
+    box-shadow: inset 0 1px 0 var(--lg-hi), inset 0 -1px 0 var(--lg-lo), inset 0 0 0 1px var(--lg-rim), 0 0 0 1px var(--lg-ring), 0 18px 36px -18px var(--lg-sh);
+    transform: translateY(calc(100% + 24px)); visibility: hidden; opacity: 0; pointer-events: none;
+    transition: transform 320ms var(--lg-ease), opacity 220ms var(--lg-ease), visibility 0s linear 320ms;
+  }
+  .ficha-barra.is-visible { transform: none; visibility: visible; opacity: 1; pointer-events: auto; transition: transform 320ms var(--lg-ease), opacity 220ms var(--lg-ease), visibility 0s; }
+  .ficha-barra .btn { min-height: 46px; margin: 0; padding-inline: 22px; }
+  .ficha-barra__whatsapp { flex: 1 1 auto; }
+  .ficha-barra__info { flex: none; }
+  /* La barra ya ofrece WhatsApp y formulario: el botón flotante de conversación sale de la ficha en móvil (sin botones duplicados ni superpuestos) */
+  .pagina-ficha-propiedad .floating-contact { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .ficha-barra, .ficha-barra.is-visible { transition: none; } }

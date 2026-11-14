@@ -15,8 +15,8 @@
     "activo": true,
     "precision": "aproximada",
     "nivelZoom": 15,
-    "latitud": 8.973371,
-    "longitud": -79.530982
+    "latitud": "8.973",
+    "longitud": "-79.531"
   },
   "estado": "disponible",
   "precio": {
@@ -49,7 +49,8 @@
   },
   "detallesCuantitativos": {
     "habitaciones": 1,
-    "banos": 2
+    "banos": 2,
+    "habitacionesMaximo": 2
   },
   "mostrarEnHome": false,
   "descripcion": "Apartamentos en un edificio residencial ubicado en Santo Tomás, a pasos de la Cinta Costera y el Parque Urracá, en el corazón de la ciudad de Panamá.\n\nOpciones disponibles desde $150,000, con modelos de 41.5 a 72 m², de 1 y 2 recámaras.\n\nCuenta con piscina en el rooftop, gimnasio, área de co-working, lounge social y área de scooter.\n\nA solo 2 minutos de la estación de metro de Santo Tomás, cerca de Calle Uruguay y a minutos de los principales hospitales y universidades de la ciudad.\n\nConsulta con MAKOM disponibilidad, precios y opciones según tu presupuesto.",
@@ -69,6 +70,11 @@
     "vista-ciudad"
   ],
   "seo": {
+    "titulo": "Apartamentos de 1 y 2 recámaras a dos minutos del metro | MAKOM",
+    "tituloEn": "1 and 2-bedroom apartments 2 minutes from the metro | MAKOM",
+    "descripcion": "Desde $150,000 · Santo Tomás, Ciudad de Panamá. Solicita disponibilidad, planos y opciones con un asesor de MAKOM.",
+    "descripcionEn": "From $150,000 · Santo Tomás, Panama City. Ask for availability, floor plans and options with a MAKOM advisor.",
     "noIndex": false
-  }
+  },
+  "slugPublico": "apartamentos-santo-tomas-mkw-re-020"
 }

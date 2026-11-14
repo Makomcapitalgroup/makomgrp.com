@@ -1,10 +1,12 @@
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
+const crypto = require("crypto");
 const yaml = require("js-yaml");
 const { eleventyImageTransformPlugin } = require("@11ty/eleventy-img");
 const Image = require("@11ty/eleventy-img").default;
 const { validarZonas } = require("./scripts/verificar-zonas");
+const ficha = require("./scripts/ficha-propiedad");
 
 // Milestone 9: fecha real de última modificación de un archivo, tomada
 // del historial de git (fecha del último commit que lo tocó) — nunca
@@ -120,6 +122,51 @@ function categoriaPerspectivaPresentada(categoria, lang, mapa) {
       return traducida;
     })
     .join(", ");
+}
+
+// Ficha de propiedad: valida en cada build los datos nuevos que, si estuvieran mal,
+// producirían enlaces rotos o contactos erróneos. Los errores detienen el build; los
+// avisos (video sin formato válido, asesor inexistente) se imprimen y la ficha cae a su
+// comportamiento seguro (sin video / contacto corporativo).
+function validarFichas(raiz) {
+  const dir = path.join(raiz, "content", "propiedades");
+  if (!fs.existsSync(dir)) return;
+  const dirAsesores = path.join(raiz, "content", "asesores");
+  const asesores = new Set(
+    fs.existsSync(dirAsesores) ? fs.readdirSync(dirAsesores).filter((a) => a.endsWith(".json")).map((a) => path.basename(a, ".json")) : []
+  );
+  const errores = [];
+  const avisos = [];
+  const archivos = fs.readdirSync(dir).filter((a) => a.endsWith(".json"));
+  const nombresArchivo = new Set(archivos.map((a) => path.basename(a, ".json")));
+  const publicos = new Map();
+  archivos.forEach((archivo) => {
+    const base = path.basename(archivo, ".json");
+    const d = JSON.parse(fs.readFileSync(path.join(dir, archivo), "utf8"));
+    if (d.slugPublico !== undefined && d.slugPublico !== null && d.slugPublico !== "") {
+      if (!ficha.slugPublicoValido(d.slugPublico)) {
+        errores.push(`"slugPublico" no válido en ${archivo}: "${d.slugPublico}" (solo minúsculas, números y guiones simples).`);
+      } else {
+        if (nombresArchivo.has(d.slugPublico) && d.slugPublico !== base) errores.push(`"slugPublico" de ${archivo} ("${d.slugPublico}") coincide con el nombre de archivo de OTRA propiedad.`);
+        if (publicos.has(d.slugPublico)) errores.push(`"slugPublico" duplicado: "${d.slugPublico}" en ${archivo} y ${publicos.get(d.slugPublico)}.`);
+        publicos.set(d.slugPublico, archivo);
+      }
+    }
+    // Privacidad: el repositorio es público; las coordenadas del mapa solo pueden guardarse con ≤ 3 decimales (zona aproximada).
+    if (d.mapa && typeof d.mapa === "object") {
+      ["latitud", "longitud"].forEach((campo) => {
+        const valor = d.mapa[campo];
+        if (valor !== undefined && valor !== null && valor !== "" && ficha.coordenadaGuardada(valor) === null) {
+          errores.push(`"mapa.${campo}" de ${archivo} no es una coordenada aproximada válida: use como máximo ${ficha.MAX_DECIMALES_COORDENADA} decimales (el repositorio del sitio es público).`);
+        }
+      });
+    }
+    if (d.asesor && !asesores.has(d.asesor)) avisos.push(`${archivo}: el asesor "${d.asesor}" no existe en content/asesores/ — la ficha usará el contacto corporativo.`);
+    const v = d.videoRecorrido;
+    if (v && (v.url || v.archivo) && !ficha.videoDe(v)) avisos.push(`${archivo}: el video del recorrido no es válido (solo https de YouTube/Vimeo o un .mp4/.webm) — no se mostrará.`);
+  });
+  avisos.forEach((a) => console.warn(`[ficha] ${a}`));
+  if (errores.length > 0) throw new Error("Validación de fichas de propiedades falló:\n" + errores.map((e) => `  - ${e}`).join("\n"));
 }
 
 // Milestone 12 — Etapa 8A: valida en cada build que "referenciaMakom"
@@ -330,19 +377,68 @@ module.exports = function (eleventyConfig) {
     const dir = path.join(__dirname, "content", "propiedades");
     if (!fs.existsSync(dir)) return [];
     const archivos = fs.readdirSync(dir).filter((archivo) => archivo.endsWith(".json"));
-    return Promise.all(
+    const portadasPequenas = [];
+    const lista = await Promise.all(
       archivos.map(async (archivo) => {
         const datos = JSON.parse(fs.readFileSync(path.join(dir, archivo), "utf8"));
-        datos.slug = path.basename(archivo, ".json");
+        // "slugArchivo" es la dirección histórica (nombre del archivo). Si la propiedad tiene
+        // un «Enlace limpio» (slugPublico) válido, ESA es la dirección pública y la histórica
+        // queda como redirección (ver colección "propiedadesRedireccion").
+        datos.slugArchivo = path.basename(archivo, ".json");
+        datos.slug = ficha.slugPublicoValido(datos.slugPublico) || datos.slugArchivo;
         datos._archivoRelativo = path.join("content", "propiedades", archivo);
         const galeria = (datos.fotografias && datos.fotografias.galeria) || [];
         const portada = galeria.find((f) => f.portada) || galeria[0] || null;
         const origenImagenSocial = (datos.seo && datos.seo.imagenSocial) || (portada && portada.archivo) || null;
-        const variante = await generarVarianteOptimizada(origenImagenSocial, { formatos: ["jpeg"], anchos: [1200] });
-        datos._imagenOgUrl = variante ? variante.archivo : null;
+        const social = await generarImagenSocial(origenImagenSocial);
+        datos._imagenOgUrl = social ? social.archivo : null;
+        datos._imagenOgAncho = social ? social.ancho : null;
+        datos._imagenOgAlto = social ? social.alto : null;
+        // Auditoría (solo aviso): la foto principal de la ficha debería medir 1600 px de ancho o más. Nunca se amplía una imagen pequeña.
+        const ancho = await anchoDeImagen(portada && portada.archivo);
+        if (ancho && ancho < 1600) portadasPequenas.push(`${datos.referenciaMakom} (${ancho} px)`);
         return datos;
       })
     );
+    if (portadasPequenas.length) {
+      console.warn(`[ficha] Portadas de menos de 1600 px de ancho (se usan tal cual, sin ampliar): ${portadasPequenas.join(", ")}`);
+    }
+    return lista;
+  });
+
+  // Direcciones históricas que cambiaron al asignar un «Enlace limpio». GitHub Pages es
+  // hosting estático: no puede responder con un HTTP 301 real. Cada dirección antigua se
+  // sirve como una página mínima con redirección inmediata (meta refresh + JS), enlace
+  // canónico a la dirección nueva y noindex. Es una redirección «suave»: conserva los
+  // enlaces compartidos, pero NO es un 301 (ver informe). Un 301 real exige un proxy
+  // delante del dominio (p. ej. Cloudflare) o mover el hosting.
+  eleventyConfig.addCollection("propiedadesRedireccion", async () => {
+    const dir = path.join(__dirname, "content", "propiedades");
+    if (!fs.existsSync(dir)) return [];
+    const salida = [];
+    fs.readdirSync(dir)
+      .filter((archivo) => archivo.endsWith(".json"))
+      .forEach((archivo) => {
+        const d = JSON.parse(fs.readFileSync(path.join(dir, archivo), "utf8"));
+        const antiguo = path.basename(archivo, ".json");
+        const nuevo = ficha.slugPublicoValido(d.slugPublico);
+        if (nuevo && nuevo !== antiguo) salida.push({ slugAntiguo: antiguo, slugNuevo: nuevo, referenciaMakom: d.referenciaMakom });
+      });
+    return salida;
+  });
+
+  // Perfiles de asesores (content/asesores/*.json), mismo patrón que propiedades.
+  eleventyConfig.addCollection("asesores", () => {
+    const dir = path.join(__dirname, "content", "asesores");
+    if (!fs.existsSync(dir)) return [];
+    return fs
+      .readdirSync(dir)
+      .filter((archivo) => archivo.endsWith(".json"))
+      .map((archivo) => {
+        const datos = JSON.parse(fs.readFileSync(path.join(dir, archivo), "utf8"));
+        datos.slug = path.basename(archivo, ".json");
+        return datos;
+      });
   });
 
   // Milestone 14 — Etapa 2: colección de proyectos, mismo patrón que
@@ -384,6 +480,7 @@ module.exports = function (eleventyConfig) {
     validarConfigCmsContraFuenteCentral(__dirname);
     validarZonas(__dirname);
     validarReferenciasMakom(__dirname);
+    validarFichas(__dirname);
   });
 
   // Resuelve una clave técnica (ej. "vista-mar") a su etiqueta pública
@@ -623,26 +720,22 @@ module.exports = function (eleventyConfig) {
     return { principal, miniaturas, todas: [principal, ...miniaturas] };
   });
 
-  // Milestone 8: resuelve las coordenadas públicas de un mapa activo.
-  // Devuelve null si el mapa no debe mostrarse o si faltan datos — la
-  // plantilla nunca debe recibir un objeto a medias que la obligue a
-  // adivinar. Con precision:"aproximada" (default recomendado), las
-  // coordenadas se redondean a 3 decimales — un desplazamiento
-  // DETERMINISTA (mismo resultado siempre, no aleatorio) de hasta
-  // ~110m en latitud, suficiente para no revelar el edificio exacto
-  // sin dejar de ubicar el sector correctamente. Con "exacta", se usan
-  // tal cual — una elección consciente, nunca el default.
-  eleventyConfig.addFilter("mapaPublico", (mapa) => {
-    if (!mapa || mapa.activo !== true) return null;
-    if (typeof mapa.latitud !== "number" || typeof mapa.longitud !== "number") return null;
-    const esExacta = mapa.precision === "exacta";
-    const redondear = (n) => Math.round(n * 1000) / 1000;
-    return {
-      lat: esExacta ? mapa.latitud : redondear(mapa.latitud),
-      lng: esExacta ? mapa.longitud : redondear(mapa.longitud),
-      zoom: typeof mapa.nivelZoom === "number" ? mapa.nivelZoom : 15,
-      aproximada: !esExacta,
-    };
+  // Zona aproximada del mapa (Mejora 7). Devuelve null si el mapa no debe mostrarse o
+  // faltan datos. NUNCA publica la ubicación exacta: el centro se desplaza de forma
+  // determinista (según la referencia de la propiedad) y se redondea; la página dibuja un
+  // círculo de radio fijo, sin marcador. Ver scripts/ficha-propiedad.js.
+  eleventyConfig.addFilter("mapaPublico", (mapa, semilla) => ficha.mapaPublico(mapa, semilla));
+
+  // Mejoras de la ficha (Fase B): filtros de presentación. Lógica en scripts/ficha-propiedad.js.
+  eleventyConfig.addFilter("rangoDetalle", (min, max, desde, lang) => ficha.rangoDetalle(min, max, desde, lang));
+  eleventyConfig.addFilter("fechaReferenciaTexto", (precio, lang) => ficha.fechaReferenciaTexto(precio, lang));
+  eleventyConfig.addFilter("preciosEspecificosTexto", (precio, lang) => ficha.preciosEspecificosTexto(precio, lang));
+  eleventyConfig.addFilter("videoDe", (video) => ficha.videoDe(video));
+  eleventyConfig.addFilter("planosValidos", (planos) => ficha.planosValidos(planos));
+  eleventyConfig.addFilter("iconoDe", (valor, mapa) => ficha.iconoDe(valor, mapa));
+  eleventyConfig.addFilter("asesorDe", (lista, slug, lang) => {
+    if (!slug) return null;
+    return ficha.asesorPublico((lista || []).find((a) => a.slug === slug), lang);
   });
 
   // Milestone 9: regla definitiva de indexabilidad de una propiedad.
@@ -842,15 +935,17 @@ module.exports = function (eleventyConfig) {
   eleventyConfig.addFilter("specsTexto", (d, lang) => {
     if (!d) return "";
     const partes = [];
+    const hab = ficha.rangoDetalle(d.habitaciones, d.habitacionesMaximo, d.habitacionesDesde, lang);
+    const ban = ficha.rangoDetalle(d.banos, d.banosMaximo, d.banosDesde, lang);
     if (lang === "en") {
-      if (d.habitaciones != null) partes.push(`${d.habitaciones} bed`);
-      if (d.banos != null) partes.push(`${d.banos} bath`);
+      if (hab != null) partes.push(`${hab} bed`);
+      if (ban != null) partes.push(`${ban} bath`);
       if (d.estacionamientos != null) partes.push(`${d.estacionamientos} parking`);
       if (d.metrajeInterno != null) partes.push(`${d.metrajeInterno} m²`);
       return partes.join(" · ");
     }
-    if (d.habitaciones != null) partes.push(`${d.habitaciones} hab`);
-    if (d.banos != null) partes.push(`${d.banos} baños`);
+    if (hab != null) partes.push(`${hab} hab`);
+    if (ban != null) partes.push(`${ban} baños`);
     if (d.estacionamientos != null) partes.push(`${d.estacionamientos} est.`);
     if (d.metrajeInterno != null) partes.push(`${d.metrajeInterno} m²`);
     return partes.join(" · ");
@@ -878,6 +973,69 @@ module.exports = function (eleventyConfig) {
   // cada ficha (JPEG 1200px, Milestone 9 — og:image no es un <img>, es
   // el valor de un <meta content="...">, así que el transform tampoco
   // lo alcanzaría aunque estuviera en una página generada).
+  async function anchoDeImagen(rutaPublica) {
+    if (!rutaPublica) return null;
+    const ruta = path.join(__dirname, rutaPublica.replace(/^\//, ""));
+    if (!fs.existsSync(ruta)) return null;
+    try {
+      const meta = await require("sharp")(ruta).metadata();
+      return meta.width || null;
+    } catch {
+      return null;
+    }
+  }
+
+  // Imagen social (Open Graph / WhatsApp): 1200 × 630 px (relación 1,91:1). Reglas:
+  //  - fuente ≥ 1200 × 630: recorte centrado a 1200 × 630;
+  //  - fuente más pequeña (≥ 600 px de ancho): se recorta a 1,91:1 al TAMAÑO NATIVO, sin ampliar;
+  //  - fuente < 600 px o sin fuente: null (la plantilla usa la imagen corporativa).
+  // Nunca se amplía una imagen pequeña. Si "sharp" no está disponible, se vuelve al comportamiento
+  // anterior (variante JPEG de 1200 px de ancho).
+  async function generarImagenSocial(rutaPublica) {
+    if (!rutaPublica) return null;
+    const rutaOriginal = path.join(__dirname, rutaPublica.replace(/^\//, ""));
+    if (!fs.existsSync(rutaOriginal)) return null;
+    let sharp = null;
+    try {
+      sharp = require("sharp");
+    } catch {
+      sharp = null;
+    }
+    if (!sharp) {
+      const v = await generarVarianteOptimizada(rutaPublica, { formatos: ["jpeg"], anchos: [1200] });
+      return v ? { archivo: v.archivo, ancho: v.ancho, alto: v.alto } : null;
+    }
+    const meta = await sharp(rutaOriginal).metadata();
+    if (!meta.width || !meta.height || meta.width < 600) return null;
+    let ancho = 1200;
+    let alto = 630;
+    if (meta.width < 1200 || meta.height < 630) {
+      ancho = meta.width;
+      alto = Math.round(meta.width / (1200 / 630));
+      if (alto > meta.height) {
+        alto = meta.height;
+        ancho = Math.round(meta.height * (1200 / 630));
+      }
+    }
+    const huella = crypto
+      .createHash("sha1")
+      .update(fs.readFileSync(rutaOriginal))
+      .update(`og-${ancho}x${alto}`)
+      .digest("hex")
+      .slice(0, 10);
+    const nombre = `og-${path.basename(rutaOriginal).replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9_-]+/g, "-").slice(0, 40)}-${huella}.jpg`;
+    const dirSalida = path.join(__dirname, "_site", "assets", "propiedades", "_optimizadas");
+    const destino = path.join(dirSalida, nombre);
+    if (!fs.existsSync(destino)) {
+      fs.mkdirSync(dirSalida, { recursive: true });
+      await sharp(rutaOriginal)
+        .resize({ width: ancho, height: alto, fit: "cover", position: "centre" })
+        .jpeg({ quality: 82, mozjpeg: true })
+        .toFile(destino);
+    }
+    return { archivo: `/assets/propiedades/_optimizadas/${nombre}`, ancho, alto };
+  }
+
   async function generarVarianteOptimizada(rutaPublica, { formatos, anchos }) {
     if (!rutaPublica) return null;
     const rutaOriginal = path.join(__dirname, rutaPublica.replace(/^\//, ""));
@@ -1118,3 +1276,6 @@ module.exports = function (eleventyConfig) {
     },
   };
 };
+
+// Solo para las pruebas (scripts/verificar-ficha.js): la validación de datos de fichas.
+module.exports.validarFichas = validarFichas;

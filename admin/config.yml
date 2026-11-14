@@ -165,6 +165,26 @@ collections:
               - { label: "Mensual", value: "mensual" }
               - { label: "Quincenal", value: "quincenal" }
               - { label: "Otra", value: "otra" }
+          - label: "Fecha de referencia del precio"
+            name: "fechaReferencia"
+            widget: "datetime"
+            format: "YYYY-MM"
+            date_format: "MM/YYYY"
+            time_format: false
+            required: false
+            hint: "Mes y año en que MAKOM confirmó el precio de lista (ej. 11/2026). Si se llena, la ficha muestra debajo del precio: «Precio de lista a [mes] [año] · sujeto a disponibilidad». Déjelo vacío si no está confirmado: el sitio nunca inventa una fecha."
+          - label: "Precios específicos (opcional)"
+            name: "preciosEspecificos"
+            widget: "list"
+            required: false
+            collapsed: true
+            label_singular: "Precio específico"
+            summary: "{{fields.etiqueta}} — desde {{fields.monto}}"
+            hint: "Para modelos con precio propio, ej. «2 recámaras» desde $X. Solo con datos confirmados por MAKOM. Se muestra bajo el precio como «2 recámaras desde $X»."
+            fields:
+              - { label: "Etiqueta (ES)", name: "etiqueta", widget: "string", hint: "Ej.: 2 recámaras" }
+              - { label: "Etiqueta (EN)", name: "etiquetaEn", widget: "string", required: false, hint: "Ej.: 2 bedrooms. Si se deja vacía se usa la de español." }
+              - { label: "Monto desde (USD)", name: "monto", widget: "number", value_type: "int", min: 0 }
 
       # ---------------------------------------------------------
       # 3. UBICACIÓN
@@ -241,6 +261,10 @@ collections:
           - { label: "Metraje total (m²)", name: "metrajeTotal", widget: "number", value_type: "float", min: 0, required: false }
           - { label: "Año de construcción", name: "anoConstruccion", widget: "number", value_type: "int", required: false }
           - { label: "Piso", name: "piso", widget: "string", required: false, hint: "Puede ser un número o texto (ej. PB, Ático)." }
+          - { label: "Habitaciones — máximo (rango)", name: "habitacionesMaximo", widget: "number", value_type: "int", min: 0, required: false, hint: "Solo si la oferta incluye varias tipologías. Ej.: Habitaciones = 1 y este campo = 2 → la ficha muestra «1–2». No escriba un valor sin confirmarlo." }
+          - { label: "Habitaciones — mostrar «Desde N»", name: "habitacionesDesde", widget: "boolean", default: false, required: false, hint: "Muestra «Desde 1» (en vez de «1») cuando existen más tipologías sin un máximo confirmado." }
+          - { label: "Baños — máximo (rango)", name: "banosMaximo", widget: "number", value_type: "float", step: 0.5, min: 0, required: false, hint: "Ej.: Baños = 1 y este campo = 2 → «1–2»." }
+          - { label: "Baños — mostrar «Desde N»", name: "banosDesde", widget: "boolean", default: false, required: false }
 
       - label: "Detalles de la propiedad"
         name: "detalles"
@@ -308,6 +332,8 @@ collections:
           - { label: "Concierge", value: "concierge" }
           - { label: "Administración en sitio", value: "administracion-sitio" }
           - { label: "Acceso para personas con movilidad reducida", value: "accesibilidad" }
+          - { label: "Lounge social", value: "lounge-social" }
+          - { label: "Área de scooter", value: "area-scooter" }
 
       # ---------------------------------------------------------
       # 6. FOTOGRAFÍAS
@@ -329,6 +355,9 @@ collections:
             hint: >
               Suba entre 3 y 6 fotografías. Arrastre para reordenar; la
               primera se usa como portada salvo que marque otra distinta.
+              La foto principal debería medir 1600 px de ancho o más: el
+              sitio nunca amplía una imagen pequeña, así que una foto de
+              baja resolución se verá borrosa (el build avisa de ellas).
               Si por error pulsa "Añadir Fotografía" y queda un elemento
               sin archivo, use el ícono de la papelera de ese elemento
               para eliminarlo antes de publicar.
@@ -357,6 +386,48 @@ collections:
       # y copian el resultado — sin escribir ni calcular coordenadas
       # de memoria.
       # ---------------------------------------------------------
+      - label: "Video del recorrido"
+        name: "videoRecorrido"
+        widget: "object"
+        collapsed: true
+        required: false
+        hint: "Opcional. Aparece como la ficha «Video» junto a las miniaturas de la galería. Use un enlace (YouTube, Vimeo o un .mp4 público) o suba un archivo; si completa ambos, se usa el enlace."
+        fields:
+          - { label: "Enlace del video", name: "url", widget: "string", required: false, hint: "Ej.: https://www.youtube.com/watch?v=… o https://vimeo.com/… o la URL pública de un .mp4. Solo https." }
+          - { label: "Archivo de video (.mp4 / .webm)", name: "archivo", widget: "file", required: false, hint: "Los archivos se guardan en el repositorio: manténgalos por debajo de 25 MB. Para videos largos prefiera un enlace." }
+          - { label: "Imagen de portada del video", name: "poster", widget: "image", required: false, hint: "Opcional. Se muestra antes de reproducir un archivo de video." }
+          - { label: "Título accesible", name: "titulo", widget: "string", required: false, hint: "Ej.: Recorrido por el apartamento modelo. Si se deja vacío se usa «Video del recorrido»." }
+
+      - label: "Planos"
+        name: "planos"
+        widget: "list"
+        required: false
+        collapsed: true
+        label_singular: "Plano"
+        summary: "{{fields.etiqueta}} {{fields.archivo}}"
+        hint: "Opcional. Aparece como la ficha «Planos» junto a las miniaturas. Suba imágenes (JPG/PNG)."
+        fields:
+          - { label: "Archivo", name: "archivo", widget: "image" }
+          - { label: "Etiqueta (ES)", name: "etiqueta", widget: "string", required: false, hint: "Ej.: Modelo A — 1 recámara" }
+          - { label: "Etiqueta (EN)", name: "etiquetaEn", widget: "string", required: false }
+
+      - label: "Asesor asignado"
+        name: "asesor"
+        widget: "relation"
+        collection: "asesores"
+        search_fields: ["nombre"]
+        value_field: "{{slug}}"
+        display_fields: ["nombre"]
+        required: false
+        hint: "Opcional. La tarjeta de contacto muestra su foto o monograma, nombre, cargo, número de idoneidad (si lo tiene) y un botón de WhatsApp a SU número. Sin asesor, se usa el contacto corporativo de MAKOM. Los perfiles se crean en la sección «Asesores»."
+
+      - label: "Enlace limpio (opcional)"
+        name: "slugPublico"
+        widget: "string"
+        required: false
+        pattern: ["^[a-z0-9]+(-[a-z0-9]+)*$", "Solo minúsculas, números y guiones simples (sin tildes, espacios ni guiones largos)."]
+        hint: "Ej.: apartamentos-santo-tomas-mkw-re-020. Sin tildes, sin guion largo y sin el precio. Si se llena, ESA es la dirección pública de la ficha y la dirección anterior (la del nombre del archivo) queda redirigida. No lo cambie en propiedades ya compartidas sin avisar a desarrollo."
+
       - label: "Mapa"
         name: "mapa"
         widget: "object"
@@ -373,20 +444,20 @@ collections:
             widget: "select"
             default: "aproximada"
             options:
-              - { label: "Aproximada (recomendado)", value: "aproximada" }
-              - { label: "Exacta", value: "exacta" }
-            hint: "Aproximada difumina el punto para no revelar la ubicación exacta. Use Exacta solo como una decisión consciente."
+              - { label: "Aproximada (zona)", value: "aproximada" }
+            hint: "El sitio público siempre muestra una zona aproximada (un círculo), nunca un marcador ni la ubicación exacta: el centro del círculo se desplaza a propósito respecto al punto que usted escribe abajo. La opción «Exacta» se retiró por política (ver la ficha de cada propiedad para confirmar)."
           - label: "Latitud"
             name: "latitud"
-            widget: "number"
-            value_type: "float"
+            widget: "string"
             required: false
-            hint: "Abra /admin/buscar-ubicacion.html en otra pestaña, busque la dirección aproximada y copie aquí el número que le muestre."
+            pattern: ["^-?[0-9]{1,3}(\\.[0-9]{1,3})?$", "Máximo 3 decimales (zona aproximada). Ej.: 8.973. El repositorio del sitio es público: no se admiten coordenadas exactas."]
+            hint: "Abra /admin/buscar-ubicacion.html en otra pestaña, busque la ZONA (no la dirección exacta del edificio) y copie aquí el número, con un máximo de 3 decimales (≈110 m). IMPORTANTE: el repositorio del sitio es público; lo que se guarda aquí puede verse en GitHub aunque la página muestre solo un círculo, por eso el formulario no admite coordenadas exactas."
           - label: "Longitud"
             name: "longitud"
-            widget: "number"
-            value_type: "float"
+            widget: "string"
             required: false
+            pattern: ["^-?[0-9]{1,3}(\\.[0-9]{1,3})?$", "Máximo 3 decimales (zona aproximada). Ej.: -79.531. El repositorio del sitio es público: no se admiten coordenadas exactas."]
+            hint: "Máximo 3 decimales (≈110 m), igual que la latitud."
           - label: "Nivel de zoom"
             name: "nivelZoom"
             widget: "number"
@@ -423,7 +494,8 @@ collections:
         fields:
           - { label: "Título SEO", name: "titulo", widget: "string", required: false }
           - { label: "Descripción SEO", name: "descripcion", widget: "text", required: false }
-          - { label: "Imagen social", name: "imagenSocial", widget: "image", required: false }
+          - { label: "Descripción SEO en inglés", name: "descripcionEn", widget: "text", required: false, hint: "Se usa en /en/. Si se deja vacía, se genera a partir de la descripción en inglés (nunca se reutiliza el texto en español)." }
+          - { label: "Imagen social", name: "imagenSocial", widget: "image", required: false, hint: "Imagen para WhatsApp, Facebook y otras redes. Ideal: 1200 × 630 px. Si se deja vacía se usa la portada de la galería (recortada a 1200 × 630 solo si tiene el tamaño suficiente; nunca se amplía)." }
           - { label: "No indexar (noindex)", name: "noIndex", widget: "boolean", default: false }
 
       # ---------------------------------------------------------
@@ -707,3 +779,29 @@ collections:
           - { label: "Descripción SEO", name: "descripcion", widget: "text", required: false }
           - { label: "Descripción SEO en inglés", name: "descripcionEn", widget: "text", required: false }
           - { label: "No indexar (noindex)", name: "noIndex", widget: "boolean", default: false }
+
+  # ---------------------------------------------------------------
+  # Asesores: perfiles reutilizables que se asignan a cada propiedad
+  # (campo "Asesor asignado"). Los datos son SOLO los que MAKOM
+  # confirme: el sitio nunca inventa nombres, números ni idoneidades.
+  # ---------------------------------------------------------------
+  - name: "asesores"
+    label: "Asesores"
+    label_singular: "Asesor"
+    description: "Perfiles de asesores de MAKOM Properties que se pueden asignar a una propiedad."
+    folder: "content/asesores"
+    create: true
+    slug: "{{slug}}"
+    format: "json"
+    extension: "json"
+    identifier_field: "nombre"
+    summary: "{{nombre}} — {{cargo}}"
+    editor:
+      preview: false
+    fields:
+      - { label: "Nombre", name: "nombre", widget: "string" }
+      - { label: "Cargo (ES)", name: "cargo", widget: "string", hint: "Ej.: Asesor inmobiliario · MAKOM Properties" }
+      - { label: "Cargo (EN)", name: "cargoEn", widget: "string", required: false, hint: "Si se deja vacío se usa el cargo en español." }
+      - { label: "Número de idoneidad", name: "idoneidad", widget: "string", required: false, hint: "Solo si aplica y está confirmado. Si se deja vacío, la tarjeta no muestra ninguna línea de idoneidad." }
+      - { label: "WhatsApp (solo dígitos con código de país)", name: "whatsapp", widget: "string", required: false, pattern: ["^[0-9]{8,15}$", "Solo dígitos, con código de país y sin +, espacios ni guiones (ej. 50763534377)."], hint: "El botón de WhatsApp de la ficha usa ESTE número. Si se deja vacío, la tarjeta usa el WhatsApp corporativo de MAKOM." }
+      - { label: "Foto", name: "foto", widget: "image", required: false, hint: "Opcional. Sin foto, la tarjeta muestra un monograma con las iniciales." }

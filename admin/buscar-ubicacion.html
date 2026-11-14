@@ -91,7 +91,9 @@
   <p class="ayuda">
     Escriba una dirección o sector aproximado y pulse "Buscar". Ajuste el pin
     arrastrándolo si hace falta. Copie la Latitud y Longitud resultantes en
-    el campo "Mapa" de la propiedad en <code>/admin/</code>. Esta página es
+    el campo "Mapa" de la propiedad en <code>/admin/</code>. Por privacidad,
+    los valores se muestran redondeados a 3 decimales (zona aproximada, ≈110 m):
+    el repositorio del sitio es público y no admite coordenadas exactas. Esta página es
     solo una herramienta interna — nunca se publica ni se enlaza desde el
     sitio público.
   </p>
@@ -125,8 +127,8 @@
     var marcador = null;
 
     function mostrarResultado(lat, lng) {
-      document.getElementById('resultado-lat').value = lat.toFixed(6);
-      document.getElementById('resultado-lng').value = lng.toFixed(6);
+      document.getElementById('resultado-lat').value = lat.toFixed(3);
+      document.getElementById('resultado-lng').value = lng.toFixed(3);
     }
 
     function colocarPin(lat, lng, centrar) {
