@@ -809,6 +809,14 @@ async function grupoFichas(p, anchos, paginas) {
       const n = await p.eval("document.querySelectorAll('[data-galeria] [data-galeria-abrir=\"0\"]').length");
       ok(`${E} una única galería interactiva identificada`, n === 1, n);
       ok(`${E} sin errores de JavaScript`, p.errores.length === 0, p.errores.join(" | "));
+      // Mejora 8 (ficha de propiedad): por debajo de 1024 px el botón flotante de conversación sale de la ficha y su lugar lo
+      // ocupa la barra inferior de contacto (WhatsApp con la referencia + «Solicitar»): nunca conviven dos controles de contacto
+      // fijos. Desde 1024 px el flotante sigue igual y la tarjeta de contacto acompaña el desplazamiento (sticky).
+      if (w < 1024) {
+        ok(`${E} el flotante no se muestra (lo sustituye la barra de contacto)`, (await p.eval("getComputedStyle(document.getElementById('floating-contact')).display")) === "none", "");
+        ok(`${E} existe la barra inferior con WhatsApp y el mensaje lleva la referencia`, (await p.eval("(() => { const a = document.querySelector('[data-ficha-barra] a[data-ficha-whatsapp]'); return !!a && /MKW-RE-/.test(decodeURIComponent(a.href)); })()")) === true, "");
+        continue;
+      }
       // La foto principal se carga con prioridad: se espera a que esté decodificada para que
       // la geometría (y con ella el recorrido de muestreo) no dependa de la velocidad de red.
       await p.esperar("(() => { const i = window.__t.principal().querySelector('img'); return i && i.complete && i.naturalWidth > 0; })()", 8000);
@@ -1223,10 +1231,12 @@ async function grupoPanel(p, anchos, paginas) {
       await p.ir(lang === "en" ? "/en/properties/" : "/propiedades/");
       await ciclo(p, `catálogo ${L} ${w}px`, "flotante", "#floating-contact-panel");
 
-      await p.ir(paginas.ficha[lang]);
-      await p.scroll(await p.scrollMax() / 2);
-      await comprobarEstadoSilencioso(p, "evitar");
-      await ciclo(p, `ficha ${L} ${w}px`, "flotante", "#floating-contact-panel");
+      if (w >= 1024) {   // por debajo, la ficha usa la barra de contacto en lugar del flotante (ver grupoFichas)
+        await p.ir(paginas.ficha[lang]);
+        await p.scroll(await p.scrollMax() / 2);
+        await comprobarEstadoSilencioso(p, "evitar");
+        await ciclo(p, `ficha ${L} ${w}px`, "flotante", "#floating-contact-panel");
+      }
 
       await p.ir(paginas.perspectiva[lang]);
       await ciclo(p, `perspectiva ${L} ${w}px`, "flotante", "#floating-contact-panel");
@@ -1273,6 +1283,7 @@ async function grupoTeclado(p, anchos, paginas) {
         ["perspectiva", paginas.perspectiva[lang], "siempre"],
       ];
       for (const [nombre, ruta, tipo] of casos) {
+        if (nombre === "ficha" && w < 1024) continue;   // la ficha en móvil no tiene flotante (barra de contacto)
         const E = `${nombre} ${L} ${w}px`;
         await p.ir(ruta);
         // Recorrido con Tab desde arriba: nunca se enfoca el flotante apartado y el
