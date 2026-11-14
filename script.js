@@ -2275,6 +2275,8 @@ document.addEventListener('DOMContentLoaded', function () {
     anchor.addEventListener('click', function (e) {
       var targetId = this.getAttribute('href');
       if (targetId === '#') return;
+      // Los enlaces al formulario de contacto los gestiona el módulo central 9b (misma lógica en toda la web).
+      if (mkEsEnlaceFormulario(this)) return;
 
       var target = document.querySelector(targetId);
       if (target) {
@@ -2302,6 +2304,220 @@ document.addEventListener('DOMContentLoaded', function () {
         }, { once: true });
       }
     });
+  });
+
+
+  /* ============================================================
+     9b. NAVEGACIÓN AL FORMULARIO DE CONTACTO — módulo central
+     Todo control cuyo destino es el formulario (cabecera, menú móvil, pie, panel «Formulario» del Hero y del botón flotante, CTA de
+     servicios, propiedades y proyectos…) es un enlace a «#contacto» de la Home de su idioma: «#contacto» en la propia Home, «/#contacto»
+     o «/en/#contacto» desde cualquier otra página. Ningún enlace lleva su propio código de desplazamiento: este módulo lo resuelve todo.
+       - Desde otra página la navegación es la nativa (conserva el origen —document.referrer— y los parámetros utm_* que el formulario
+         envía al CRM); al cargar la Home con «#contacto» se alinea el formulario.
+       - En la propia Home el clic se intercepta, se añade «#contacto» al historial (una sola vez, aunque se pulse varias veces) y se alinea.
+     Causa raíz de los fallos anteriores: el salto nativo a «#contacto» (y el desplazamiento suave de la sección 9) se calculaban UNA vez,
+     con la página aún sin asentar (imágenes diferidas, fuentes, secciones que entran con data-reveal) y con scroll-behavior:smooth recorriendo
+     ~10 000 px: al terminar de cargar el contenido, el formulario quedaba fuera de pantalla (o bajo el encabezado / el botón flotante).
+     Solución: se calcula la posición con la geometría ASENTADA (descontando el desplazamiento de data-reveal), se desplaza y se vuelve a
+     medir cada fotograma hasta que la posición es estable con la página cargada; se corrige si el diseño se mueve y se detiene en cuanto
+     la persona interactúa (rueda, toque, teclado, ratón). Sin temporizadores: todo se decide por estados observables.
+       - Formulario COMPLETO a la vista: debajo del encabezado y por encima del botón flotante (lo mínimo que haga falta desplazar,
+         para conservar el título de la sección cuando cabe).
+       - prefers-reduced-motion: sin animación. Teclado: el foco pasa a la sección (Tab entra en el primer campo).
+  ============================================================ */
+  var MK_ID_SECCION = 'contacto';
+  var MK_ID_FORM = 'contact-form';
+  var mkAlineacion = { token: 0, limpiar: null };
+
+  function mkRutaNormal(ruta) {
+    return ruta.replace(/index\.html$/, '').replace(/([^/])$/, '$1/');
+  }
+
+  // ¿Este enlace lleva al formulario de contacto de la Home? (y, si es de este mismo documento, ¿está el formulario aquí?)
+  function mkEsEnlaceFormulario(a) {
+    if (!a || !a.getAttribute) return false;
+    var href = a.getAttribute('href');
+    if (!href || href.indexOf('#' + MK_ID_SECCION) === -1) return false;
+    var u;
+    try { u = new URL(href, window.location.href); } catch (e) { return false; }
+    if (u.origin !== window.location.origin || u.hash !== '#' + MK_ID_SECCION) return false;
+    var ruta = mkRutaNormal(u.pathname);
+    return ruta === '/' || ruta === '/en/';
+  }
+
+  function mkMismoDocumento(a) {
+    var u = new URL(a.getAttribute('href'), window.location.href);
+    return mkRutaNormal(u.pathname) === mkRutaNormal(window.location.pathname) && !!document.getElementById(MK_ID_FORM);
+  }
+
+  function mkReducirMovimiento() {
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  // Posición vertical (de documento) con el diseño ya asentado: las secciones con data-reveal entran deslizándose desde 24 px más abajo.
+  function mkYAsentada(el) {
+    var r = el.getBoundingClientRect();
+    var rv = el.closest('[data-reveal]');
+    var ty = 0;
+    if (rv) {
+      try { ty = new DOMMatrixReadOnly(window.getComputedStyle(rv).transform).m42 || 0; } catch (e) { ty = 0; }
+    }
+    return r.top - ty + window.pageYOffset;
+  }
+
+  // Scroll al que debe llegar la página para que el formulario completo quede a la vista y utilizable.
+  function mkDestinoFormulario() {
+    var seccion = document.getElementById(MK_ID_SECCION);
+    var form = document.getElementById(MK_ID_FORM);
+    if (!seccion || !form) return null;
+    var cab = document.getElementById('header');
+    var altoVisor = document.documentElement.clientHeight;
+    // Franja superior tapada por el encabezado fijo (+ aire).
+    var arriba = (cab ? Math.max(0, cab.getBoundingClientRect().bottom) : 72) + 16;
+    // Franja inferior ocupada por el botón flotante (huella real: margen + alto del botón + aire).
+    var abajo = 24;
+    var fc = document.getElementById('floating-contact');
+    var tg = document.getElementById('floating-contact-toggle');
+    if (fc && tg) {
+      var csf = window.getComputedStyle(fc);
+      abajo = (parseFloat(csf.bottom) || 24) + tg.offsetHeight + 12;
+    }
+    var formY = mkYAsentada(form);
+    var formAlto = form.offsetHeight;
+    var ySeccion = mkYAsentada(seccion) - arriba;          // título de la sección bajo el encabezado (aspecto habitual)
+    var yMin = formY + formAlto - (altoVisor - abajo);      // el formulario entero por encima del botón flotante
+    var yMax = formY - arriba;                              // …y su borde superior no queda bajo el encabezado
+    var y = yMin <= yMax ? Math.max(ySeccion, yMin) : yMax; // si no cabe entero (ventana muy baja) manda el borde superior
+    var tope = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    return Math.max(0, Math.min(y, tope));
+  }
+
+  function mkDesplazar(y, suave) {
+    var raiz = document.documentElement;
+    if (suave && !mkReducirMovimiento()) {
+      window.scrollTo({ top: y, behavior: 'smooth' });
+      return;
+    }
+    // Instantáneo de verdad aunque el CSS declare scroll-behavior:smooth (sin depender de behavior:'instant', que no admiten todos los navegadores).
+    var previo = raiz.style.scrollBehavior;
+    raiz.style.scrollBehavior = 'auto';
+    window.scrollTo(0, y);
+    raiz.style.scrollBehavior = previo;
+  }
+
+  // Alinea el formulario y mantiene la alineación mientras la página termina de asentarse.
+  //   Fase 1 (fotograma a fotograma): desplaza, vuelve a medir y corrige hasta que la posición es estable con la página cargada.
+  //   Fase 2 (ResizeObserver): si después aún cambia el tamaño del documento (p. ej. una imagen diferida que carga tarde), vuelve a alinear.
+  //   Ambas fases terminan en cuanto la persona interactúa, se pide otra alineación o se sale de la página.
+  function mkIrAlFormulario(opciones) {
+    var opc = opciones || {};
+    if (mkAlineacion.limpiar) mkAlineacion.limpiar();
+    var token = ++mkAlineacion.token;
+    if (!document.getElementById(MK_ID_FORM)) return;
+    var raiz = document.documentElement;
+
+    if (mobileMenuOpen) closeMobileMenu();
+    // El menú de servicios (se abre al pasar el puntero) también debe cerrarse: si no, queda desplegado sobre el formulario.
+    if (megaOpen) { clearTimeout(megaHoverTimer); closeMegaMenu(); }
+    if (opc.historial && window.location.hash !== '#' + MK_ID_SECCION) {
+      try { window.history.pushState(null, '', window.location.pathname + window.location.search + '#' + MK_ID_SECCION); } catch (e) { /* sin historial */ }
+    }
+
+    var seccion = document.getElementById(MK_ID_SECCION);
+    seccion.setAttribute('tabindex', '-1');
+    seccion.focus({ preventScroll: true });
+    seccion.addEventListener('blur', function () { seccion.removeAttribute('tabindex'); }, { once: true });
+
+    // La persona manda: cualquier gesto propio detiene la alineación automática.
+    var usuario = false;
+    var observador = null;
+    var eventos = ['wheel', 'touchstart', 'keydown', 'mousedown', 'pointerdown'];
+    function paraUsuario(ev) {
+      if (ev.type === 'keydown' && ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' ', 'Spacebar'].indexOf(ev.key) === -1) return;
+      usuario = true;
+      limpiar();
+    }
+    // Entrar en un campo (clic, toque o Tab) también es tomar el control: no se vuelve a mover la página bajo la persona.
+    function alEnfocar(ev) {
+      if (ev.target !== seccion && seccion.contains(ev.target)) { usuario = true; limpiar(); }
+    }
+    function limpiar() {
+      document.removeEventListener('focusin', alEnfocar);
+      eventos.forEach(function (n) { window.removeEventListener(n, paraUsuario, { passive: true }); });
+      if (observador) { observador.disconnect(); observador = null; }
+      raiz.style.scrollBehavior = previoAuto;
+      if (mkAlineacion.limpiar === limpiar) mkAlineacion.limpiar = null;
+    }
+    mkAlineacion.limpiar = limpiar;
+    eventos.forEach(function (n) { window.addEventListener(n, paraUsuario, { passive: true }); });
+    document.addEventListener('focusin', alEnfocar);
+    var previoAuto = raiz.style.scrollBehavior;
+
+    var suave = !!opc.suave && !mkReducirMovimiento();
+    // Sin animación propia: el salto nativo a «#» con scroll-behavior:smooth (CSS) quedaría animándose por su cuenta y competiría con la alineación.
+    if (!suave) raiz.style.scrollBehavior = 'auto';
+    var yInicial = mkDestinoFormulario();
+    if (yInicial === null) { limpiar(); return; }
+    var emitido = yInicial;
+    mkDesplazar(yInicial, suave);
+
+    var ultimoY = window.pageYOffset;
+    var quietos = 0;      // fotogramas seguidos sin que el scroll se mueva
+    var estables = 0;     // fotogramas seguidos alineados, con la página cargada
+    var fotogramas = 0;
+    var fuentesListas = !(document.fonts && document.fonts.status === 'loading');
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { fuentesListas = true; });
+
+    function vigilarCambiosDeTamano() {
+      if (!('ResizeObserver' in window) || token !== mkAlineacion.token || usuario) return;
+      observador = new ResizeObserver(function () {
+        if (token !== mkAlineacion.token || usuario) return;
+        var destino = mkDestinoFormulario();
+        if (destino !== null && Math.abs(destino - window.pageYOffset) > 1) mkDesplazar(destino, false);
+      });
+      observador.observe(document.body);
+      observador.observe(raiz);
+    }
+
+    (function fotograma() {
+      if (token !== mkAlineacion.token || usuario) return;
+      fotogramas++;
+      var y = window.pageYOffset;
+      quietos = Math.abs(y - ultimoY) < 0.5 ? quietos + 1 : 0;
+      ultimoY = y;
+      var destino = mkDestinoFormulario();
+      if (destino !== null && Math.abs(destino - y) > 1) {
+        estables = 0;
+        // Con un desplazamiento suave en curso solo se reorienta si el destino se movió; con el scroll quieto se corrige al instante.
+        if (quietos >= 2 || !suave) { mkDesplazar(destino, false); emitido = destino; quietos = 0; }
+        else if (Math.abs(destino - emitido) > 2) { mkDesplazar(destino, true); emitido = destino; }
+      } else if (quietos >= 1) {
+        var cargada = document.readyState === 'complete' && fuentesListas;
+        estables = cargada ? estables + 1 : 0;
+      }
+      // Estable: página cargada y formulario alineado durante 20 fotogramas seguidos (tope de seguridad: 900 fotogramas ≈ 15 s).
+      if (estables >= 20 || fotogramas > 900) { raiz.style.scrollBehavior = previoAuto; vigilarCambiosDeTamano(); return; }
+      window.requestAnimationFrame(fotograma);
+    })();
+  }
+
+  // Clic en cualquier enlace al formulario (también los creados después de cargar la página).
+  document.addEventListener('click', function (e) {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+    if (!a || a.target === '_blank' || a.hasAttribute('download') || !mkEsEnlaceFormulario(a) || !mkMismoDocumento(a)) return;
+    e.preventDefault();
+    mkIrAlFormulario({ historial: true, suave: true });
+  });
+
+  // Llegada desde otra página (o recarga / atrás / adelante) con «#contacto»: se alinea el formulario.
+  if (document.getElementById(MK_ID_FORM) && window.location.hash === '#' + MK_ID_SECCION) mkIrAlFormulario({ suave: false });
+  // «Atrás/adelante» entre entradas del historial de la Home y cambios manuales del hash.
+  window.addEventListener('popstate', function () {
+    if (document.getElementById(MK_ID_FORM) && window.location.hash === '#' + MK_ID_SECCION) mkIrAlFormulario({ suave: false });
+  });
+  window.addEventListener('hashchange', function () {
+    if (document.getElementById(MK_ID_FORM) && window.location.hash === '#' + MK_ID_SECCION) mkIrAlFormulario({ suave: false });
   });
 
   /* ============================================================
