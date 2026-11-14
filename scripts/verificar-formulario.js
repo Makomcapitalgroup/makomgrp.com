@@ -33,6 +33,7 @@
  *   --todos                     probar TODAS las páginas × TODOS sus CTA × todos los anchos (muy lento)
  *   --inventario <ruta.md>      escribir el inventario (tabla Markdown) con los resultados
  *   --fusionar a.json,b.json    (con --inventario) fusionar los volcados de ejecuciones por ancho y escribir el inventario, sin probar nada
+ *   --base <url>                probar un sitio ya publicado (p. ej. https://makomgrp.com) en vez de _site/ local (sin la prueba de carga lenta)
  *   --json <ruta.json>          volcar las filas de resultado (para fusionar ejecuciones por ancho en paralelo)
  *   --detalle                   imprimir también lo que pasa
  * Código de salida: 0 sin fallos; 1 con fallos; 2 error de entorno.
@@ -55,7 +56,7 @@ const PAGINAS_SIN_FORMULARIO_DE_ORIGEN = []; // todas las páginas deben poder l
 /* ------------------------------------------------------------------ */
 
 function leerArgumentos(argv) {
-  const a = { anchos: [1440, 768, 390, 375], solo: null, todos: false, inventario: null, json: null, fusionar: null, detalle: false };
+  const a = { anchos: [1440, 768, 390, 375], solo: null, todos: false, inventario: null, json: null, fusionar: null, base: null, detalle: false };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
     if (k === "--anchos") a.anchos = argv[++i].split(",").map(Number);
@@ -63,6 +64,7 @@ function leerArgumentos(argv) {
     else if (k === "--todos") a.todos = true;
     else if (k === "--inventario") a.inventario = argv[++i];
     else if (k === "--json") a.json = argv[++i];
+    else if (k === "--base") a.base = argv[++i].replace(/\/+$/, "");
     else if (k === "--fusionar") a.fusionar = argv[++i].split(",");
     else if (k === "--detalle") a.detalle = true;
     else throw new Error("Opción desconocida: " + k);
@@ -745,10 +747,11 @@ async function escenarios(base, paginas, ancho, opciones) {
         const c = await centroDe(br, sel);
         const y0 = await br.ev("scrollY");
         await br.clicEn(c.x, c.y);
-        // Sin animación: en un par de fotogramas ya está alineado (no hay recorrido gradual)
+        // Sin animación: ya en el primer fotograma tras el clic la página está (casi) en su destino; una animación suave recorrería esa
+        // distancia en cientos de milisegundos. (Con una red real pueden llegar después correcciones instantáneas por contenido que carga tarde.)
         const salto = await br.ev("new Promise(r => { const ys = [scrollY]; let n = 0; (function f(){ ys.push(scrollY); if (++n >= 6) return r(ys); requestAnimationFrame(f); })(); })");
-        const intermedios = salto.slice(1).filter((y) => y > y0 + 1 && Math.abs(y - salto[salto.length - 1]) > 1).length;
-        ok(pre("reduced-motion: el desplazamiento al formulario es inmediato (sin recorrido animado)"), intermedios === 0 && salto[salto.length - 1] > y0 + 1, JSON.stringify(salto));
+        const final = salto[salto.length - 1];
+        ok(pre("reduced-motion: el desplazamiento al formulario es inmediato (sin recorrido animado)"), final > y0 + 1 && salto[1] >= y0 + 0.5 * (final - y0), JSON.stringify(salto));
         await validarLlegada(br, {}, pre("reduced-motion"), "/");
       } finally {
         await br.cerrar();
@@ -851,7 +854,7 @@ function escribirInventario(ruta, ctas, informe, otros) {
   const t0 = Date.now();
 
   if (!args.solo || args.solo === "cta" || args.solo === "escenarios") {
-    const { servidor, base } = await nav.iniciarServidor();
+    const { servidor, base } = args.base ? { servidor: { close() {} }, base: args.base } : await nav.iniciarServidor();
     try {
       if (!args.solo || args.solo === "cta") {
         const casos = seleccionar(ctas, paginas, args.anchos, args.todos);
@@ -867,7 +870,7 @@ function escribirInventario(ruta, ctas, informe, otros) {
       servidor.close();
     }
   }
-  if (!args.solo || args.solo === "lento") {
+  if ((!args.solo || args.solo === "lento") && !args.base) {
     // Carga lenta: imágenes, fuentes, estilos y scripts llegan con retraso; el destino debe seguir siendo el mismo
     const retardo = (ruta) => (/\.(jpe?g|png|webp|avif|gif|svg)$/i.test(ruta) ? 350 : /\.woff2?$/i.test(ruta) ? 700 : /\.css$/i.test(ruta) ? 250 : /script\.js$/i.test(ruta) ? 300 : 0);
     const { servidor, base } = await nav.iniciarServidor({ retardo });
