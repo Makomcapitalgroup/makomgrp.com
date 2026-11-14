@@ -368,7 +368,8 @@ module.exports = function (eleventyConfig) {
     const dir = path.join(__dirname, "content", "propiedades");
     if (!fs.existsSync(dir)) return [];
     const archivos = fs.readdirSync(dir).filter((archivo) => archivo.endsWith(".json"));
-    return Promise.all(
+    const portadasPequenas = [];
+    const lista = await Promise.all(
       archivos.map(async (archivo) => {
         const datos = JSON.parse(fs.readFileSync(path.join(dir, archivo), "utf8"));
         // "slugArchivo" es la dirección histórica (nombre del archivo). Si la propiedad tiene
@@ -384,9 +385,16 @@ module.exports = function (eleventyConfig) {
         datos._imagenOgUrl = social ? social.archivo : null;
         datos._imagenOgAncho = social ? social.ancho : null;
         datos._imagenOgAlto = social ? social.alto : null;
+        // Auditoría (solo aviso): la foto principal de la ficha debería medir 1600 px de ancho o más. Nunca se amplía una imagen pequeña.
+        const ancho = await anchoDeImagen(portada && portada.archivo);
+        if (ancho && ancho < 1600) portadasPequenas.push(`${datos.referenciaMakom} (${ancho} px)`);
         return datos;
       })
     );
+    if (portadasPequenas.length) {
+      console.warn(`[ficha] Portadas de menos de 1600 px de ancho (se usan tal cual, sin ampliar): ${portadasPequenas.join(", ")}`);
+    }
+    return lista;
   });
 
   // Direcciones históricas que cambiaron al asignar un «Enlace limpio». GitHub Pages es
@@ -956,6 +964,18 @@ module.exports = function (eleventyConfig) {
   // cada ficha (JPEG 1200px, Milestone 9 — og:image no es un <img>, es
   // el valor de un <meta content="...">, así que el transform tampoco
   // lo alcanzaría aunque estuviera en una página generada).
+  async function anchoDeImagen(rutaPublica) {
+    if (!rutaPublica) return null;
+    const ruta = path.join(__dirname, rutaPublica.replace(/^\//, ""));
+    if (!fs.existsSync(ruta)) return null;
+    try {
+      const meta = await require("sharp")(ruta).metadata();
+      return meta.width || null;
+    } catch {
+      return null;
+    }
+  }
+
   // Imagen social (Open Graph / WhatsApp): 1200 × 630 px (relación 1,91:1). Reglas:
   //  - fuente ≥ 1200 × 630: recorte centrado a 1200 × 630;
   //  - fuente más pequeña (≥ 600 px de ancho): se recorta a 1,91:1 al TAMAÑO NATIVO, sin ampliar;
