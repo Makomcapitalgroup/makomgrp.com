@@ -13,8 +13,8 @@
     "activo": true,
     "precision": "aproximada",
     "nivelZoom": 15,
-    "latitud": 9.001663,
-    "longitud": -79.512689
+    "latitud": "9.002",
+    "longitud": "-79.513"
   },
   "estado": "disponible",
   "precio": {

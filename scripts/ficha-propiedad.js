@@ -138,6 +138,27 @@ function planosValidos(planos) {
 /* Mapa: zona aproximada                                              */
 /* ------------------------------------------------------------------ */
 
+// Política de privacidad: el repositorio del sitio es PÚBLICO, así que lo que se guarda en el
+// CMS puede leerse en GitHub. Las coordenadas del mapa se guardan con un máximo de 3 decimales
+// (~110 m, zona aproximada). El formulario del CMS lo exige con este mismo patrón y el build
+// falla si algún archivo guarda más precisión.
+const PATRON_COORDENADA = "^-?[0-9]{1,3}(\\.[0-9]{1,3})?$";
+const MAX_DECIMALES_COORDENADA = 3;
+
+function decimalesDe(n) {
+  const t = String(n);
+  const i = t.indexOf(".");
+  return i === -1 ? 0 : t.length - i - 1;
+}
+
+// Una coordenada guardada puede ser texto («8.973», lo que escribe el formulario nuevo) o un
+// número (archivos anteriores). Devuelve el número, o null si no es válida o es demasiado precisa.
+function coordenadaGuardada(valor) {
+  if (typeof valor === "number") return Number.isFinite(valor) && decimalesDe(valor) <= MAX_DECIMALES_COORDENADA ? valor : null;
+  if (typeof valor === "string" && new RegExp(PATRON_COORDENADA).test(valor.trim())) return Number(valor.trim());
+  return null;
+}
+
 const RADIO_ZONA_M = 450; // radio del círculo que se dibuja (m)
 const DESPLAZAMIENTO_MIN_M = 90; // el centro publicado se aleja del punto real entre 90 y 170 m
 const DESPLAZAMIENTO_MAX_M = 170;
@@ -149,19 +170,26 @@ const DESPLAZAMIENTO_MAX_M = 170;
 // delata. La opción antigua «exacta» del CMS se ignora: siempre se publica la zona.
 function mapaPublico(mapa, semilla) {
   if (!mapa || mapa.activo !== true) return null;
-  if (!esNumero(mapa.latitud) || !esNumero(mapa.longitud)) return null;
+  // Se acepta texto o número; con más de 3 decimales se parte de la versión redondeada, nunca del punto exacto.
+  const redondeo3 = (v) => {
+    const n = typeof v === "string" && /^-?[0-9]+(\.[0-9]+)?$/.test(v.trim()) ? Number(v.trim()) : v;
+    return esNumero(n) ? Math.round(n * 1000) / 1000 : null;
+  };
+  const latBase = redondeo3(mapa.latitud);
+  const lngBase = redondeo3(mapa.longitud);
+  if (latBase === null || lngBase === null) return null;
   const h = crypto.createHash("sha256").update(String(semilla || "makom")).digest();
   const angulo = (h.readUInt16BE(0) / 65535) * 2 * Math.PI;
   const dist = DESPLAZAMIENTO_MIN_M + (h.readUInt16BE(2) / 65535) * (DESPLAZAMIENTO_MAX_M - DESPLAZAMIENTO_MIN_M);
   const dLat = (dist * Math.sin(angulo)) / 111320;
-  const dLng = (dist * Math.cos(angulo)) / (111320 * Math.cos((mapa.latitud * Math.PI) / 180));
+  const dLng = (dist * Math.cos(angulo)) / (111320 * Math.cos((latBase * Math.PI) / 180));
   const redondear = (n) => Math.round(n * 1000) / 1000;
-  let lat = redondear(mapa.latitud + dLat);
-  let lng = redondear(mapa.longitud + dLng);
+  let lat = redondear(latBase + dLat);
+  let lng = redondear(lngBase + dLng);
   // Si el redondeo devolviera exactamente una coordenada guardada (p. ej. un punto con 3 decimales), se mueve un paso de 0,001° (~110 m):
   // ninguna de las dos coordenadas publicadas coincide nunca con la real. El punto real sigue dentro del círculo (peor caso ≈ 360 m de 450 m).
-  if (lat === mapa.latitud) lat = redondear(lat + (dLat >= 0 ? 0.001 : -0.001));
-  if (lng === mapa.longitud) lng = redondear(lng + (dLng >= 0 ? 0.001 : -0.001));
+  if (lat === latBase) lat = redondear(lat + (dLat >= 0 ? 0.001 : -0.001));
+  if (lng === lngBase) lng = redondear(lng + (dLng >= 0 ? 0.001 : -0.001));
   return {
     lat,
     lng,
@@ -228,6 +256,10 @@ module.exports = {
   videoDe,
   planosValidos,
   mapaPublico,
+  coordenadaGuardada,
+  decimalesDe,
+  PATRON_COORDENADA,
+  MAX_DECIMALES_COORDENADA,
   distanciaMetros,
   asesorPublico,
   iniciales,

@@ -93,7 +93,7 @@ function pruebasLogica() {
   ok("planos: solo imágenes del sitio", ficha.planosValidos([{ archivo: "/assets/a.jpg" }, { archivo: "https://x.com/a.jpg" }, { archivo: "/assets/a.pdf" }, { archivo: "" }, null]).length === 1 && ficha.planosValidos(undefined).length === 0);
 
   // Mapa: el punto exacto nunca se publica y siempre cae dentro del círculo
-  const reales = [[8.973371, -79.530982], [9.027715, -79.52274], [8.85954, -79.99673], [9.4, -82.5], [-34.6, -58.4], [9, -79.5], [8.973, -79.531]];
+  const reales = [[9.084482, -79.642093], [9.138826, -79.411111], [8.970651, -79.888888], [9.4, -82.5], [-34.6, -58.4], [9, -79.5], [8.973, -79.531]];
   for (let i = 0; i < 400; i++) reales.push([7.5 + (i * 0.00731) % 2.5, -82.9 + (i * 0.01379) % 3.2]);   // barrido determinista de puntos de Panamá
   let todosDentro = true, ningunoIgual = true, distMin = Infinity, distMax = 0;
   reales.forEach(([lat, lng], i) => {
@@ -107,12 +107,15 @@ function pruebasLogica() {
   ok(`el punto real queda dentro del círculo con margen (distancia al centro publicado ${Math.round(distMin)}–${Math.round(distMax)} m, radio ${ficha.RADIO_ZONA_M} m)`, todosDentro, distMax);
   ok("el centro publicado nunca coincide con el punto real", ningunoIgual);
   ok("el centro publicado está desplazado ≥ 40 m del punto real (no lo delata)", distMin >= 40, distMin);
-  const a = ficha.mapaPublico({ activo: true, latitud: 8.973371, longitud: -79.530982 }, "MKW-RE-020");
-  const b = ficha.mapaPublico({ activo: true, latitud: 8.973371, longitud: -79.530982 }, "MKW-RE-020");
-  const c = ficha.mapaPublico({ activo: true, latitud: 8.973371, longitud: -79.530982 }, "MKW-RE-021");
+  const a = ficha.mapaPublico({ activo: true, latitud: 9.084482, longitud: -79.642093 }, "MKW-RE-020");
+  const b = ficha.mapaPublico({ activo: true, latitud: 9.084482, longitud: -79.642093 }, "MKW-RE-020");
+  const c = ficha.mapaPublico({ activo: true, latitud: 9.084482, longitud: -79.642093 }, "MKW-RE-021");
   ok("desplazamiento determinista por propiedad (no cambia entre builds, sí entre propiedades)", JSON.stringify(a) === JSON.stringify(b) && JSON.stringify(a) !== JSON.stringify(c));
   ok("coordenadas publicadas con 3 decimales como máximo", [a.lat, a.lng].every((n) => String(Math.abs(n)).split(".")[1].length <= 3));
-  ok("la opción antigua «exacta» se ignora: sigue siendo zona aproximada", (() => { const e = ficha.mapaPublico({ activo: true, latitud: 8.973371, longitud: -79.530982, precision: "exacta" }, "X"); return e.aproximada === true && e.lat !== 8.973371 && e.radio === ficha.RADIO_ZONA_M; })());
+  ok("la opción antigua «exacta» se ignora: sigue siendo zona aproximada", (() => { const e = ficha.mapaPublico({ activo: true, latitud: 9.084482, longitud: -79.642093, precision: "exacta" }, "X"); return e.aproximada === true && e.lat !== 9.084482 && e.radio === ficha.RADIO_ZONA_M; })());
+  ok("coordenadaGuardada: acepta texto o número con ≤ 3 decimales y rechaza el resto", ficha.coordenadaGuardada("8.973") === 8.973 && ficha.coordenadaGuardada(-79.531) === -79.531 && ficha.coordenadaGuardada("9.084482") === null && ficha.coordenadaGuardada(9.084482) === null && ficha.coordenadaGuardada("") === null && ficha.coordenadaGuardada(undefined) === null);
+  const tx = ficha.mapaPublico({ activo: true, latitud: "8.973", longitud: "-79.531" }, "MKW-RE-020"), nu = ficha.mapaPublico({ activo: true, latitud: 8.973, longitud: -79.531 }, "MKW-RE-020");
+  ok("el mapa acepta coordenadas en texto (formulario nuevo) igual que en número (archivos anteriores)", tx && JSON.stringify(tx) === JSON.stringify(nu) && tx.lat !== 8.973 && tx.lng !== -79.531);
   ok("mapa inactivo o sin coordenadas → null", ficha.mapaPublico({ activo: false, latitud: 1, longitud: 1 }, "x") === null && ficha.mapaPublico({ activo: true }, "x") === null && ficha.mapaPublico(null, "x") === null);
   ok("zoom acotado a 12–16", ficha.mapaPublico({ activo: true, latitud: 1, longitud: 1, nivelZoom: 19 }, "x").zoom === 16 && ficha.mapaPublico({ activo: true, latitud: 1, longitud: 1, nivelZoom: 3 }, "x").zoom === 12);
 
@@ -182,11 +185,13 @@ function pruebasSitio(etiqueta, site, dirsProps) {
       ok(`${nombre}: botones de WhatsApp (tarjeta y barra) con la referencia ${p.referenciaMakom}`, wa.length === 2 && wa.every((m) => decodeURIComponent(m[3]).includes(p.referenciaMakom)), wa.length);
       ok(`${nombre}: la barra inferior y la tarjeta usan el mismo número`, new Set(wa.map((m) => m[2])).size === 1);
       if (!p.asesor) ok(`${nombre}: sin asesor → WhatsApp corporativo y sin bloque de asesor`, wa.every((m) => m[2] === "50763534377") && !html.includes("ficha-asesor"));
-      ok(`${nombre}: sin coordenadas exactas ni marcadores en el HTML`, !(p.mapa && p.mapa.latitud && (html.includes(String(p.mapa.latitud)) || html.includes(String(p.mapa.longitud)))));
-      if (p.mapa && p.mapa.activo && typeof p.mapa.latitud === "number") {
+      const valorExacto = (v) => v !== undefined && new RegExp(`(?<![0-9.])${String(v).replace(/[.]/g, "[.]")}(?![0-9])`).test(html);
+      ok(`${nombre}: sin coordenadas guardadas ni marcadores en el HTML`, !(p.mapa && p.mapa.latitud && p.mapa.longitud && valorExacto(p.mapa.latitud) && valorExacto(p.mapa.longitud)));
+      const latG = p.mapa ? ficha.coordenadaGuardada(p.mapa.latitud) : null, lngG = p.mapa ? ficha.coordenadaGuardada(p.mapa.longitud) : null;
+      if (p.mapa && p.mapa.activo && latG !== null && lngG !== null) {
         const lat = +meta(html, /data-lat="([^"]*)"/), lng = +meta(html, /data-lng="([^"]*)"/), radio = +meta(html, /data-radio="([^"]*)"/);
-        ok(`${nombre}: mapa con círculo (data-radio) y centro desplazado, no el punto real`, radio === ficha.RADIO_ZONA_M && (lat !== p.mapa.latitud || lng !== p.mapa.longitud) && ficha.distanciaMetros(p.mapa.latitud, p.mapa.longitud, lat, lng) < radio * 0.85, `${lat},${lng}`);
-        ok(`${nombre}: JSON-LD geo usa el centro aproximado`, !html.includes(`"latitude":${p.mapa.latitud}`));
+        ok(`${nombre}: mapa con círculo (data-radio) y centro desplazado, no el punto real`, radio === ficha.RADIO_ZONA_M && (lat !== latG || lng !== lngG) && ficha.distanciaMetros(latG, lngG, lat, lng) < radio * 0.85, `${lat},${lng}`);
+        ok(`${nombre}: JSON-LD geo usa el centro aproximado`, !(new RegExp(`"latitude":${latG}(?![0-9])`).test(html) && new RegExp(`"longitude":${lngG}(?![0-9])`).test(html)));
       }
       ok(`${nombre}: sin video/planos no hay fichas extra; con ellos sí`, (!!(p.videoRecorrido && (p.videoRecorrido.url || p.videoRecorrido.archivo)) || (p.planos || []).length > 0) === html.includes("galeria-ficha__extra"));
       if (p.slug !== p.slugArchivo) ok(`${nombre}: la dirección histórica ya no es una ficha`, !html.includes("canonical\" href=\"" + base + p.slugArchivo));
@@ -232,20 +237,23 @@ function pruebasSitio(etiqueta, site, dirsProps) {
     ok("los feeds públicos usan el enlace limpio", feeds.every((f) => !historicas.some((h) => leer(path.join(site, f)).includes(h))));
   }
 
-  // Privacidad: ninguna coordenada exacta en ningún archivo público (salvo la configuración del CMS, que solo nombra el campo)
-  const exactas = [];
+  // Privacidad: las coordenadas guardadas son aproximadas (≤ 3 decimales) y nada de lo publicado las repite ni es más preciso que eso
+  const guardadas = [];
   props.forEach((p) => {
-    if (p.mapa && typeof p.mapa.latitud === "number") exactas.push(String(p.mapa.latitud), String(p.mapa.longitud));
+    if (p.mapa && p.mapa.latitud !== undefined) guardadas.push([p.referenciaMakom, p.mapa.latitud, p.mapa.longitud]);
   });
-  const largas = exactas.filter((s) => s.replace("-", "").replace(".", "").length >= 6);
+  const demasiadoPrecisas = guardadas.filter(([, a, o]) => ficha.coordenadaGuardada(a) === null || ficha.coordenadaGuardada(o) === null);
+  ok(`datos: las ${guardadas.length} coordenadas guardadas en el árbol tienen como máximo 3 decimales (repositorio público)`, demasiadoPrecisas.length === 0, demasiadoPrecisas.map((x) => x[0]).join(","));
   const fugas = [];
-  todosLosArchivos(site, (f) => /\.(html|json|xml|js|css|txt)$/.test(f) && !f.includes(`${path.sep}vendor${path.sep}`)).forEach((f) => {
+  const decimalesLargos = /(?:data-lat|data-lng|"latitude"|"longitude")["=:\s]*"?(-?[0-9]+\.[0-9]{4,})/g;
+  todosLosArchivos(site, (f) => /\.(html|json|xml|txt)$/.test(f) && !f.includes(`${path.sep}vendor${path.sep}`) && !f.includes(`${path.sep}admin${path.sep}`)).forEach((f) => {
     const t = leer(f);
-    largas.forEach((c) => {
-      if (t.includes(c)) fugas.push(path.relative(site, f) + " contiene " + c);
+    for (const m of t.matchAll(decimalesLargos)) fugas.push(path.relative(site, f) + " publica " + m[1]);
+    guardadas.forEach(([ref, a, o]) => {
+      if (t.includes(`data-lat="${a}"`) && t.includes(`data-lng="${o}"`)) fugas.push(path.relative(site, f) + " publica el punto guardado de " + ref);
     });
   });
-  ok(`ninguna coordenada exacta (${largas.length / 2} propiedades con mapa) aparece en HTML, JSON, XML, JS ni CSS publicados`, fugas.length === 0, fugas.slice(0, 3).join(" | "));
+  ok(`ninguna coordenada publicada (data-lat/lng, JSON-LD) tiene más de 3 decimales ni coincide con el punto guardado`, fugas.length === 0, fugas.slice(0, 3).join(" | "));
 }
 
 /* ------------------------------------------------------------------ */
@@ -270,6 +278,34 @@ function pruebasCms() {
   ok("colección asesores: nombre, cargo, idoneidad opcional, WhatsApp validado, foto opcional", colAs && ["nombre", "cargo", "cargoEn", "idoneidad", "whatsapp", "foto"].every((n) => colAs.fields.some((f) => f.name === n)) && colAs.fields.find((f) => f.name === "idoneidad").required === false && Array.isArray(colAs.fields.find((f) => f.name === "whatsapp").pattern));
   const mapa = col.fields.find((f) => f.name === "mapa").fields.find((f) => f.name === "precision");
   ok("mapa: ya no se ofrece la precisión «exacta»", !mapa.options.some((o) => o.value === "exacta"));
+  const camposMapa = col.fields.find((f) => f.name === "mapa").fields;
+  const camposCoord = ["latitud", "longitud"].map((n) => camposMapa.find((f) => f.name === n));
+  ok("mapa: latitud y longitud son texto con patrón de máximo 3 decimales (no admiten coordenadas exactas)", camposCoord.every((f) => f && f.widget === "string" && f.pattern && f.pattern[0] === ficha.PATRON_COORDENADA));
+  const reCoord = new RegExp(ficha.PATRON_COORDENADA);
+  ok("patrón del CMS: acepta «8.973», «-79.531», «9», rechaza «9.084482», «abc», «8,973» y vacíos con espacios", ["8.973", "-79.531", "9", "8.9"].every((v) => reCoord.test(v)) && ["9.084482", "-79.5309", "abc", "8,973", " 8.973", "1234.5", "8."].every((v) => !reCoord.test(v)));
+  const paginaUbic = leer(path.join(RAIZ, "admin", "buscar-ubicacion.html"));
+  ok("la herramienta de búsqueda de ubicación redondea a 3 decimales (nunca 6)", paginaUbic.includes("toFixed(3)") && !paginaUbic.includes("toFixed(6)"));
+  // Guardia del build: un archivo con coordenadas exactas detiene el build
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "guardia-coord-"));
+  try {
+    const { validarFichas } = require(path.join(RAIZ, ".eleventy.js"));
+    fs.mkdirSync(path.join(tmp, "content", "propiedades"), { recursive: true });
+    const base = { referenciaMakom: "MKW-RE-999", mapa: { activo: true, precision: "aproximada", latitud: "8.973", longitud: "-79.531" } };
+    const escribir = (mapa) => fs.writeFileSync(path.join(tmp, "content", "propiedades", "x.json"), JSON.stringify({ ...base, mapa }));
+    const intenta = () => { try { validarFichas(tmp); return null; } catch (e) { return e.message; } };
+    escribir(base.mapa);
+    ok("guardia del build: coordenadas aproximadas (texto) pasan", intenta() === null);
+    escribir({ ...base.mapa, latitud: 8.973 , longitud: -79.531 });
+    ok("guardia del build: coordenadas aproximadas (número, formato anterior) pasan", intenta() === null);
+    escribir({ ...base.mapa, latitud: "9.084482" });
+    ok("guardia del build: una latitud con 6 decimales detiene el build", /mapa\.latitud/.test(intenta() || ""));
+    escribir({ ...base.mapa, longitud: -79.642093 });
+    ok("guardia del build: una longitud numérica con 6 decimales detiene el build", /mapa\.longitud/.test(intenta() || ""));
+    escribir({ activo: false, latitud: "9.084482", longitud: "-79.642093" });
+    ok("guardia del build: también se vigila el mapa desactivado (el repositorio sigue siendo público)", intenta() !== null);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
   const slugPub = col.fields.find((f) => f.name === "slugPublico");
   ok("slugPublico: patrón sin tildes ni guiones largos", slugPub.pattern && new RegExp(slugPub.pattern[0]).test("apartamentos-santo-tomas-mkw-re-020") && !new RegExp(slugPub.pattern[0]).test("apartamentos—santo"));
   ok("las demás colecciones no cambian", ["proyectos", "perspectivas"].every((n) => cfg.collections.some((c) => c.name === n)));

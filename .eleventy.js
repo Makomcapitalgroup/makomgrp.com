@@ -152,6 +152,15 @@ function validarFichas(raiz) {
         publicos.set(d.slugPublico, archivo);
       }
     }
+    // Privacidad: el repositorio es público; las coordenadas del mapa solo pueden guardarse con ≤ 3 decimales (zona aproximada).
+    if (d.mapa && typeof d.mapa === "object") {
+      ["latitud", "longitud"].forEach((campo) => {
+        const valor = d.mapa[campo];
+        if (valor !== undefined && valor !== null && valor !== "" && ficha.coordenadaGuardada(valor) === null) {
+          errores.push(`"mapa.${campo}" de ${archivo} no es una coordenada aproximada válida: use como máximo ${ficha.MAX_DECIMALES_COORDENADA} decimales (el repositorio del sitio es público).`);
+        }
+      });
+    }
     if (d.asesor && !asesores.has(d.asesor)) avisos.push(`${archivo}: el asesor "${d.asesor}" no existe en content/asesores/ — la ficha usará el contacto corporativo.`);
     const v = d.videoRecorrido;
     if (v && (v.url || v.archivo) && !ficha.videoDe(v)) avisos.push(`${archivo}: el video del recorrido no es válido (solo https de YouTube/Vimeo o un .mp4/.webm) — no se mostrará.`);
@@ -1267,3 +1276,6 @@ module.exports = function (eleventyConfig) {
     },
   };
 };
+
+// Solo para las pruebas (scripts/verificar-ficha.js): la validación de datos de fichas.
+module.exports.validarFichas = validarFichas;
