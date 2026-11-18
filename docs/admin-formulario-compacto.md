@@ -123,3 +123,31 @@ Sigue siendo solo CSS en `admin/tema-makom.css` (sin JavaScript, sin cambios de 
 1. **Fotografías y tarjetas enriquecidas en los listados de las cuatro colecciones.** Decap 3.17.3 solo toma la imagen de una tarjeta de un campo llamado `image`, `thumbnail`, `thumb`, `picture`, `avatar`, `photo`, `cover`, `hero` o `logo`; los campos de MAKOM tienen otros nombres. Opciones con riesgo (a decidir): renombrar campos (cambia datos y plantillas), JavaScript que lea el estado de Decap, o sustituir componentes internos. También: `summary` con más datos por colección y `view_filters` / `view_groups` nativos por estado.
 2. **Visualización pública de la galería de Proyectos.** `_includes/proyecto.njk` solo usa `imagenPrincipal`; la galería ya se puede cargar desde el panel pero no se muestra en la ficha (requiere cambio de plantilla).
 3. **Pruebas autenticadas con Loyra y pruebas en Safari / iPhone reales.** Todo lo anterior se verificó con el Decap real y un respaldo de prueba en memoria, solo en Chrome (CDP); falta confirmar con sesión real de GitHub la carga de imágenes de las tres colecciones nuevas (un solo commit por publicación) y el comportamiento en Safari, iPhone y Firefox.
+
+---
+
+# Listado de Propiedades (rama `feat/admin-listado-propiedades`, sin fusionar)
+
+## Auditoría de Decap 3.17.3: qué recibe realmente cada tarjeta del listado
+
+- Cada tarjeta recibe **solo** el resultado de `summary` (un texto) y, en la vista de **cuadrícula**, una imagen **únicamente si** la colección tiene un campo de nivel superior de tipo `image` cuyo nombre sea exactamente `image`, `thumbnail`, `thumb`, `picture`, `avatar`, `photo`, `cover`, `hero` o `logo` (función de inferencia del bundle). La vista de lista nunca muestra imágenes. La opción `thumbnail:` de la colección no existe en esta versión.
+- En Propiedades la portada está **anidada** (`fotografias.galeria[].archivo` con `portada: true`) y la gestiona el widget propio: Decap no la ve en el listado. No hay API pública para tarjetas: `window.CMS` expone `registerWidget`, `registerPreviewTemplate`, `registerEventListener` (preSave/postSave…), `registerEditorComponent`, etc., pero ningún gancho del listado y no expone el store.
+- Soportado y oficial para el listado: `summary` (texto con filtros `default`, `truncate`, `upper`, `lower`, `date`, `ternary`), `sortable_fields`, **`view_filters`** y **`view_groups`**.
+
+## Qué se implementó (soportado y de bajo riesgo)
+
+1. `summary` de dos líneas: `{{titulo | truncate(110)}}` / `{{referenciaMakom | default('sin referencia')}} · {{operacion}} · {{tipo}} · {{estado}}` (valores tal como están guardados; los datos no cambian).
+2. CSS: respeta el salto de línea (`white-space: pre-line`); en ≥ 1100 px jerarquía por `::first-line` (título 16 px / 500, datos 13 px gris); en pantallas menores texto uniforme (si el título se parte, `::first-line` solo estilaría la primera línea visual).
+3. `view_filters` nativos por cada estado definido (Disponibles, Reservadas, Alquiladas, Vendidas, Archivadas, Borradores) y por operación (En venta, En alquiler). El menú de Decap no se cierra al elegir y cada opción alterna.
+4. Botones del listado («Ordenar por», «Filter by») con la forma de «Añadir rápido».
+
+## Qué NO es posible sin cambios de mayor riesgo (portada real, chips de color, «Editar»)
+
+| Alternativa | Qué logra | Riesgos |
+|---|---|---|
+| **A. Solo lo implementado** | Datos (ref., operación, tipo, estado) y filtros, sin tocar datos ni JavaScript | No hay foto ni color por estado |
+| **B. Script de «enriquecimiento» (prototipo evaluado)** | Portada real, chips de estado de color e indicador «Editar ›», por atributos/variables CSS en cada tarjeta | JavaScript nuevo en el panel que lee el enlace de cada tarjeta (ruta `#/collections/propiedades/entries/<slug>`) y trae el JSON de cada propiedad de `raw.githubusercontent.com` (repositorio público): depende de un servicio externo y de que el repositorio siga siendo público; la CDN de GitHub cachea 5 min (una portada recién publicada tardaría hasta 5 min en verse); los atributos se pierden al cambiar de vista/colección (hay que reaplicarlos con un `MutationObserver`); el listado pagina por desplazamiento (20 en 20) y hay que cubrir las tarjetas que llegan después. En la prueba: 20 propiedades traídas en ~0,6 s; los atributos sobreviven al reordenar pero no al cambiar de vista. Requiere pruebas propias y mantenimiento en cada actualización de Decap. |
+| **C. Campo derivado `image`** | La cuadrícula nativa mostraría la portada | Cambia el modelo de datos (clave nueva en cada JSON), requiere `preSave` para mantenerla y una migración de las propiedades existentes; solo en la vista de cuadrícula |
+| **D. Sustituir componentes internos / fork de Decap** | Control total | Alto riesgo y mantenimiento permanente; no recomendado |
+
+No se implementó B, C ni D: requieren aprobación.

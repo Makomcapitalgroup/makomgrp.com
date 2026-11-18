@@ -161,6 +161,11 @@ html body [class*="-ViewControlsButton"] { width: 36px; height: 36px; display: i
 html body [class*="-ViewControlsButton"]:hover { color: var(--mk-negro); background: var(--mk-hover); }
 html body [class*="-ViewControlsButton"]:active { background: rgba(10, 10, 10, .11); }
 html body [class*="-CollectionControlsContainer"] [class*="-StyledWrapper"] *:not([class*="-ViewControlsButton"]):not(svg):not(path) { color: rgba(10, 10, 10, .74); }
+html body [class*="-CollectionControlsContainer"] [class*="-StyledDropdownButton"] {
+  display: inline-flex; align-items: center; min-height: 36px; padding: 0 32px 0 14px; border: 1px solid rgba(10, 10, 10, .16); border-radius: var(--mk-r-chip); background: transparent; font-size: 13px; font-weight: 500; letter-spacing: .02em;
+  transition: background-color var(--mk-fast) var(--mk-ease), border-color var(--mk-fast) var(--mk-ease);
+}
+html body [class*="-CollectionControlsContainer"] [class*="-StyledDropdownButton"]:hover { background: var(--mk-hover); border-color: rgba(10, 10, 10, .30); }
 /* Listado: lo único que Decap ofrece por entrada es el texto del `summary` de admin/config.yml («título — estado»). Sin JavaScript no se puede resaltar el estado dentro de ese texto;
    el refinamiento es de ritmo, tipografía y respuesta al ratón/teclado (ver docs/admin-formulario-compacto.md → propuestas). */
 /* Identidad por colección: el listado toma el acento de la colección activa en la navegación lateral (su enlace lleva aria-current="page" y el href de la colección).
@@ -191,6 +196,15 @@ html body [class*="-GridCard"]:not([class*="-GridCardLink"]) { height: 176px; fl
 html body [class*="-GridCardLink"] { padding: 0; border-radius: var(--mk-r-panel); }
 html body [class*="-GridCardLink"] [class*="-CardBody"] { padding: 20px 24px; }
 html body [class*="-ListCardTitle"] { font-size: 15px; font-weight: 400; line-height: 1.45; letter-spacing: .005em; color: var(--mk-negro); }
+/* Tarjetas con `summary` de dos líneas (Propiedades: título + «referencia · operación · tipo · estado»): se respeta el salto de línea del texto.
+   Solo en el listado de Propiedades se da jerarquía: primera línea (título) 16 px / 500; segunda (datos) 13 px en gris. */
+html body [class*="-ListCardTitle"], html body [class*="-GridCard"] [class*="-CardBody"] { white-space: pre-line; }
+html body [class*="-ListCardTitle"] { display: block; overflow-wrap: anywhere; line-height: 1.55; }
+@media (min-width: 1100px) {
+  /* La jerarquía por «primera línea» solo se usa donde el título cabe en una línea; en pantallas angostas el título se parte y todo el texto conserva el mismo estilo. */
+  html body:has([class*="-SidebarNavLink"][aria-current="page"][href$="collections/propiedades"]) [class*="-ListCardTitle"] { font-size: 13px; line-height: 1.65; color: var(--mk-ink-soft); letter-spacing: .01em; }
+  html body:has([class*="-SidebarNavLink"][aria-current="page"][href$="collections/propiedades"]) [class*="-ListCardTitle"]::first-line { font-size: 16px; font-weight: 500; line-height: 1.5; letter-spacing: .005em; color: var(--mk-negro); }
+}
 
 /* ---------- Editor: barra de acciones ---------- */
 html body [class*="-ToolbarContainer"] {

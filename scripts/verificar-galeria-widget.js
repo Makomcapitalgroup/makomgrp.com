@@ -153,6 +153,10 @@ function iniciarServidorPrueba(decap, dirFixtures) {
       for (const f of fs.readdirSync(d).filter((x) => x.endsWith(".json"))) out.content[col][f] = { content: fs.readFileSync(path.join(d, f), "utf8") };
       // Datos CONGELADOS para las dos entradas que las pruebas modifican: la propiedad de Costa del Este (6 fotos, versión del PR #20) y el asesor de Loyra.
       // Así las pruebas no dependen de lo que el equipo publique después desde el CMS real (el 18-nov Loyra le agregó fotos a esa propiedad).
+      // Entradas SINTÉTICAS (solo en el servidor de prueba; no existen en content/): sin referencia, borrador, título larguísimo, archivada, vendida y reservada.
+      if (col === "propiedades") {
+        for (const f of fs.readdirSync(path.join(RAIZ, "scripts", "fixtures")).filter((x) => /^listado-zz-.*\.json$/.test(x))) out.content[col][f.replace(/^listado-/, "")] = { content: fs.readFileSync(path.join(RAIZ, "scripts", "fixtures", f), "utf8") };
+      }
       const congelada = { propiedades: ["panam", "propiedad-costa-del-este-base.json"], asesores: ["loyra", "asesor-loyra-base.json"] }[col];
       if (congelada) {
         const clave = Object.keys(out.content[col]).find((k) => k.includes(congelada[0]) && (col !== "propiedades" || k.includes("costa-del-este-panam")));
@@ -847,7 +851,7 @@ async function escenarios(p, dirFix, n, temporales) {
   await dormir(400);
   const hov = await p.ev(`(() => { const e = document.querySelector('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])'); const cs = getComputedStyle(e); return cs.borderTopColor + '|' + cs.boxShadow; })()`);
   ok("listado: al pasar el ratón la entrada resalta con el borde en el acento de la colección (terracota en Propiedades) y sombra", /181, 71, 42|0\.7098\d* 0\.2784\d* 0\.1647\d*/.test(hov) && /rgba\(10, 10, 10, 0\.08\)/.test(hov), hov);
-  ok("listado: separación entre entradas y título legible (15 px, interlineado 1,45)", await p.ev(`(() => { const t = document.querySelector('[class*="-ListCardTitle"]'); const cs = getComputedStyle(t); const a = document.querySelectorAll('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])'); const g = a[1].getBoundingClientRect().top - a[0].getBoundingClientRect().bottom; return cs.fontSize === '15px' && parseFloat(cs.lineHeight) >= 21 && g >= 9; })()`));
+  ok("listado: separación entre entradas y título legible (títulos de 15 px, o 16 px en la primera línea de Propiedades)", await p.ev(`(() => { const t = document.querySelector('[class*="-ListCardTitle"]'); const cs = getComputedStyle(t); const a = document.querySelectorAll('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])'); const g = a[1].getBoundingClientRect().top - a[0].getBoundingClientRect().bottom; return (cs.fontSize === '15px' || (cs.fontSize === '13px' && getComputedStyle(t, '::first-line').fontSize === '16px')) && parseFloat(cs.lineHeight) >= 20 && g >= 9; })()`));
   // --- Editor: estados de guardado
   await p.ev(`location.hash = '#/collections/propiedades/entries/${ENTRADA}'`);
   await p.esperar("!!document.querySelector('[data-galeria-fotos]')");
@@ -1085,7 +1089,7 @@ async function escenarios(p, dirFix, n, temporales) {
     await dormir(500);
     const l = JSON.parse(await p.ev(`(() => { const c = document.querySelector('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])'); const b = getComputedStyle(c, '::before'); const t = document.querySelector('[class*="-ListCardTitle"]'); const a = c.querySelectorAll('a').length; return JSON.stringify({ franja: b.backgroundColor, ancho: b.width, radio: getComputedStyle(c).borderTopLeftRadius, titulo: getComputedStyle(t).fontSize, n: document.querySelectorAll('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])').length }); })()`));
     vistos.add(l.franja);
-    ok(`${col}: el listado muestra tarjetas con franja de acento propia de la colección (${acentos[col]}), radio de 16 px y título de 15 px`, l.franja === acentos[col] && l.ancho === "4px" && l.radio === "16px" && l.titulo === "15px" && l.n >= 1, JSON.stringify(l));
+    ok(`${col}: el listado muestra tarjetas con franja de acento propia de la colección (${acentos[col]}), radio de 16 px y título de 15 px (Propiedades: datos de 13 px bajo el título)`, l.franja === acentos[col] && l.ancho === "4px" && l.radio === "16px" && l.titulo === (col === "propiedades" ? "13px" : "15px") && l.n >= 1, JSON.stringify(l));
   }
   ok("los cuatro listados tienen un acento distinto entre sí (colecciones diferenciables)", vistos.size === 4, [...vistos].join(" | "));
   await p.ev("location.hash = '#/collections/perspectivas'");
@@ -1095,6 +1099,91 @@ async function escenarios(p, dirFix, n, temporales) {
   const gr = JSON.parse(await p.ev(`(() => { const c = document.querySelector('[class*="-GridCard"]:not([class*="-GridCardLink"])'); return JSON.stringify(c ? { alto: Math.round(c.getBoundingClientRect().height), franja: getComputedStyle(c, '::before').backgroundColor } : null); })()`));
   ok("vista de cuadrícula: tarjetas de 176 px (en vez de 240 px casi vacíos) con la franja de acento de la colección", !!gr && gr.alto === 176 && gr.franja === acentos.perspectivas, JSON.stringify(gr));
   await p.ev(`(() => { const b = document.querySelector('[aria-label="List view option"]'); if (b) b.click(); })()`);
+  /* ---------- 16. Listado de Propiedades: summary de dos líneas, filtros nativos, jerarquía y responsive ---------- */
+  grupo = "16 · listado de propiedades";
+  await vista(1440);
+  // Carga limpia del panel directamente en el listado (sin abrir antes ninguna entrada: Decap duplicaría en la lista la entrada ya cargada en memoria con otra normalización del nombre)
+  const lcarga = p.cdp.una("Page.loadEventFired");
+  await p.cdp.send("Page.navigate", { url: p.base + "/admin/" });
+  await Promise.race([lcarga, dormir(15000)]);
+  await p.esperar("!!document.querySelector('button')", 15000);
+  await p.ev("(() => { const b = [...document.querySelectorAll('button')].find((b) => /Iniciar sesi/i.test(b.textContent)); if (b) b.click(); })()");
+  await p.esperar("!!document.querySelector('a[href*=\"collections\"], [class*=SidebarContainer]')", 15000);
+  const cfgL = require("js-yaml").load(fs.readFileSync(path.join(RAIZ, "admin", "config.yml"), "utf8")).collections[0];
+  const estadosCfg = cfgL.fields.find((f) => f.name === "estado").options.map((o) => o.value);
+  const operCfg = cfgL.fields.find((f) => f.name === "operacion").options.map((o) => o.value);
+  ok("config: el summary es título + «referencia · operación · tipo · estado» con los campos reales y sin inventar datos", /\{\{titulo( \| truncate\(\d+\))?\}\}\\n\{\{referenciaMakom \| default\('sin referencia'\)\}\} · \{\{operacion\}\} · \{\{tipo\}\} · \{\{estado\}\}/.test(cfgL.summary.replace(/\n/g, "\\n")), cfgL.summary);
+  ok("config: hay un filtro nativo (view_filters) por CADA estado definido en el campo «Estado» y por cada operación, con el valor exacto", estadosCfg.every((v) => cfgL.view_filters.some((f) => f.field === "estado" && f.pattern === "^" + v + "$")) && operCfg.every((v) => cfgL.view_filters.some((f) => f.field === "operacion" && f.pattern === "^" + v + "$")), JSON.stringify({ estadosCfg, operCfg }));
+  const cargarTodas = async () => { for (let i = 0; i < 10; i++) { await p.ev(`(() => { window.scrollTo(0, document.documentElement.scrollHeight); [...document.querySelectorAll('*')].filter((e) => e.scrollHeight > e.clientHeight + 50 && /auto|scroll/.test(getComputedStyle(e).overflowY)).forEach((e) => { e.scrollTop = e.scrollHeight; }); })()`); await dormir(500); } };
+  await p.ev("location.hash = '#/collections/propiedades'");
+  await p.esperar("document.querySelectorAll('[class*=\"-ListCardLink\"]').length > 0", 15000);
+  await cargarTodas();
+  const filas = JSON.parse(await p.ev(`(() => JSON.stringify([...document.querySelectorAll('[class*="-ListCardLink"]')].map((a) => { const slug = decodeURIComponent(a.getAttribute('href').split('/entries/')[1]); const k = Object.keys(window.__crudo.content.propiedades).find((x) => x.replace(/\\.json$/, '') === slug); const raw = window.__crudo.content.propiedades[k].content; const d = typeof raw === 'string' ? JSON.parse(raw) : raw; const t = a.querySelector('[class*="-ListCardTitle"]').textContent; return { slug, texto: t, titulo: d.titulo, ref: d.referenciaMakom || '', op: d.operacion, tipo: d.tipo, estado: d.estado }; })))()`));
+  const total = Object.keys(await p.ev("(() => { const o = {}; Object.keys(window.__crudo.content.propiedades).forEach((k) => { o[k] = 1; }); return o; })()")).length;
+  const slugsRepo = await p.ev("Object.keys(window.__crudo.content.propiedades).map((k) => k.replace(/\\.json$/, ''))");
+  const contados = {}; filas.forEach((f) => { contados[f.slug] = (contados[f.slug] || 0) + 1; });
+  ok(`el listado carga TODAS las propiedades (reales + 4 sintéticas = ${total}) con su tarjeta`, filas.length === total, filas.length + " de " + total + " | repetidas: " + JSON.stringify(Object.entries(contados).filter(([k, v]) => v > 1)) + " | sin tarjeta: " + JSON.stringify(slugsRepo.filter((k) => !contados[k])) + " | sin clave: " + JSON.stringify(Object.keys(contados).filter((k) => !slugsRepo.includes(k))));
+  const mal = filas.filter((f) => { const [l1, l2] = f.texto.split("\n"); const esperado1 = f.titulo.length > 110 ? f.titulo.slice(0, 110) + "..." : f.titulo; return l1 !== esperado1 || l2 !== `${f.ref || "sin referencia"} · ${f.op} · ${f.tipo} · ${f.estado}`; });
+  ok("fidelidad: en TODAS las tarjetas la 1.ª línea es el título (cortado a 110 caracteres solo si lo excede) y la 2.ª es referencia · operación · tipo · estado, leídos de los datos de esa propiedad", mal.length === 0, JSON.stringify(mal.slice(0, 2)));
+  const sint = Object.fromEntries(filas.filter((f) => /^zz-sintetica/.test(f.slug)).map((f) => [f.slug.replace("zz-sintetica-", ""), f]));
+  ok("casos especiales: borrador sin referencia («sin referencia»), archivada, vendida y reservada se muestran con su estado real", sint["borrador-sin-referencia"] && sint["borrador-sin-referencia"].texto.split("\n")[1] === "sin referencia · venta · penthouse · borrador" && /· archivada$/.test(sint["archivada-titulo-largo"].texto) && /· vendida$/.test(sint["vendida"].texto) && /· reservada$/.test(sint["reservada"].texto), JSON.stringify(Object.keys(sint)));
+  ok("título larguísimo (> 110 caracteres): la tarjeta lo corta con «…» solo al mostrarlo; el título guardado no cambia", sint["borrador-sin-referencia"].texto.split("\n")[0].endsWith("...") && sint["borrador-sin-referencia"].titulo.length > 150 && !sint["borrador-sin-referencia"].titulo.endsWith("..."));
+  ok("las tarjetas enlazan a la edición de SU propiedad (#/collections/propiedades/entries/<slug>) y cada una trae el indicador de acento", await p.ev(`(() => [...document.querySelectorAll('[class*="-ListCardLink"]')].every((a) => /^#\\/collections\\/propiedades\\/entries\\/.+/.test(a.getAttribute('href'))))()`));
+  const jer = JSON.parse(await p.ev(`(() => { const t = document.querySelector('[class*="-ListCardTitle"]'); const b = getComputedStyle(t), f = getComputedStyle(t, '::first-line'); return JSON.stringify({ base: b.fontSize, ps: b.whiteSpace, f1: f.fontSize, peso: f.fontWeight, col1: f.color, col2: b.color }); })()`));
+  ok("escritorio (≥ 1100 px): jerarquía — título 16 px / 500 en negro y datos 13 px en gris, respetando el salto de línea", jer.base === "13px" && jer.f1 === "16px" && jer.peso === "500" && jer.ps === "pre-line" && jer.col1 === "rgb(10, 10, 10)" && jer.col2 !== jer.col1, JSON.stringify(jer));
+  const contr = contraste(sobre(jer.col2, "rgb(255,255,255)"), [255, 255, 255]);
+  ok(`contraste de la línea de datos (gris sobre blanco) ≥ 4,5:1 (${contr.toFixed(2)}:1)`, contr >= 4.5, contr);
+  // Filtros nativos
+  const botones = await p.ev(`[...document.querySelectorAll('[class*="-CollectionControlsContainer"] button, [class*="-CollectionControlsContainer"] [role="button"]')].map((b) => b.textContent.trim() || b.getAttribute('aria-label'))`);
+  ok("los controles del listado conservan «Ordenar por» y las vistas de lista/cuadrícula y suman el filtro nativo", botones.some((b) => /Ordenar/.test(b)) && botones.includes("List view option") && botones.includes("Grid view option") && botones.some((b) => /Filter|Filtr/.test(b)), JSON.stringify(botones));
+  const contar = () => p.ev(`document.querySelectorAll('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])').length`);
+  // El menú de filtros de Decap NO se cierra al elegir (closeOnSelection: false) y cada opción alterna (marcada / desmarcada).
+  const elegirFiltro = async (texto) => {
+    if (!(await p.ev("!!document.querySelector('[class*=\"-DropdownList\"] [class*=\"-StyledMenuItem\"]')"))) { await p.real("Filter by"); await dormir(400); }
+    await p.ev(`(() => { const o = [...document.querySelectorAll('[class*="-StyledMenuItem"]')].find((e) => e.textContent.trim() === ${JSON.stringify(texto)}); if (o) o.click(); })()`);
+    await dormir(900);
+    await p.cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
+    await dormir(300);
+  };
+  await elegirFiltro("Archivadas");
+  const archivadas = JSON.parse(await p.ev(`(() => JSON.stringify([...document.querySelectorAll('[class*="-ListCardTitle"]')].map((t) => t.textContent.split('\\n')[1].split(' · ').pop())))()`));
+  ok("filtro «Archivadas»: solo quedan propiedades con estado archivada (reales + sintéticas)", archivadas.length >= 2 && archivadas.every((e) => e === "archivada"), JSON.stringify(archivadas));
+  await elegirFiltro("Archivadas");
+  await cargarTodas();
+  ok("al quitar el filtro vuelven todas las propiedades", (await contar()) === total, (await contar()) + " de " + total);
+  await elegirFiltro("En alquiler");
+  const alq = JSON.parse(await p.ev(`(() => JSON.stringify([...document.querySelectorAll('[class*="-ListCardTitle"]')].map((t) => t.textContent.split('\\n')[1].split(' · ')[1])))()`));
+  ok("filtro «En alquiler»: solo propiedades con operación alquiler", alq.length >= 3 && alq.every((e) => e === "alquiler"), JSON.stringify(alq.slice(0, 4)));
+  await elegirFiltro("En alquiler");
+  // Navegación a la edición
+  await p.ev(`(() => { document.querySelector('[class*="-ListCardLink"]').click(); })()`);
+  await p.esperar("!!document.querySelector('[id^=\"titulo-field-\"]')", 15000);
+  await dormir(800);
+  ok("abrir una tarjeta lleva al formulario de edición de esa propiedad (título cargado) y el panel conserva «Publicar»/estado", await p.ev(`!!document.querySelector('[id^="titulo-field-"]') && !!document.querySelector('[id^="titulo-field-"]').value && /Escribiendo en la colección Propiedades/.test(document.body.innerText)`));
+  // Otras colecciones sin cambios
+  await p.ev("location.hash = '#/collections/proyectos'");
+  await p.esperar("document.querySelectorAll('[class*=\"-ListCardTitle\"]').length > 0", 15000);
+  const otra = JSON.parse(await p.ev(`(() => { const t = document.querySelector('[class*="-ListCardTitle"]'); const c = getComputedStyle(t), f = getComputedStyle(t, '::first-line'); return JSON.stringify({ base: c.fontSize, peso: f.fontWeight, f1: f.fontSize }); })()`));
+  ok("Proyectos conserva su listado (15 px, peso 400, sin la jerarquía de dos líneas de Propiedades)", otra.base === "15px" && otra.f1 === "15px" && otra.peso === "400", JSON.stringify(otra));
+  // Responsive
+  for (const w of [1440, 1280, 1024, 768, 390, 375]) {
+    await vista(w, w < 500 ? 844 : 900);
+    await p.ev("location.hash = '#/collections/propiedades'");
+    await p.esperar("document.querySelectorAll('[class*=\"-ListCardLink\"]').length > 0", 15000);
+    await cargarTodas();
+    await p.ev("window.scrollTo(0, 0); [...document.querySelectorAll('*')].filter((e) => e.scrollTop > 0).forEach((e) => { e.scrollTop = 0; })");
+    const r = JSON.parse(await p.ev(`(() => { const vw = innerWidth; const cards = [...document.querySelectorAll('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])')]; const fuera = cards.filter((c) => { const q = c.getBoundingClientRect(); return q.right > vw + 1 || q.left < -1; }).length; const desb = [...document.querySelectorAll('[class*="-ListCardTitle"]')].filter((t) => t.scrollWidth > t.clientWidth + 1).length; const f = getComputedStyle(document.querySelector('[class*="-ListCardTitle"]'), '::first-line').fontSize; const h = cards.map((c) => c.getBoundingClientRect().height); const ctl = document.querySelector('[class*="-CollectionControlsContainer"]').getBoundingClientRect(); return JSON.stringify({ n: cards.length, fuera, desb, f1: f, hmin: Math.round(Math.min(...h)), sw: document.documentElement.scrollWidth - vw, ctlDentro: ctl.right <= vw + 1 }); })()`));
+    ok(`${w} px: las ${total} tarjetas caben en pantalla, el texto largo se ajusta sin desbordar, sin desplazamiento horizontal y los controles quedan dentro` + (w >= 1100 ? " (jerarquía 16 px)" : " (texto uniforme 15 px)"), r.n === total && r.fuera === 0 && r.desb === 0 && r.sw <= 1 && r.ctlDentro && (w >= 1100 ? r.f1 === "16px" : r.f1 === "15px") && r.hmin >= 60, JSON.stringify(r));
+  }
+  await vista(1440);
+  // Foco con teclado en las tarjetas
+  await p.ev("location.hash = '#/collections/propiedades'");
+  await dormir(800);
+  await p.cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+  await p.cdp.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+  const fcard = await p.ev(`(() => { const a = document.querySelector('[class*="-ListCardLink"]'); a.focus(); const c = getComputedStyle(a); const li = a.closest('li'); return a === document.activeElement && /solid/.test(c.outlineStyle) && /2px/.test(c.outlineWidth) && /181, 71, 42/.test(c.outlineColor) && getComputedStyle(li).borderTopColor.length > 0; })()`);
+  ok("teclado: el enlace de la tarjeta recibe el foco con contorno de 2 px terracota", fcard === true, fcard);
+
   const ed = JSON.parse(await p.ev(`(() => { return null; })()`));
   await enColeccion("perspectivas", "turismo-record", "!!document.querySelector('.cms-editor-visual')", "titulo");
   const alturas = JSON.parse(await p.ev(`(() => JSON.stringify([...document.querySelectorAll('.cms-editor-visual [class*="editorStyles"]')].map((e) => Math.round(parseFloat(getComputedStyle(e).minHeight)))))()`));
