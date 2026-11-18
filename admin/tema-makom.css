@@ -163,11 +163,33 @@ html body [class*="-ViewControlsButton"]:active { background: rgba(10, 10, 10, .
 html body [class*="-CollectionControlsContainer"] [class*="-StyledWrapper"] *:not([class*="-ViewControlsButton"]):not(svg):not(path) { color: rgba(10, 10, 10, .74); }
 /* Listado: lo único que Decap ofrece por entrada es el texto del `summary` de admin/config.yml («título — estado»). Sin JavaScript no se puede resaltar el estado dentro de ese texto;
    el refinamiento es de ritmo, tipografía y respuesta al ratón/teclado (ver docs/admin-formulario-compacto.md → propuestas). */
-html body [class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"]) { background: #fff; border: 1px solid var(--mk-line); border-radius: var(--mk-r-panel); box-shadow: none; margin-bottom: 10px; overflow: hidden; transition: border-color var(--mk-fast) var(--mk-ease), box-shadow var(--mk-fast) var(--mk-ease), transform var(--mk-fast) var(--mk-ease); }
-html body [class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"]):hover { border-color: rgba(181, 71, 42, .40); box-shadow: inset 3px 0 0 var(--mk-terracota), var(--mk-sombra-card); transform: translateY(-1px); }
-html body [class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"]):focus-within { border-color: var(--mk-terracota); box-shadow: inset 3px 0 0 var(--mk-terracota); }
+/* Identidad por colección: el listado toma el acento de la colección activa en la navegación lateral (su enlace lleva aria-current="page" y el href de la colección).
+   Propiedades = terracota, Proyectos = petróleo, Perspectivas = arena oscuro, Asesores = verde bosque. Es solo color; no depende del contenido de las entradas. */
+html body { --mk-acento: var(--mk-terracota); }
+html body:has([class*="-SidebarNavLink"][aria-current="page"][href$="collections/proyectos"]) { --mk-acento: var(--mk-petroleo); }
+html body:has([class*="-SidebarNavLink"][aria-current="page"][href$="collections/perspectivas"]) { --mk-acento: #8A6D3B; }
+html body:has([class*="-SidebarNavLink"][aria-current="page"][href$="collections/asesores"]) { --mk-acento: var(--mk-success); }
+html body [class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"]),
+html body [class*="-GridCard"]:not([class*="-GridCardLink"]) {
+  position: relative; background: #fff; border: 1px solid var(--mk-line); border-radius: var(--mk-r-panel); box-shadow: none; overflow: hidden;
+  transition: border-color var(--mk-fast) var(--mk-ease), box-shadow var(--mk-fast) var(--mk-ease), transform var(--mk-fast) var(--mk-ease);
+}
+html body [class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"]) { margin-bottom: 10px; }
+html body [class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"]):hover,
+html body [class*="-GridCard"]:not([class*="-GridCardLink"]):hover { border-color: color-mix(in srgb, var(--mk-acento) 45%, transparent); box-shadow: var(--mk-sombra-card); transform: translateY(-1px); }
+html body [class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"]):focus-within,
+html body [class*="-GridCard"]:not([class*="-GridCardLink"]):focus-within { border-color: var(--mk-acento); }
+/* Franja de acento de la colección (pseudo-elemento: el enlace interior de Decap pinta su propio fondo y taparía una sombra interior) */
+html body [class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])::before,
+html body [class*="-GridCard"]:not([class*="-GridCardLink"])::before { content: ""; position: absolute; z-index: 1; top: 0; bottom: 0; left: 0; width: 4px; background: var(--mk-acento); pointer-events: none; transition: width var(--mk-fast) var(--mk-ease); }
+html body [class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"]):hover::before,
+html body [class*="-GridCard"]:not([class*="-GridCardLink"]):hover::before { width: 6px; }
 html body [class*="-ListCardLink"] { padding: 18px 24px; border-radius: var(--mk-r-panel); }
-html body [class*="-ListCardLink"]:focus-visible { outline-offset: -3px; }
+html body [class*="-ListCardLink"]:focus-visible, html body [class*="-GridCardLink"]:focus-visible { outline-offset: -3px; }
+/* Cuadrícula: Decap fija 240 px de alto aunque solo haya texto; se reduce para no dejar tarjetas vacías */
+html body [class*="-GridCard"]:not([class*="-GridCardLink"]) { height: 176px; flex-basis: 335px; }
+html body [class*="-GridCardLink"] { padding: 0; border-radius: var(--mk-r-panel); }
+html body [class*="-GridCardLink"] [class*="-CardBody"] { padding: 20px 24px; }
 html body [class*="-ListCardTitle"] { font-size: 15px; font-weight: 400; line-height: 1.45; letter-spacing: .005em; color: var(--mk-negro); }
 
 /* ---------- Editor: barra de acciones ---------- */
@@ -353,6 +375,132 @@ html body [class*="-ControlContainer"]:has(> div[id*="-field-"] > [class*="-TopB
 html body [class*="-NestedObjectLabel"] { background: rgba(201, 185, 154, .12); color: var(--mk-negro); border-radius: 0 0 var(--mk-r-inner) var(--mk-r-inner); }
 html body [class*="-StyledListItemTopBar"] { background: rgba(201, 185, 154, .30); border-radius: var(--mk-r-inner) var(--mk-r-inner) 0 0; }
 
+
+/* =====================================================================================================================
+   Estándar compartido para PROYECTOS, PERSPECTIVAS y ASESORES (mismo sistema que Propiedades: cuadrícula de 12 columnas por CSS, sin tocar
+   el DOM, los ids ni el orden de tabulación). Cada panel se reconoce por un campo propio: «tipoProyecto» (Proyectos), «categoria» (Perspectivas)
+   e «idoneidad» (Asesores). Propiedades no se modifica: sus reglas llevan su propio marcador («operacion»).
+   Rótulos de grupo («Información general», «Descripción»…): Decap no permite agrupar campos sin cambiar la estructura de los datos (un
+   widget «object» anida el JSON), así que el agrupamiento es VISUAL: el primer campo de cada grupo muestra un rótulo (pseudo-elemento ::before)
+   y la fila entera lleva más separación (--mk-mt). Si un campo no tiene regla, se ve a ancho completo.
+   ===================================================================================================================== */
+/* --- Proyectos --- */
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="titulo-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="tituloEn-field-"]) { --mk-d: 6; --mk-t: 12; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="estado-field-"]) { --mk-d: 4; --mk-t: 6; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="tipoProyecto-field-"]) { --mk-d: 8; --mk-t: 6; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="ubicacion-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="ubicacionEn-field-"]) { --mk-d: 6; --mk-t: 6; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="ano-field-"]) { --mk-d: 4; --mk-t: 6; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="ctaTexto-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="ctaTextoEn-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="ctaUrl-field-"]) { --mk-d: 4; --mk-t: 12; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="mostrarEnHome-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="ordenHome-field-"]) { --mk-d: 3; --mk-t: 6; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="extracto-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="extractoEn-field-"]) { --mk-d: 6; --mk-t: 12; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:has(> .cms-editor-visual) { --mk-d: 6; --mk-t: 12; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="titulo-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="tituloEn-field-"]) { --mk-mt: 34px; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="titulo-field-"])::before { content: "Información general"; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="extracto-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="extractoEn-field-"]) { --mk-mt: 34px; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="extracto-field-"])::before { content: "Descripción"; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="ctaTexto-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="ctaTextoEn-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="ctaUrl-field-"]) { --mk-mt: 34px; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="ctaTexto-field-"])::before { content: "Llamado a la acción"; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="mostrarEnHome-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="ordenHome-field-"]) { --mk-mt: 34px; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="mostrarEnHome-field-"])::before { content: "Página principal"; }
+/* --- Perspectivas --- */
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="titulo-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="tituloEn-field-"]) { --mk-d: 6; --mk-t: 12; }
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="fecha-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="autor-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="categoria-field-"]) { --mk-d: 4; --mk-t: 6; }
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="extracto-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="extractoEn-field-"]) { --mk-d: 6; --mk-t: 12; }
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="mostrarEnHome-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="ordenHome-field-"]) { --mk-d: 3; --mk-t: 6; }
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:has(> .cms-editor-visual) { --mk-d: 6; --mk-t: 12; }
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="titulo-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="tituloEn-field-"]) { --mk-mt: 34px; }
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="titulo-field-"])::before { content: "Información editorial"; }
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="extracto-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="extractoEn-field-"]) { --mk-mt: 34px; }
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="extracto-field-"])::before { content: "Extractos"; }
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="mostrarEnHome-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="ordenHome-field-"]) { --mk-mt: 34px; }
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="mostrarEnHome-field-"])::before { content: "Página principal"; }
+/* --- Asesores --- */
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="nombre-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="cargo-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="cargoEn-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="idoneidad-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="whatsapp-field-"]) { --mk-d: 6; --mk-t: 12; }
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="nombre-field-"]) { --mk-mt: 34px; }
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="nombre-field-"])::before { content: "Identidad"; }
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="cargo-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="cargoEn-field-"]) { --mk-mt: 34px; }
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="cargo-field-"])::before { content: "Cargo"; }
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="idoneidad-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="whatsapp-field-"]) { --mk-mt: 34px; }
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="idoneidad-field-"])::before { content: "Contacto"; }
+
+/* Cada grupo empieza en una fila nueva (--mk-sd = columna de inicio) y su segunda columna queda a la derecha */
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="titulo-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="extracto-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="ctaTexto-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="mostrarEnHome-field-"]) { --mk-sd: 1; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="extractoEn-field-"]) { --mk-sd: 7; }
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="titulo-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="extracto-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="mostrarEnHome-field-"]) { --mk-sd: 1; }
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="extractoEn-field-"]) { --mk-sd: 7; }
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="nombre-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="cargo-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="idoneidad-field-"]) { --mk-sd: 1; }
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="cargoEn-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="whatsapp-field-"]) { --mk-sd: 7; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:has(> .cms-editor-visual) { --mk-sd: 1; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:has(> .cms-editor-visual) ~ [class*="-ControlContainer"]:has(> .cms-editor-visual) { --mk-sd: 7; }
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:has(> .cms-editor-visual) { --mk-sd: 1; }
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:has(> .cms-editor-visual) ~ [class*="-ControlContainer"]:has(> .cms-editor-visual) { --mk-sd: 7; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="estado-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="ubicacion-field-"]),
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="ano-field-"]) { --mk-sd: 1; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="ubicacionEn-field-"]) { --mk-sd: 7; }
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([id^="fecha-field-"]) { --mk-sd: 1; }
+
+/* Grupos de imágenes y de contenido */
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:has([data-imagen-makom]) { --mk-mt: 34px; --mk-sd: 1; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"]:has([data-imagen-makom])::before { content: "Imágenes"; }
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:has([data-imagen-makom]) { --mk-mt: 34px; --mk-sd: 1; }
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:has([data-imagen-makom])::before { content: "Portada"; }
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) > [class*="-ControlContainer"]:has([data-imagen-makom]) { --mk-mt: 34px; --mk-sd: 1; }
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) > [class*="-ControlContainer"]:has([data-imagen-makom])::before { content: "Fotografía de perfil"; }
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:has(> .cms-editor-visual) { --mk-mt: 34px; }
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:has(> .cms-editor-visual)::before { content: "Contenido"; }
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"]:has(> .cms-editor-visual) ~ [class*="-ControlContainer"]:has(> .cms-editor-visual)::before { content: none; }
+
+/* Rótulo de grupo + separación entre grupos (variable --mk-mt); el rótulo se dibuja sobre el primer campo del grupo */
+html body [class*="-ControlContainer"][class*="-ControlContainer"] { margin-top: var(--mk-mt, 0); }
+html body [class*="-ControlPaneContainer"] > [class*="-ControlContainer"]::before {
+  position: absolute; top: -26px; left: 0; display: block; padding-left: 10px; border-left: 3px solid var(--mk-terracota); line-height: 1;
+  font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--mk-terracota-ink); white-space: nowrap;
+}
+html body [class*="-ControlPaneContainer"] > [class*="-ControlContainer"] { position: relative; }
+
+/* Editores de texto: Decap les da 300 px mínimos (y 5 filas a los textos largos); aquí 190 / 104 px, y siguen creciendo al escribir */
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) .cms-editor-visual [class*="editorStyles"],
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) .cms-editor-visual [class*="editorStyles"],
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) .cms-editor-visual [class*="editorStyles"] { min-height: 190px; }
+html body [class*="-ControlPaneContainer"]:has([id^="tipoProyecto-field-"]) > [class*="-ControlContainer"] textarea,
+html body [class*="-ControlPaneContainer"]:has([id^="categoria-field-"]) > [class*="-ControlContainer"] textarea,
+html body [class*="-ControlPaneContainer"]:has([id^="idoneidad-field-"]) > [class*="-ControlContainer"] textarea { min-height: 104px; }
+
+
 /* --- Altura de los controles y espaciado (≥ 640 px; en móvil se conservan los controles cómodos de 48 px) --- */
 @media (min-width: 640px) {
   html body [class*="-FieldLabel"] { padding-bottom: 6px; font-size: 12px; font-weight: 500; letter-spacing: .06em; color: rgba(10, 10, 10, .74); }
@@ -405,6 +553,27 @@ html body [data-galeria-fotos] [data-galeria-tarjeta] p { overflow-wrap: anywher
 html body [data-galeria-fotos] [data-galeria-tarjeta] > div:first-child > span:nth-of-type(2) { background: var(--mk-terracota) !important; color: #fff !important; font-size: 12px !important; font-weight: 600 !important; letter-spacing: .02em; padding: 5px 11px !important; border-radius: var(--mk-r-chip) !important; box-shadow: 0 2px 8px rgba(10, 10, 10, .28) !important; }
 html body [data-galeria-fotos] [data-galeria-tarjeta]:has(> div:first-child > span + span) { border-color: var(--mk-terracota) !important; box-shadow: 0 0 0 1px var(--mk-terracota), var(--mk-sombra-card); }
 html body [data-galeria-fotos] [data-galeria-tarjeta] input[type="text"] { border-radius: var(--mk-r-ctl) !important; border-color: rgba(10, 10, 10, .14) !important; }
+
+/* ---------- Widget «imagen-makom» (imagen principal / portada / foto de perfil): solo apariencia, por sus atributos data-* ---------- */
+html body [data-imagen-makom] { color: var(--mk-negro) !important; }
+html body [data-imagen-makom] [data-imagen-zona] {
+  gap: 20px !important; padding: 16px !important; background: rgba(255, 255, 255, .6) !important; border: 1.5px dashed rgba(10, 10, 10, .20) !important; border-radius: var(--mk-r-card) !important;
+  transition: border-color var(--mk-fast) var(--mk-ease), background-color var(--mk-fast) var(--mk-ease);
+}
+html body [data-imagen-makom] [data-imagen-zona]:hover { border-color: var(--mk-terracota) !important; }
+html body [data-imagen-makom] [data-imagen-marco] { border: 1px solid var(--mk-line) !important; box-shadow: var(--mk-sombra-card); background: rgba(201, 185, 154, .18) !important; }
+html body [data-imagen-makom] [data-imagen-vista="normal"] [data-imagen-marco] { border-radius: var(--mk-r-panel) !important; }
+html body [data-imagen-makom] [data-imagen-vacia] { color: var(--mk-ink-soft) !important; font-size: 13px !important; }
+html body [data-imagen-makom] [data-imagen-insignia] { background: var(--mk-terracota) !important; color: #fff !important; font-size: 12px !important; font-weight: 600 !important; letter-spacing: .02em; padding: 5px 11px !important; border-radius: var(--mk-r-chip) !important; box-shadow: 0 2px 8px rgba(10, 10, 10, .28); }
+html body [data-imagen-makom] [data-imagen-accion] {
+  display: inline-flex !important; align-items: center; justify-content: center; min-height: 40px; padding: 0 20px !important; border-radius: var(--mk-r-ctl) !important; line-height: 1; text-align: center; cursor: pointer;
+  font-size: 13px !important; font-weight: 500 !important; letter-spacing: .04em; transition: background-color var(--mk-fast) var(--mk-ease);
+}
+html body [data-imagen-makom] label[data-imagen-accion] { background: var(--mk-terracota) !important; color: var(--mk-blanco) !important; }
+html body [data-imagen-makom] label[data-imagen-accion]:hover { background: var(--mk-terracota-dark) !important; }
+html body [data-imagen-makom] button[data-imagen-accion] { background: #fff !important; border: 1px solid var(--mk-error) !important; color: var(--mk-error) !important; }
+html body [data-imagen-makom] button[data-imagen-accion]:hover { background: rgba(192, 57, 43, .08) !important; }
+html body [data-imagen-makom] [data-imagen-archivo] { overflow-wrap: anywhere; }
 
 /* ---------- Biblioteca de medios (se abre con «Medios»; mismas formas y colores, sin tocar su funcionamiento) ---------- */
 html body [class*="-StyledModal"] { border-radius: var(--mk-r-card); background: var(--mk-blanco); box-shadow: var(--mk-sombra-cristal); }

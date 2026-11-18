@@ -39,7 +39,7 @@ const erroresPagina = []; // excepciones y console.error de la página (se compr
 let grupo = "";
 function ok(nombre, condicion, detalle) {
   resultados.push({ grupo, nombre, ok: !!condicion, detalle: condicion ? "" : String(detalle === undefined ? "" : detalle).slice(0, 300) });
-  if (DETALLE) console.log(`  ${condicion ? "ok   " : "FALLO"} ${grupo} | ${nombre}`);
+  if (DETALLE) console.log(`  ${condicion ? "ok   " : "FALLO"} ${grupo} | ${nombre}${condicion ? "" : "  →  " + String(detalle === undefined ? "" : detalle).slice(0, 400)}`);
   return !!condicion;
 }
 const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -151,6 +151,13 @@ function iniciarServidorPrueba(decap, dirFixtures) {
       out.content[col] = {};
       if (!fs.existsSync(d)) continue;
       for (const f of fs.readdirSync(d).filter((x) => x.endsWith(".json"))) out.content[col][f] = { content: fs.readFileSync(path.join(d, f), "utf8") };
+      // Datos CONGELADOS para las dos entradas que las pruebas modifican: la propiedad de Costa del Este (6 fotos, versión del PR #20) y el asesor de Loyra.
+      // Así las pruebas no dependen de lo que el equipo publique después desde el CMS real (el 18-nov Loyra le agregó fotos a esa propiedad).
+      const congelada = { propiedades: ["panam", "propiedad-costa-del-este-base.json"], asesores: ["loyra", "asesor-loyra-base.json"] }[col];
+      if (congelada) {
+        const clave = Object.keys(out.content[col]).find((k) => k.includes(congelada[0]) && (col !== "propiedades" || k.includes("costa-del-este-panam")));
+        if (clave) out.content[col][clave] = { content: fs.readFileSync(path.join(RAIZ, "scripts", "fixtures", congelada[1]), "utf8") };
+      }
       out["content/" + col] = out.content[col]; // el listado del backend de prueba busca la carpeta con la ruta completa
     }
     return "window.repoFiles=" + JSON.stringify(out) + ";";
@@ -839,7 +846,7 @@ async function escenarios(p, dirFix, n, temporales) {
   await p.cdp.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: caja1.x, y: caja1.y });
   await dormir(400);
   const hov = await p.ev(`(() => { const e = document.querySelector('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])'); const cs = getComputedStyle(e); return cs.borderTopColor + '|' + cs.boxShadow; })()`);
-  ok("listado: al pasar el ratón la entrada resalta con borde y filo terracota", /181, 71, 42/.test(hov), hov);
+  ok("listado: al pasar el ratón la entrada resalta con el borde en el acento de la colección (terracota en Propiedades) y sombra", /181, 71, 42|0\.7098\d* 0\.2784\d* 0\.1647\d*/.test(hov) && /rgba\(10, 10, 10, 0\.08\)/.test(hov), hov);
   ok("listado: separación entre entradas y título legible (15 px, interlineado 1,45)", await p.ev(`(() => { const t = document.querySelector('[class*="-ListCardTitle"]'); const cs = getComputedStyle(t); const a = document.querySelectorAll('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])'); const g = a[1].getBoundingClientRect().top - a[0].getBoundingClientRect().bottom; return cs.fontSize === '15px' && parseFloat(cs.lineHeight) >= 21 && g >= 9; })()`));
   // --- Editor: estados de guardado
   await p.ev(`location.hash = '#/collections/propiedades/entries/${ENTRADA}'`);
@@ -926,6 +933,175 @@ async function escenarios(p, dirFix, n, temporales) {
   await dormir(1200);
   ok("con «reducir movimiento» activo, los botones no animan (transition-duration 0 s)", await p.ev(`(() => ['[class*="-CollectionTopNewButton"]', '[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])', 'header nav a'].every((s) => { const c = getComputedStyle(document.querySelector(s)); return c.transitionDuration.split(',').every((d) => parseFloat(d) === 0); }))()`));
   await p.cdp.send("Emulation.setEmulatedMedia", { features: [] });
+
+
+  /* ---------- 15. Proyectos, Perspectivas y Asesores: widget «imagen-makom», galería sin portada y estándar visual compartido ---------- */
+  grupo = "15 · otras colecciones";
+  await vista(1440);
+  await p.cargar();
+  const fx = (nombre) => path.join(dirFix, nombre);
+  // Cada colección se abre con una carga completa de la página (el «repositorio» de prueba vuelve a su estado inicial): al cambiar de colección solo con
+  // el hash, Decap deja montado el formulario anterior. La clave (p. ej. «loyra») se busca entre los archivos de la colección.
+  const enColeccion = async (col, clave, espera, campo) => {
+    const l = p.cdp.una("Page.loadEventFired");
+    await p.cdp.send("Page.navigate", { url: p.base + "/admin/" });
+    await Promise.race([l, dormir(15000)]);
+    await p.esperar("!!document.querySelector('button')", 15000);
+    await p.ev("(() => { const b = [...document.querySelectorAll('button')].find((b) => /Iniciar sesi/i.test(b.textContent)); if (b) b.click(); })()");
+    await p.esperar("!!document.querySelector('a[href*=\"collections\"], [class*=SidebarContainer]')", 15000);
+    const slug = await p.ev(`Object.keys(window.__crudo.content['${col}']).find((k) => k.includes(${JSON.stringify(clave)})).replace(/\\.json$/, '')`);
+    await p.ev(`location.hash = '#/collections/${col}/entries/' + ${JSON.stringify(slug)}`);
+    await p.esperar(`(() => { const i = document.querySelector('[id^="${campo}-field-"]'); return !!i && !!i.value; })() && (${espera})`, 25000);
+    await dormir(800);
+    return slug;
+  };
+  const datosRepo = async (col, slug) => JSON.parse(await p.ev(`(() => { const c = window.__crudo.content['${col}']; const k = Object.keys(c).find((x) => x.replace(/\\.json$/, '') === ${JSON.stringify(slug)}); const raw = c[k].content; return typeof raw === 'string' ? raw : JSON.stringify(raw); })()`));
+  const subirEn = async (selector, rutas) => {
+    const doc = await p.cdp.send("DOM.getDocument", { depth: 1 });
+    const q = await p.cdp.send("DOM.querySelector", { nodeId: doc.root.nodeId, selector });
+    await p.cdp.send("DOM.setFileInputFiles", { nodeId: q.nodeId, files: rutas });
+    await p.esperar("!document.querySelector('[data-galeria-progreso]') && !/Optimizando y subiendo/.test(document.body.innerText)", 60000);
+    await dormir(300);
+  };
+  const soltarImagen = async (nombres) => {
+    await p.ev(`(async () => { const dt = new DataTransfer(); for (const n of ${JSON.stringify(nombres)}) { const r = await fetch('/__fixtures/' + n); const b = await r.blob(); dt.items.add(new File([b], n.split('/').pop(), { type: b.type })); } const z = document.querySelector('[data-imagen-zona]'); for (const t of ['dragenter', 'dragover', 'drop']) z.dispatchEvent(new DragEvent(t, { bubbles: true, cancelable: true, dataTransfer: dt })); return true; })()`);
+    await p.esperar("!/Optimizando y subiendo/.test(document.body.innerText)", 60000);
+    await dormir(300);
+  };
+  const estadoImg = async () => JSON.parse(await p.ev(`(() => { const w = document.querySelector('[data-imagen-makom]'); const img = w && w.querySelector('[data-imagen-vista-previa]'); return JSON.stringify({ hay: !!w, vista: w && w.getAttribute('data-imagen-vista'), preview: img ? img.getAttribute('src') : null, cargada: img ? img.complete && img.naturalWidth > 0 : false, vacia: !!(w && w.querySelector('[data-imagen-vacia]')), insignia: (w && (w.querySelector('[data-imagen-insignia]') || {}).textContent) || '', archivo: (w && (w.querySelector('[data-imagen-archivo]') || {}).textContent) || '', accion: (w && (w.querySelector('label[data-imagen-accion]') || {}).textContent) || '', quitar: !!(w && w.querySelector('button[data-imagen-accion="quitar"]')), errores: w ? [...w.querySelectorAll('[data-imagen-error]')].map((e) => e.textContent) : [], avisos: w ? [...w.querySelectorAll('[data-imagen-aviso]')].map((e) => e.textContent) : [] }); })()`));
+  const igualesSalvo = (a, b, permitidas) => { const d = []; const rec = (x, y, r) => { if (x && y && typeof x === "object" && typeof y === "object") { for (const k of new Set([...Object.keys(x), ...Object.keys(y)])) rec(x[k], y[k], r + "." + k); } else if (typeof x === "string" && typeof y === "string" && x.replace(/\n{3,}/g, "\n\n").trim() === y.replace(/\n{3,}/g, "\n\n").trim()) { /* Decap normaliza el Markdown del texto enriquecido al guardar (3 saltos de línea → 2): lo hace con cualquier guardado nativo, no es del widget */ } else if (JSON.stringify(x) !== JSON.stringify(y)) d.push(r); }; rec(a, b, ""); return { d, mal: d.filter((r) => !permitidas.includes(r) && !/^\.metadatos\./.test(r)) }; };
+  const clic = async (selector) => { const c = await p.ev(`(() => { const e = document.querySelector(${JSON.stringify(selector)}); e.scrollIntoView({ block: 'center' }); const q = e.getBoundingClientRect(); return { x: q.left + q.width / 2, y: q.top + q.height / 2 }; })()`); for (const t of ["mouseMoved", "mousePressed", "mouseReleased"]) await p.cdp.send("Input.dispatchMouseEvent", { type: t, x: c.x, y: c.y, button: "left", clickCount: t === "mouseMoved" ? 0 : 1 }); await dormir(400); };
+  const RUTA_NUEVA = /^\/assets\/propiedades\/uploads\/[a-z0-9-]+-\d{8}-[0-9a-f]{8}\.jpg$/;
+
+  // ---------- ASESORES ----------
+  let slugA = await enColeccion("asesores", "loyra", "!!document.querySelector('[data-imagen-makom]')", "nombre");
+  const origA = await datosRepo("asesores", slugA);
+  let e0 = await estadoImg();
+  ok("asesores: la foto de perfil usa el widget «imagen-makom» en vista de perfil y muestra la vista previa de la foto actual, cargada", e0.hay && e0.vista === "perfil" && e0.cargada && /asesor-loyra\.jpg/.test(e0.preview + e0.archivo) && e0.accion === "Reemplazar imagen" && e0.quitar, JSON.stringify(e0));
+  ok("asesores: la vista previa de perfil es circular de 120 px", await p.ev(`(() => { const m = document.querySelector('[data-imagen-marco]'); const c = getComputedStyle(m); const r = m.getBoundingClientRect(); return Math.round(r.width) === 120 && Math.round(r.height) === 120 && c.borderTopLeftRadius === '50%'; })()`));
+  await subirEn("input[data-imagen-entrada]", [fx(n(3))]);
+  e0 = await estadoImg();
+  ok("asesores: al subir una foto grande (4000×3000) se optimiza, se ve la vista previa nueva y aparece la nota de optimización", e0.cargada && /optimizada/.test(e0.archivo) && RUTA_NUEVA.test("/assets/propiedades/uploads/" + e0.archivo.split(" ·")[0]) && /^asesor-loyra-flores-\d{8}-[0-9a-f]{8}\.jpg/.test(e0.archivo), JSON.stringify(e0));
+  const est1 = await p.publicar();
+  ok("asesores: publicar con la foto nueva funciona", /GUARDADOS/.test(est1) && !/NO GUARDADOS/.test(est1), est1);
+  const rep1 = await p.repo();
+  const a1 = await datosRepo("asesores", slugA);
+  const nuevoAsset = rep1.archivos.find((x) => /asesor-loyra-flores-\d{8}-[0-9a-f]{8}\.jpg$/.test(x.ruta));
+  const meta1 = nuevoAsset ? await metaDe(nuevoAsset) : null;
+  ok("asesores: el JSON guarda la ruta nueva (cadena, igual que el widget nativo) y NO cambia ningún otro dato", typeof a1.foto === "string" && RUTA_NUEVA.test(a1.foto) && igualesSalvo(origA, a1, [".foto"]).mal.length === 0, JSON.stringify({ foto: a1.foto, difs: igualesSalvo(origA, a1, [".foto"]) }));
+  ok("asesores: la imagen guardada es un JPEG de ≤ 1000 px de lado mayor, sin metadatos EXIF, y es la que sube Decap (un solo archivo nuevo)", !!meta1 && meta1.format === "jpeg" && Math.max(meta1.width, meta1.height) <= 1000 && !meta1.exif && rep1.archivos.filter((x) => /asesor-loyra-flores-/.test(x.ruta)).length === 1, JSON.stringify(meta1 && { f: meta1.format, w: meta1.width, h: meta1.height, exif: !!meta1.exif }));
+  await clic('button[data-imagen-accion="quitar"]');
+  e0 = await estadoImg();
+  ok("asesores: «Quitar» muestra «Sin foto» y el botón vuelve a «Elegir imagen»", e0.vacia && !e0.cargada && e0.accion === "Elegir imagen" && !e0.quitar, JSON.stringify(e0));
+  const est2 = await p.publicar();
+  const a2 = await datosRepo("asesores", slugA);
+  ok("asesores: publicar sin foto deja el campo vacío (el sitio usa el monograma: la ficha solo pinta la foto si el campo tiene valor) y no cambia otros datos", /GUARDADOS/.test(est2) && !a2.foto && igualesSalvo(origA, a2, [".foto"]).mal.length === 0, JSON.stringify({ est2, foto: a2.foto, d: igualesSalvo(origA, a2, [".foto"]) }));
+  await subirEn("input[data-imagen-entrada]", [fx("texto-disfrazado.jpg")]);
+  e0 = await estadoImg();
+  ok("asesores: un archivo que no es imagen muestra un error claro y no cambia el valor", e0.vacia && e0.errores.length === 1 && /imagen|decodificar|abrir|leer/i.test(e0.errores[0]), JSON.stringify(e0));
+  await soltarImagen([n(4), n(5)]);
+  e0 = await estadoImg();
+  ok("asesores: arrastrar y soltar admite una sola imagen: usa la primera y avisa", e0.cargada && e0.avisos.some((t) => /una imagen/.test(t)), JSON.stringify(e0));
+  await p.ev("location.hash = '#/collections/asesores'");
+  await dormir(500);
+
+  // ---------- PERSPECTIVAS ----------
+  let slugP = await enColeccion("perspectivas", "turismo-record", "!!document.querySelector('[data-imagen-makom]')", "titulo");
+  const origP = await datosRepo("perspectivas", slugP);
+  e0 = await estadoImg();
+  ok("perspectivas: la portada usa «imagen-makom» (vista normal), muestra la vista previa actual y la insignia «★ Portada»", e0.hay && e0.vista === "normal" && e0.cargada && e0.insignia === "★ Portada" && e0.accion === "Reemplazar imagen", JSON.stringify(e0));
+  await subirEn("input[data-imagen-entrada]", [fx(n(6))]);
+  const estP = await p.publicar();
+  const p1 = await datosRepo("perspectivas", slugP);
+  const repP = await p.repo();
+  const aP = repP.archivos.find((x) => /perspectiva-turismo-record[a-z0-9-]*-\d{8}-[0-9a-f]{8}\.jpg$/.test(x.ruta));
+  const metaP = aP ? await metaDe(aP) : null;
+  ok("perspectivas: reemplazar la portada y publicar guarda la ruta nueva, con un solo cambio en los datos (no se toca el resto del artículo ES/EN)", /GUARDADOS/.test(estP) && RUTA_NUEVA.test(p1.imagenPortada) && igualesSalvo(origP, p1, [".imagenPortada"]).mal.length === 0, JSON.stringify({ estP, v: p1.imagenPortada, d: igualesSalvo(origP, p1, [".imagenPortada"]), dif: (() => { const a = String(origP.contenido), b = String(p1.contenido); let k = 0; while (k < a.length && a[k] === b[k]) k++; return { en: k, antes: a.slice(Math.max(0, k - 20), k + 30), despues: b.slice(Math.max(0, k - 20), k + 30), largo: [a.length, b.length] }; })() }));
+  ok("perspectivas: la imagen guardada es un JPEG de ≤ 2400 px, sin metadatos EXIF", !!metaP && metaP.format === "jpeg" && Math.max(metaP.width, metaP.height) <= 2400 && !metaP.exif, JSON.stringify(metaP && { w: metaP.width, h: metaP.height }));
+  await clic('button[data-imagen-accion="quitar"]');
+  const estP2 = await p.publicar();
+  const p2 = await datosRepo("perspectivas", slugP);
+  ok("perspectivas: quitar la portada y publicar la deja vacía sin tocar el resto", /GUARDADOS/.test(estP2) && !p2.imagenPortada && igualesSalvo(origP, p2, [".imagenPortada"]).mal.length === 0, JSON.stringify({ estP2, v: p2.imagenPortada }));
+  ok("perspectivas: no se agregó ninguna galería (la estructura del contenido no la requiere)", await p.ev("!document.querySelector('[data-galeria-fotos]')"));
+
+  // ---------- PROYECTOS ----------
+  let slugY = await enColeccion("proyectos", "remodelacion", "!!document.querySelector('[data-imagen-makom]') && !!document.querySelector('[data-galeria-fotos]')", "titulo");
+  const origY = await datosRepo("proyectos", slugY);
+  e0 = await estadoImg();
+  ok("proyectos: la imagen principal usa «imagen-makom»; sin imagen muestra «Sin imagen», sin insignia y con el botón «Elegir imagen»", e0.hay && e0.vista === "normal" && e0.vacia && e0.insignia === "" && e0.accion === "Elegir imagen", JSON.stringify(e0));
+  await subirEn("input[data-imagen-entrada]", [fx(n(7))]);
+  e0 = await estadoImg();
+  ok("proyectos: tras subir, la imagen principal se identifica con la insignia «★ Imagen principal» y la vista previa", e0.cargada && e0.insignia === "★ Imagen principal", JSON.stringify(e0));
+  const g0 = JSON.parse(await p.ev(`(() => { const g = document.querySelector('[data-galeria-fotos]'); return JSON.stringify({ contador: g.querySelector('[data-galeria-contador]').textContent, estado: g.querySelector('[data-galeria-estado]').textContent, tarjetas: g.querySelectorAll('[data-galeria-tarjeta]').length }); })()`));
+  ok("proyectos: la galería sin fotos no exige mínimo (0 de 12) y no marca error", /^0 de 12/.test(g0.contador) && !/Faltan/.test(g0.estado), JSON.stringify(g0));
+  await subirEn("input[data-galeria-entrada]", [fx(n(8)), fx(n(9)), fx(n(10))]);
+  const g1 = JSON.parse(await p.ev(`(() => { const g = document.querySelector('[data-galeria-fotos]'); return JSON.stringify({ n: g.querySelectorAll('[data-galeria-tarjeta]').length, estrellas: /★/.test(g.textContent), hacerPortada: [...g.querySelectorAll('button')].some((b) => /portada/i.test(b.textContent)), insignias: g.querySelectorAll('[data-galeria-tarjeta] > div:first-child > span').length }); })()`));
+  ok("proyectos: la galería carga varias fotos a la vez, con miniaturas, y NO muestra ninguna «portada» (ni ★ ni «Hacer portada»)", g1.n === 3 && !g1.estrellas && !g1.hacerPortada && g1.insignias === 3, JSON.stringify(g1));
+  const antesOrden = await p.ev("[...document.querySelectorAll('[data-galeria-tarjeta] img')].map((i) => i.getAttribute('src')).join('|')");
+  await clic('[data-galeria-tarjeta="0"] button[aria-label^="Mover la fotografía 1 a la derecha"]');
+  const despuesOrden = await p.ev("[...document.querySelectorAll('[data-galeria-tarjeta] img')].map((i) => i.getAttribute('src')).join('|')");
+  ok("proyectos: se puede reordenar (◀ ▶) y cambia el orden de las miniaturas", antesOrden !== despuesOrden && antesOrden.split("|")[0] === despuesOrden.split("|")[1]);
+  await clic('[data-galeria-tarjeta="2"] button[aria-label^="Quitar la fotografía 3"]');
+  ok("proyectos: «Quitar» saca la fotografía de la lista (quedan 2)", (await p.n()) === 2);
+  await subirEn("input[data-galeria-entrada]", [fx(n(11)), fx(n(12)), fx(n(1)), fx(n(2)), fx(n(3)), fx(n(4)), fx(n(5)), fx(n(6)), fx(n(7)), fx("orden-1.jpg"), fx("orden-2.jpg")]);
+  ok("proyectos: la galería respeta el máximo de 12 (agrega hasta completar y avisa del resto)", (await p.n()) === 12 && /12 de 12/.test(await p.contador()), await p.contador());
+  await clic('[data-galeria-tarjeta="11"] button[aria-label^="Quitar la fotografía 12"]');
+  await clic('[data-galeria-tarjeta="10"] button[aria-label^="Quitar la fotografía 11"]');
+  const estY = await p.publicar();
+  const y1 = await datosRepo("proyectos", slugY);
+  ok("proyectos: publicar guarda la imagen principal (cadena) y la galería como [{ archivo }] SIN clave «portada», y no cambia ningún otro dato", /GUARDADOS/.test(estY) && RUTA_NUEVA.test(y1.imagenPrincipal) && Array.isArray(y1.galeria) && y1.galeria.length === 10 && y1.galeria.every((f) => RUTA_NUEVA.test(f.archivo) && !("portada" in f)) && igualesSalvo(origY, y1, [".imagenPrincipal", ".galeria"]).mal.length === 0, JSON.stringify({ estY, ip: y1.imagenPrincipal, g: (y1.galeria || []).slice(0, 2), mal: igualesSalvo(origY, y1, [".imagenPrincipal", ".galeria"]).mal }));
+  ok("proyectos: los nombres de archivo salen del título («proyecto-…») y son únicos", new Set(y1.galeria.map((f) => f.archivo)).size === 10 && /proyecto-remodelacion/.test(y1.imagenPrincipal), y1.imagenPrincipal);
+  await p.ev(`location.hash = '#/collections/proyectos/entries/${slugY}'`);
+  await p.esperar("!!document.querySelector('[data-galeria-fotos]')");
+  await dormir(500);
+  ok("proyectos: al reabrir la entrada publicada se ven las 10 miniaturas y la imagen principal con su insignia", (await p.n()) === 10 && (await estadoImg()).insignia === "★ Imagen principal");
+  await p.quitarTodas();
+  const estY2 = await p.publicar();
+  const y2 = await datosRepo("proyectos", slugY);
+  ok("proyectos: vaciar la galería y publicar funciona (mínimo 0) y deja la imagen principal", /GUARDADOS/.test(estY2) && (!y2.galeria || y2.galeria.length === 0) && RUTA_NUEVA.test(y2.imagenPrincipal), JSON.stringify({ estY2, g: y2.galeria }));
+
+  // ---------- Estándar visual compartido ----------
+  await p.cargar();
+  const colores = {};
+  for (const [col, clave, marca, titulo] of [["proyectos", "remodelacion", "tipoProyecto", "Información general"], ["perspectivas", "turismo-record", "categoria", "Información editorial"], ["asesores", "loyra", "idoneidad", "Identidad"]]) {
+    await enColeccion(col, clave, "true", marca === "idoneidad" ? "nombre" : "titulo");
+    await vista(1440);
+    const g = JSON.parse(await p.ev(`(() => { const pane = document.querySelector('[class*="-ControlPaneContainer"]:not([class*="-PreviewPane"])'); const cols = getComputedStyle(pane).gridTemplateColumns.split(' ').length; const hojas = [...pane.querySelectorAll('[class*="-ControlContainer"]')].filter((c) => !c.querySelector('[class*="-ControlContainer"]') && c.getBoundingClientRect().width > 0); const primeros = [...pane.children].filter((c) => getComputedStyle(c, '::before').content !== 'none' && getComputedStyle(c, '::before').content !== 'normal').map((c) => getComputedStyle(c, '::before').content.replace(/"/g, '')); const mal = []; for (let i = 1; i < hojas.length; i++) { const a = hojas[i - 1].getBoundingClientRect(), b = hojas[i].getBoundingClientRect(); const fila = Math.abs(b.top - a.top) <= 2 && b.left >= a.right - 2; if (!(fila || b.top >= a.bottom - 2)) mal.push(i); } const ancho = Math.round(pane.getBoundingClientRect().width); const anchos = hojas.filter((c) => !c.closest('[data-galeria-fotos]')).every((c) => c.getBoundingClientRect().width >= 150); return JSON.stringify({ cols, ancho, grupos: primeros, ordenOK: mal.length === 0, anchosOK: anchos }); })()`));
+    ok(`${col}: cuadrícula de 12 columnas (1080 px), rótulos de grupo (${g.grupos.join(" · ")}), orden de tabulación = orden visual y campos sin encogerse`, g.cols === 12 && g.ancho === 1080 && g.grupos.length >= 3 && g.grupos[0] === titulo && g.ordenOK && g.anchosOK, JSON.stringify(g));
+    const campos = JSON.parse(await p.ev(`(() => { const e = [...document.querySelectorAll('input[type=text],input[type=number],[class$="-control"]')].filter((x) => x.getBoundingClientRect().width > 0 && !x.closest('[data-galeria-fotos]') && !x.closest('[data-imagen-makom]') && !(x.tagName === 'INPUT' && x.closest('[class$="-control"]'))); const r = getComputedStyle(e[0]).borderTopLeftRadius; return JSON.stringify({ n: e.length, radio: r, alto: Math.min(...e.map((x) => Math.round(x.getBoundingClientRect().height))) }); })()`));
+    ok(`${col}: campos con bordes redondeados de 10 px y alto ≥ 40 px`, campos.radio === "10px" && campos.alto >= 40, JSON.stringify(campos));
+    await vista(390, 844);
+    const m = JSON.parse(await p.ev(`(() => { const vw = innerWidth; const hojas = [...document.querySelectorAll('[class*="-ControlContainer"]')].filter((c) => !c.querySelector('[class*="-ControlContainer"]') && c.getBoundingClientRect().width > 0); const pane = document.querySelector('[class*="-ControlPaneContainer"]:not([class*="-PreviewPane"])'); return JSON.stringify({ uno: hojas.every((c) => c.getBoundingClientRect().left < 40 && c.getBoundingClientRect().right <= vw), toolbar: document.querySelector('[class*="-ToolbarContainer"]').getBoundingClientRect().width === vw }); })()`));
+    ok(`${col}: en móvil (390 px) una sola columna, sin recortes y con la barra de acciones a todo el ancho`, m.uno && m.toolbar, JSON.stringify(m));
+    await vista(1440);
+  }
+  // ---------- Listados de las cuatro colecciones ----------
+  await p.cargar();
+  const acentos = { propiedades: "rgb(181, 71, 42)", proyectos: "rgb(31, 85, 96)", perspectivas: "rgb(138, 109, 59)", asesores: "rgb(45, 106, 79)" };
+  const vistos = new Set();
+  for (const col of ["propiedades", "proyectos", "perspectivas", "asesores"]) {
+    await p.ev(`location.hash = '#/collections/${col}'`);
+    await p.esperar("!!document.querySelector('[class*=\"-ListCard\"]:not([class*=\"-ListCardLink\"]):not([class*=\"-ListCardTitle\"])')", 15000);
+    await dormir(500);
+    const l = JSON.parse(await p.ev(`(() => { const c = document.querySelector('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])'); const b = getComputedStyle(c, '::before'); const t = document.querySelector('[class*="-ListCardTitle"]'); const a = c.querySelectorAll('a').length; return JSON.stringify({ franja: b.backgroundColor, ancho: b.width, radio: getComputedStyle(c).borderTopLeftRadius, titulo: getComputedStyle(t).fontSize, n: document.querySelectorAll('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])').length }); })()`));
+    vistos.add(l.franja);
+    ok(`${col}: el listado muestra tarjetas con franja de acento propia de la colección (${acentos[col]}), radio de 16 px y título de 15 px`, l.franja === acentos[col] && l.ancho === "4px" && l.radio === "16px" && l.titulo === "15px" && l.n >= 1, JSON.stringify(l));
+  }
+  ok("los cuatro listados tienen un acento distinto entre sí (colecciones diferenciables)", vistos.size === 4, [...vistos].join(" | "));
+  await p.ev("location.hash = '#/collections/perspectivas'");
+  await dormir(600);
+  await p.ev(`(() => { const b = document.querySelector('[aria-label="Grid view option"]'); if (b) b.click(); })()`);
+  await dormir(800);
+  const gr = JSON.parse(await p.ev(`(() => { const c = document.querySelector('[class*="-GridCard"]:not([class*="-GridCardLink"])'); return JSON.stringify(c ? { alto: Math.round(c.getBoundingClientRect().height), franja: getComputedStyle(c, '::before').backgroundColor } : null); })()`));
+  ok("vista de cuadrícula: tarjetas de 176 px (en vez de 240 px casi vacíos) con la franja de acento de la colección", !!gr && gr.alto === 176 && gr.franja === acentos.perspectivas, JSON.stringify(gr));
+  await p.ev(`(() => { const b = document.querySelector('[aria-label="List view option"]'); if (b) b.click(); })()`);
+  const ed = JSON.parse(await p.ev(`(() => { return null; })()`));
+  await enColeccion("perspectivas", "turismo-record", "!!document.querySelector('.cms-editor-visual')", "titulo");
+  const alturas = JSON.parse(await p.ev(`(() => JSON.stringify([...document.querySelectorAll('.cms-editor-visual [class*="editorStyles"]')].map((e) => Math.round(parseFloat(getComputedStyle(e).minHeight)))))()`));
+  ok("perspectivas: los editores de texto enriquecido bajan su altura mínima de 300 a 190 px (siguen creciendo con el contenido)", alturas.length === 2 && alturas.every((a) => a === 190), JSON.stringify(alturas));
+  await p.cargar();
+  const altP = JSON.parse(await p.ev(`(() => JSON.stringify([...document.querySelectorAll('.cms-editor-visual [class*="editorStyles"]')].map((e) => Math.round(parseFloat(getComputedStyle(e).minHeight)))))()`));
+  ok("propiedades: NO se altera la altura de sus editores (sigue como en el PR #20)", altP.length === 2 && altP.every((a) => a !== 190), JSON.stringify(altP));
 
   return;
 }
