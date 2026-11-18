@@ -648,6 +648,69 @@ async function escenarios(p, dirFix, n, temporales) {
   const propios = erroresPagina.filter((e) => !/RECHAZO: undefined|Uncaught \(in promise\)$/.test(e) && !/Fallo simulado/.test(e));
   ok("el widget no produjo excepciones ni errores de consola inesperados", propios.length === 0, propios.slice(0, 3).join(" | "));
 
+  /* ---------- 12. Tema visual MAKOM (solo estética) ---------- */
+  grupo = "12 · tema MAKOM";
+  const css = fs.readFileSync(path.join(RAIZ, "admin", "tema-makom.css"), "utf8");
+  const idx = fs.readFileSync(path.join(RAIZ, "admin", "index.html"), "utf8");
+  const cfgTema = require("js-yaml").load(fs.readFileSync(path.join(RAIZ, "admin", "config.yml"), "utf8"));
+  ok("el tema está enlazado en admin/index.html y es solo CSS (sin JavaScript, sin @import ni recursos externos)", /<link href="tema-makom\.css" rel="stylesheet"/.test(idx) && !/@import|expression\(|javascript:|https?:\/\//.test(css.replace(/\/\*[\s\S]*?\*\//g, "")) && !/<script/i.test(css));
+  ok("el logo oficial sale de la opción estándar de Decap (logo.src + show_in_header) y apunta a un archivo que existe", !!(cfgTema.logo && cfgTema.logo.show_in_header === true && fs.existsSync(path.join(RAIZ, cfgTema.logo.src.replace(/^\//, "")))), JSON.stringify(cfgTema.logo));
+  ok("los selectores enganchan por la ETIQUETA del componente de Decap, no por el hash de Emotion", !/\.css-[a-z0-9]{5,}/.test(css) && /\[class\*="-SidebarNavLink"\]/.test(css));
+  // Contraste (WCAG AA 4,5:1 para texto) con los valores reales del tema
+  const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const lum = (c) => { const [r, g, b] = c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const contraste = (a, b) => { const la = lum(a), lb = lum(b); return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05); };
+  const mezcla = (fg, bg, a) => fg.map((v, i) => Math.round(v * a + bg[i] * (1 - a)));
+  const HUESO = hex("#F5F2EE");
+  const pares = [
+    ["texto de botón principal (marfil sobre terracota)", contraste(HUESO, hex("#B5472A"))],
+    ["texto de botón principal en hover (marfil sobre terracota oscuro)", contraste(HUESO, hex("#9E3D24"))],
+    ["texto terracota sobre marfil (navegación activa, etiquetas)", contraste(hex("#8F3720"), HUESO)],
+    ["texto secundario (negro 66 % sobre marfil)", contraste(mezcla([10, 10, 10], HUESO, 0.66), HUESO)],
+    ["texto de estado «Publicado» (verde bosque sobre su tinte)", contraste(hex("#2D6A4F"), mezcla(hex("#2D6A4F"), HUESO, 0.10))],
+    ["error (rojo sobre blanco)", contraste(hex("#C0392B"), hex("#FFFFFF"))],
+    ["enlace «Comprobar vista previa» (azul petróleo sobre marfil)", contraste(hex("#1F5560"), HUESO)],
+  ];
+  pares.forEach(([nombre, c]) => ok(`contraste ≥ 4,5:1 — ${nombre} (${c.toFixed(2)}:1)`, c >= 4.5, c.toFixed(2)));
+  await p.cargar();
+  await dormir(500);
+  const est = await p.ev(`(() => {
+    const g = (s) => document.querySelector(s);
+    const cs = (e) => (e ? getComputedStyle(e) : null);
+    const campo = g('[class*="-ControlContainer"] input[type="text"]');
+    const sel = g('[class*="-ControlContainer"] [class$="-control"]');
+    const pub = [...document.querySelectorAll('[class*="-StyledDropdownButton"]')].find((e) => /Publicad/.test(e.textContent));
+    return JSON.stringify({
+      fondo: cs(document.body).backgroundColor,
+      fuente: cs(document.body).fontFamily.slice(0, 20),
+      campoRadio: campo ? cs(campo).borderTopLeftRadius : null,
+      selRadio: sel ? cs(sel).borderTopLeftRadius : null,
+      publicado: pub ? cs(pub).color : null,
+    });
+  })()`);
+  const e = JSON.parse(est);
+  ok("tema aplicado: fondo marfil #F5F2EE y tipografía del sitio (Helvetica Neue)", e.fondo === "rgb(245, 242, 238)" && /Helvetica/.test(e.fuente), est);
+  ok("campos y desplegables con esquinas suaves de 10 px", e.campoRadio === "10px" && e.selRadio === "10px", est);
+  ok("el estado «Publicado» usa el verde bosque de la marca", e.publicado === "rgb(45, 106, 79)", est);
+  // El botón principal de la lista y «Publicar» son terracota
+  await p.ev("location.hash = '#/collections/propiedades'");
+  await dormir(1200);
+  const barra = JSON.parse(await p.ev(`(() => { const logo = document.querySelector('header nav img[alt="Logo"]'); const hdr = document.querySelector('header[class*="-AppHeader"]'); const r = logo && logo.getBoundingClientRect(); return JSON.stringify({ logo: r ? [Math.round(r.width), Math.round(r.height), logo.complete && logo.naturalWidth > 0] : null, cristal: hdr ? (getComputedStyle(hdr).backdropFilter || getComputedStyle(hdr).webkitBackdropFilter || '') : '' }); })()`));
+  ok("el logo oficial se ve en la barra superior (≈118×34 px, cargado)", barra.logo && barra.logo[0] >= 100 && barra.logo[1] >= 28 && barra.logo[2] === true, JSON.stringify(barra));
+  ok("la barra superior usa cristal marfil discreto (backdrop-filter)", /blur/.test(barra.cristal), JSON.stringify(barra));
+  const nuevo = await p.ev("(() => { const b = document.querySelector('[class*=\"-CollectionTopNewButton\"]'); const c = getComputedStyle(b); return JSON.stringify([c.backgroundColor, c.borderTopLeftRadius, c.textTransform]); })()");
+  ok("acción principal («+ Propiedad»): terracota #B5472A, radio 10 px, mayúsculas (igual que .btn--primary del sitio)", nuevo === JSON.stringify(["rgb(181, 71, 42)", "10px", "uppercase"]), nuevo);
+  await p.ev(`location.hash = '#/collections/propiedades/entries/${ENTRADA}'`);
+  await p.esperar("!!document.querySelector('[data-galeria-fotos]')");
+  await p.escribirAlt(0, "x");
+  const pubBtn = await p.ev("(() => { const b = [...document.querySelectorAll('[class*=\"-StyledDropdownButton\"]')].find((e) => /Publicar/.test(e.textContent)); return b ? getComputedStyle(b).backgroundColor : null; })()");
+  ok("al haber cambios, «Publicar» es terracota", pubBtn === "rgb(181, 71, 42)", pubBtn);
+  // Foco visible con el teclado (mismo anillo que el sitio: 2 px terracota)
+  await p.cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+  await p.cdp.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+  const foco = await p.ev("(() => { const a = document.activeElement; const c = getComputedStyle(a); return JSON.stringify([c.outlineStyle, c.outlineWidth, c.outlineColor, a.tagName]); })()");
+  ok("al tabular, el elemento enfocado muestra un contorno visible (2 px terracota)", /solid/.test(foco) && /2px/.test(foco) && /181, 71, 42/.test(foco), foco);
+
   return;
 }
 

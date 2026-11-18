@@ -25,6 +25,11 @@ backend:
 
 local_backend: true
 
+# Logo oficial de MAKOM en la pantalla de inicio de sesión y en la barra superior (opción estándar de Decap; solo estética).
+logo:
+  src: /assets/logos/makom-capital-group-logo-positivo.svg
+  show_in_header: true
+
 publish_mode: simple
 locale: "es"
 
