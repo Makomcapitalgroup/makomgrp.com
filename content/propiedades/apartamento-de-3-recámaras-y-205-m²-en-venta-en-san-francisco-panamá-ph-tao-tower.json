@@ -93,6 +93,9 @@
   "operacion": "venta",
   "ubicacionPublica": "San Francisco, Panamá",
   "titulo": "Apartamento de 3 recámaras y 205 m² en venta en San Francisco, Panamá | PH Tao Tower",
+  "videoRecorrido": {
+    "archivo": "/assets/propiedades/uploads/ph_tao_mini_recorrido_v2.mp4"
+  },
   "fechaEntrega": "inmediata",
   "detalles": [
     "cuarto-empleada",
