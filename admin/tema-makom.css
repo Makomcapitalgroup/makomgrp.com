@@ -1,0 +1,271 @@
+/* =====================================================================================================================
+   Tema visual MAKOM para el administrador (Decap CMS 3.17.3) — SOLO ESTÉTICA.
+   Se carga desde admin/index.html. No toca la lógica, los datos ni la publicación; no usa JavaScript.
+
+   Fuente de verdad: styles.css del sitio público (tokens :root, receta de cristal §34.13, botones, campos y radios).
+   Los valores se copiaron tal cual y llevan el prefijo --mk-.
+
+   Cómo se engancha a Decap (leer antes de modificar):
+     1. Decap NO ofrece una API de temas. Sus clases tienen un hash que cambia (css-1abc23-Etiqueta), pero la ETIQUETA del componente
+        al final del nombre (AppHeader, SidebarNavLink, PublishButton…) es el nombre del componente en su código y casi nunca cambia.
+        Por eso todos los selectores son del tipo  [class*="-Etiqueta"], nunca el hash. react-select usa «-control», «-menu», «-option».
+     2. Se antepone «html body» para ganarle en especificidad a los estilos de Decap (que se inyectan después de este archivo), sin !important.
+     3. Si una actualización de Decap cambia una etiqueta, el efecto es que ESE elemento vuelve a verse como Decap nativo; nada se rompe.
+     4. Versión de Decap fija (admin/index.html). Al actualizarla, revisar este archivo con capturas (scripts/verificar-galeria-widget.js
+        también abre el panel real).
+   Cristal: solo en la barra superior, la barra de acciones y los menús, igual que en la web, con la misma receta. Sin backdrop-filter
+   (o con «reducir transparencia») las superficies pasan a opacas (ver el final del archivo).
+   ===================================================================================================================== */
+
+:root {
+  /* Colores oficiales (styles.css :root) */
+  --mk-terracota: #B5472A;
+  --mk-terracota-dark: #9E3D24;
+  --mk-terracota-ink: #8F3720;            /* texto terracota sobre claro (--lg-l-accent): contraste ≥ 5:1 */
+  --mk-negro: #0A0A0A;
+  --mk-blanco: #F5F2EE;                   /* «blanco hueso» */
+  --mk-arena: #C9B99A;
+  --mk-error: #C0392B;
+  --mk-success: #2D6A4F;                  /* verde bosque */
+  --mk-petroleo: #1F5560;                 /* detalle funcional (enlaces/estado informativo) */
+  --mk-ink-soft: rgba(10, 10, 10, .66);
+  --mk-line: rgba(10, 10, 10, .10);
+  --mk-hover: rgba(10, 10, 10, .06);
+  /* Radios (styles.css §34: --r-ctl, --r-inner, --r-panel, --r-card) */
+  --mk-r-ctl: 10px;
+  --mk-r-inner: 12px;
+  --mk-r-panel: 16px;
+  --mk-r-card: 20px;
+  --mk-r-chip: 9999px;
+  /* Tipografía y movimiento */
+  --mk-fuente: 'Helvetica Neue', 'Inter', Helvetica, Arial, sans-serif;
+  --mk-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --mk-fast: 150ms;
+  /* Cristal marfil (styles.css §34.13, tono «marfil») */
+  --mk-blur: 20px;
+  --mk-sat: 1.7;
+  --mk-bri: 1.05;
+  --mk-cristal: rgba(245, 242, 238, .62);
+  --mk-cristal-denso: rgba(245, 242, 238, .80);
+  --mk-cristal-campo: rgba(255, 255, 255, .46);
+  --mk-cristal-boton: rgba(255, 255, 255, .42);
+  --mk-cristal-boton-hover: rgba(255, 255, 255, .72);
+  --mk-cristal-seleccion: rgba(255, 255, 255, .84);
+  --mk-hi: rgba(255, 255, 255, .95);
+  --mk-lo: rgba(10, 10, 10, .10);
+  --mk-rim: rgba(255, 255, 255, .34);
+  --mk-ring: rgba(10, 10, 10, .08);
+  --mk-fringe-a: rgba(150, 190, 255, .20);
+  --mk-fringe-b: rgba(255, 160, 110, .20);
+  --mk-sombra-cristal:
+    inset 0 1px 0 var(--mk-hi), inset 0 -1px 0 var(--mk-lo), inset 0 0 0 1px var(--mk-rim),
+    inset 1px 0 0 var(--mk-fringe-a), inset -1px 0 0 var(--mk-fringe-b),
+    0 0 0 1px var(--mk-ring), 0 22px 44px -22px rgba(10, 10, 10, .34), 0 2px 6px rgba(10, 10, 10, .10);
+  --mk-sombra-boton:
+    inset 0 1px 0 var(--mk-hi), inset 0 -1px 0 rgba(10, 10, 10, .16), inset 0 0 0 1px var(--mk-rim),
+    0 0 0 1px rgba(10, 10, 10, .14), 0 8px 18px -12px rgba(10, 10, 10, .34);
+  --mk-sombra-card: 0 4px 24px 0 rgba(10, 10, 10, .08);              /* --shadow-card del sitio */
+}
+
+/* ---------- Base ---------- */
+html body, html body #nc-root { background: var(--mk-blanco); color: var(--mk-negro); font-family: var(--mk-fuente); -webkit-font-smoothing: antialiased; }
+html body * { font-family: var(--mk-fuente); }
+html body ::selection { background: rgba(181, 71, 42, .18); }
+/* Foco visible: el mismo del sitio (2 px terracota, 3 px de separación) */
+html body :focus-visible { outline: 2px solid var(--mk-terracota); outline-offset: 3px; }
+
+/* ---------- Pantalla de inicio de sesión ---------- */
+html body [class*="-StyledAuthenticationPage"] { background: var(--mk-blanco); }
+html body [class*="-StyledAuthenticationPage"] img { height: 72px; width: auto; max-width: 80vw; }
+html body [class*="-LoginButton"] {
+  min-height: 48px; padding: 0 32px; border: 0; border-radius: var(--mk-r-ctl);
+  background: var(--mk-terracota); color: var(--mk-blanco);
+  font-size: 13px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase;
+  box-shadow: 0 10px 22px -14px rgba(181, 71, 42, .8);
+  transition: background-color var(--mk-fast) var(--mk-ease), transform var(--mk-fast) var(--mk-ease);
+}
+html body [class*="-LoginButtonIcon"] svg, html body [class*="-LoginButton"] svg { color: var(--mk-blanco); fill: currentColor; }
+html body [class*="-LoginButton"]:hover { background: var(--mk-terracota-dark); transform: translateY(-1px); }
+
+/* ---------- Barra superior (cristal marfil) ---------- */
+html body header[class*="-AppHeader"] {
+  background: var(--mk-cristal-denso); border-bottom: 0; box-shadow: 0 1px 0 0 rgba(201, 185, 154, .30);
+  -webkit-backdrop-filter: blur(var(--mk-blur)) saturate(var(--mk-sat)); backdrop-filter: blur(var(--mk-blur)) saturate(var(--mk-sat));
+}
+/* Logo oficial de MAKOM en la barra: lo inserta Decap con la opción estándar `logo.show_in_header` (admin/config.yml); aquí solo se ajusta su tamaño.
+   En pantallas anchas la barra es una fila (logo + navegación a la izquierda, acciones a la derecha); en móvil se conserva el diseño nativo de Decap
+   (dos filas) y el logo se oculta para no romper el reparto de las pestañas. */
+@media (min-width: 761px) {
+  html body header[class*="-AppHeader"] nav img[alt="Logo"] { display: block; flex: none; width: 118px; height: 34px; max-height: none; padding: 0; margin: 0 24px 0 20px; }
+  html body header[class*="-AppHeader"] nav li:has(> img[alt="Logo"]) { display: flex; align-items: center; flex: none; }
+  html body [class*="-AppHeaderContent"] { justify-content: flex-start; }
+  html body [class*="-AppHeaderActions"] { margin-left: auto; }
+}
+@media (max-width: 760px) { html body header[class*="-AppHeader"] nav li:has(> img[alt="Logo"]) { display: none; } }
+html body header[class*="-AppHeader"] nav li { display: flex; align-items: center; }
+html body [class*="-AppHeaderNavLink"] {
+  align-self: center; height: 36px; margin: 0 2px; padding-top: 0; padding-bottom: 0; border-radius: var(--mk-r-chip); color: var(--mk-ink-soft); font-size: 14px; font-weight: 400; letter-spacing: .01em;
+  transition: background-color var(--mk-fast) var(--mk-ease), color var(--mk-fast) var(--mk-ease);
+}
+html body [class*="-AppHeaderNavLink"]:hover { background: var(--mk-hover); color: var(--mk-negro); }
+html body [class*="-AppHeaderNavLink"][aria-current="page"] { background: var(--mk-cristal-seleccion); color: var(--mk-terracota-ink); box-shadow: var(--mk-sombra-boton); }
+html body [class*="-AppHeaderNavLink"][aria-current="page"] svg { color: var(--mk-terracota); }
+/* «Añadir rápido» = acción secundaria → cápsula de cristal marfil */
+html body header[class*="-AppHeader"] [class*="-StyledDropdownButton"]:not([class*="-AvatarDropdownButton"]) {
+  border-radius: var(--mk-r-chip); background: var(--mk-cristal-boton); color: var(--mk-negro); font-weight: 500; letter-spacing: .02em;
+  box-shadow: var(--mk-sombra-boton); -webkit-backdrop-filter: blur(var(--mk-blur)) saturate(var(--mk-sat)); backdrop-filter: blur(var(--mk-blur)) saturate(var(--mk-sat));
+  transition: background-color var(--mk-fast) var(--mk-ease), transform var(--mk-fast) var(--mk-ease);
+}
+html body header[class*="-AppHeader"] [class*="-StyledDropdownButton"]:not([class*="-AvatarDropdownButton"]):hover { background: var(--mk-cristal-boton-hover); transform: translateY(-1px); }
+
+
+/* ---------- Navegación de colecciones ---------- */
+html body [class*="-SidebarContainer"] { background: rgba(255, 255, 255, .72); border: 1px solid var(--mk-line); border-radius: var(--mk-r-card); box-shadow: var(--mk-sombra-card); }
+html body [class*="-SidebarHeading"] { font-size: 12px; font-weight: 400; letter-spacing: .12em; text-transform: uppercase; color: var(--mk-terracota); }
+html body [class*="-SearchInput"] { border-radius: var(--mk-r-chip); background: var(--mk-cristal-campo); }
+html body [class*="-SidebarNavLink"] {
+  border-left: 0; border-radius: var(--mk-r-inner); margin: 2px 8px; padding-left: 12px; color: var(--mk-ink-soft); font-size: 14px; font-weight: 400;
+  transition: background-color var(--mk-fast) var(--mk-ease), color var(--mk-fast) var(--mk-ease);
+}
+html body [class*="-SidebarNavLink"]:hover { background: var(--mk-hover); color: var(--mk-negro); }
+html body [class*="-SidebarNavLink"][aria-current="page"] { background: rgba(181, 71, 42, .09); color: var(--mk-terracota-ink); font-weight: 500; }
+html body [class*="-SidebarNavLink"][aria-current="page"] svg { color: var(--mk-terracota); }
+
+/* ---------- Colecciones y listado ---------- */
+html body [class*="-CollectionTopContainer"] { background: rgba(255, 255, 255, .72); border: 1px solid var(--mk-line); border-radius: var(--mk-r-card); box-shadow: var(--mk-sombra-card); }
+html body [class*="-CollectionTopHeading"] { font-size: 28px; font-weight: 300; letter-spacing: -.01em; color: var(--mk-negro); }
+html body [class*="-CollectionTopDescription"] { color: var(--mk-ink-soft); font-weight: 300; }
+/* Acción principal: terracota (igual que .btn--primary del sitio) */
+html body [class*="-CollectionTopNewButton"] {
+  min-height: 44px; border-radius: var(--mk-r-ctl); background: var(--mk-terracota); color: var(--mk-blanco);
+  font-size: 13px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; box-shadow: none;
+  transition: background-color var(--mk-fast) var(--mk-ease), transform var(--mk-fast) var(--mk-ease);
+}
+html body [class*="-CollectionTopNewButton"]:hover { background: var(--mk-terracota-dark); transform: translateY(-1px); }
+html body [class*="-ViewControlsButton"] { color: rgba(10, 10, 10, .40); border-radius: 8px; }
+html body [class*="-ViewControlsButton"]:hover { color: var(--mk-negro); }
+html body [class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"]) { background: #fff; border: 1px solid var(--mk-line); border-radius: var(--mk-r-panel); box-shadow: none; transition: border-color var(--mk-fast) var(--mk-ease), box-shadow var(--mk-fast) var(--mk-ease), transform var(--mk-fast) var(--mk-ease); }
+html body [class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"]):hover { border-color: rgba(181, 71, 42, .45); box-shadow: var(--mk-sombra-card); transform: translateY(-1px); }
+html body [class*="-ListCardTitle"] { font-size: 15px; font-weight: 400; color: var(--mk-negro); }
+
+/* ---------- Editor: barra de acciones ---------- */
+html body [class*="-ToolbarContainer"] {
+  background: var(--mk-cristal-denso); border-bottom: 0; box-shadow: 0 1px 0 0 rgba(201, 185, 154, .30);
+  -webkit-backdrop-filter: blur(var(--mk-blur)) saturate(var(--mk-sat)); backdrop-filter: blur(var(--mk-blur)) saturate(var(--mk-sat));
+}
+html body [class*="-BackCollection"] { color: var(--mk-ink-soft); font-weight: 400; }
+html body [class*="-BackStatus"] { font-size: 11px; font-weight: 600; letter-spacing: .1em; }
+/* «Publicar» (acción principal) = terracota; «Publicado» (estado) = verde bosque */
+html body [class*="-PublishButton"] {
+  border-radius: var(--mk-r-ctl); background: var(--mk-terracota); color: var(--mk-blanco);
+  font-size: 13px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase;
+  transition: background-color var(--mk-fast) var(--mk-ease), transform var(--mk-fast) var(--mk-ease);
+}
+html body [class*="-PublishButton"]:hover { background: var(--mk-terracota-dark); transform: translateY(-1px); }
+html body [class*="-PublishedToolbarButton"] { border-radius: var(--mk-r-chip); background: rgba(45, 106, 79, .10); color: var(--mk-success); font-size: 13px; font-weight: 600; letter-spacing: .02em; }
+html body [class*="-PublishedToolbarButton"]::after { border-top-color: var(--mk-success); }
+/* «Eliminar entrada» = acción secundaria destructiva → cristal con texto de error */
+html body [class*="-DeleteButton"] {
+  border-radius: var(--mk-r-chip); background: var(--mk-cristal-boton); color: var(--mk-error); font-weight: 500;
+  box-shadow: var(--mk-sombra-boton);
+  transition: background-color var(--mk-fast) var(--mk-ease), transform var(--mk-fast) var(--mk-ease);
+}
+html body [class*="-DeleteButton"]:hover { background: var(--mk-cristal-boton-hover); transform: translateY(-1px); }
+html body [class*="-RefreshPreviewButton"] { color: var(--mk-petroleo); font-weight: 500; }
+/* Menús desplegables (Publicar ahora…): panel de cristal marfil */
+html body [class*="-DropdownList"] {
+  border: 0; border-radius: var(--mk-r-panel); padding: 6px; background: var(--mk-cristal-denso); box-shadow: var(--mk-sombra-cristal);
+  -webkit-backdrop-filter: blur(var(--mk-blur)) saturate(var(--mk-sat)); backdrop-filter: blur(var(--mk-blur)) saturate(var(--mk-sat));
+}
+html body [class*="-StyledMenuItem"] { border-radius: var(--mk-r-inner); color: var(--mk-negro); font-weight: 400; transition: background-color var(--mk-fast) var(--mk-ease); }
+html body [class*="-StyledMenuItem"] svg, html body [class*="-MenuItemIconContainer"] svg { color: var(--mk-terracota); fill: currentColor; }
+html body [class*="-StyledMenuItem"]:hover, html body [class*="-StyledMenuItem"]:focus-visible { background: var(--mk-hover); color: var(--mk-negro); }
+
+/* ---------- Editor: campos ---------- */
+html body [class*="-ControlContainer"] { margin-bottom: 22px; }
+html body [class*="-FieldLabel"] {
+  background: transparent; padding: 0 0 8px; border-radius: 0; font-size: 12px; font-weight: 400; letter-spacing: .1em; text-transform: uppercase; color: var(--mk-ink-soft);
+}
+html body [class*="-FieldLabel"]::before, html body [class*="-FieldLabel"]::after { display: none; }
+html body [class*="-ControlHint"] { color: var(--mk-ink-soft); font-size: 12.5px; font-weight: 300; line-height: 1.55; }
+/* Campos de texto: esquinas suaves, fondo limpio y borde delicado (los desplegables react-select se tratan aparte) */
+html body [class*="-ControlContainer"] input:is([type="text"], [type="number"], [type="email"], [type="url"], [type="tel"], [type="date"], [type="datetime-local"]):not([role="combobox"]):not([aria-autocomplete]),
+html body [class*="-ControlContainer"] textarea {
+  background: #fff; border: 1px solid rgba(10, 10, 10, .14); border-radius: var(--mk-r-ctl); box-shadow: none; padding: 12px 14px; color: var(--mk-negro); font-weight: 400;
+  transition: border-color var(--mk-fast) var(--mk-ease), box-shadow var(--mk-fast) var(--mk-ease);
+}
+html body [class*="-ControlContainer"] input:is([type="text"], [type="number"], [type="email"], [type="url"], [type="tel"], [type="date"], [type="datetime-local"]):not([role="combobox"]):not([aria-autocomplete]):focus,
+html body [class*="-ControlContainer"] textarea:focus {
+  border-color: var(--mk-terracota); box-shadow: 0 0 0 3px rgba(181, 71, 42, .16); outline: none;
+}
+/* Fondo del editor: marfil, como el resto del panel */
+html body [class*="-EditorContainer"], html body [class*="-NoPreviewContainer"] { background: var(--mk-blanco); }
+/* Desplegables (react-select): contorno redondeado, menú de cristal marfil, opción activa en terracota suave */
+html body [class*="-ControlContainer"] [class$="-control"] {
+  min-height: 48px; background: #fff; border: 1px solid rgba(10, 10, 10, .14); border-radius: var(--mk-r-ctl); box-shadow: none;
+  transition: border-color var(--mk-fast) var(--mk-ease), box-shadow var(--mk-fast) var(--mk-ease);
+}
+html body [class*="-ControlContainer"] [class$="-container"] { border: 0; border-radius: var(--mk-r-ctl); background: transparent; }
+html body [class*="-ControlContainer"] [class$="-control"]:hover { border-color: rgba(10, 10, 10, .28); }
+html body [class*="-ControlContainer"] [class$="-control"]:focus-within { border-color: var(--mk-terracota); box-shadow: 0 0 0 3px rgba(181, 71, 42, .16); }
+html body [class*="-ControlContainer"] [class$="-singleValue"], html body [class*="-ControlContainer"] [class$="-Input"] { color: var(--mk-negro); }
+html body [class*="-ControlContainer"] [class$="-indicatorContainer"] { color: var(--mk-ink-soft); }
+html body [class$="-menu"] {
+  margin-top: 8px; padding: 6px; border: 0; border-radius: var(--mk-r-panel); background: var(--mk-cristal-denso); box-shadow: var(--mk-sombra-cristal);
+  -webkit-backdrop-filter: blur(var(--mk-blur)) saturate(var(--mk-sat)); backdrop-filter: blur(var(--mk-blur)) saturate(var(--mk-sat));
+}
+html body [class$="-menu"] [class$="-option"] { border-radius: var(--mk-r-inner); color: var(--mk-negro); cursor: pointer; }
+html body [class$="-menu"] [class$="-option"]:hover, html body [class$="-menu"] [class$="-option"][class*="isFocused"] { background: var(--mk-hover); }
+/* Selección múltiple (amenidades, detalles): fichas redondeadas */
+html body [class*="-ControlContainer"] [class$="-multiValue"] { background: rgba(181, 71, 42, .09); border-radius: var(--mk-r-chip); }
+html body [class*="-ControlContainer"] [class$="-multiValue"] > div:first-of-type { color: var(--mk-terracota-ink); font-size: 13px; padding-left: 10px; }
+/* Interruptores */
+html body [class*="-ToggleBackground"] { background: rgba(10, 10, 10, .18); }
+/* Botones «Añadir …» de las listas = secundarios de cristal */
+html body [class*="-AddButton"] { border-radius: var(--mk-r-chip); background: var(--mk-cristal-boton); color: var(--mk-negro); font-weight: 500; box-shadow: var(--mk-sombra-boton); }
+html body [class*="-AddButton"]:hover { background: var(--mk-cristal-boton-hover); }
+html body [class*="-FileWidgetButton"] { border-radius: var(--mk-r-chip); background: var(--mk-cristal-boton); color: var(--mk-negro); font-weight: 500; box-shadow: var(--mk-sombra-boton); }
+/* Secciones plegables (Fotografías, Mapa, Video…) */
+html body [class*="-TopBarContainer"], html body [class*="-ObjectWidgetTopBar"] { border-radius: var(--mk-r-inner); }
+
+/* ---------- Galería de carga múltiple (mismo funcionamiento; solo apariencia, por sus atributos data-*) ----------
+   El widget (admin/galeria-fotos.js) aplica sus colores con estilos en línea; por eso aquí hace falta !important (solo en este bloque). */
+html body [data-galeria-fotos] { color: var(--mk-negro) !important; }
+html body [data-galeria-fotos] [data-galeria-contador] { font-size: 15px; font-weight: 500 !important; }
+html body [data-galeria-fotos] [data-galeria-zona] {
+  background: rgba(255, 255, 255, .6) !important; border: 1.5px dashed rgba(10, 10, 10, .20) !important; border-radius: var(--mk-r-card) !important; padding: 28px 16px !important;
+  transition: border-color var(--mk-fast) var(--mk-ease), background-color var(--mk-fast) var(--mk-ease);
+}
+html body [data-galeria-fotos] [data-galeria-zona]:hover { border-color: var(--mk-terracota) !important; }
+html body [data-galeria-fotos] [data-galeria-zona] > span {
+  background: var(--mk-terracota) !important; border-radius: var(--mk-r-ctl) !important; padding: 12px 24px !important; font-size: 13px !important; font-weight: 500 !important; letter-spacing: .06em; text-transform: uppercase; box-shadow: none !important;
+  transition: background-color var(--mk-fast) var(--mk-ease);
+}
+html body [data-galeria-fotos] [data-galeria-zona]:hover > span { background: var(--mk-terracota-dark) !important; }
+html body [data-galeria-fotos] [data-galeria-estado] { font-weight: 500 !important; }
+html body [data-galeria-fotos] [data-galeria-tarjeta] { border: 1px solid var(--mk-line) !important; border-radius: var(--mk-r-panel) !important; box-shadow: var(--mk-sombra-card); background: #fff !important; }
+html body [data-galeria-fotos] [data-galeria-tarjeta] button, html body [data-galeria-fotos] [data-galeria-tarjeta] label {
+  border-radius: var(--mk-r-chip) !important; border-color: rgba(10, 10, 10, .14) !important; background: var(--mk-cristal-boton) !important; box-shadow: var(--mk-sombra-boton);
+  transition: background-color var(--mk-fast) var(--mk-ease);
+}
+html body [data-galeria-fotos] [data-galeria-tarjeta] button:hover:not(:disabled), html body [data-galeria-fotos] [data-galeria-tarjeta] label:hover { background: var(--mk-cristal-boton-hover) !important; }
+html body [data-galeria-fotos] [data-galeria-tarjeta] input[type="text"] { border-radius: var(--mk-r-ctl) !important; border-color: rgba(10, 10, 10, .14) !important; }
+
+/* ---------- Avisos de Decap (react-toastify, clases públicas de esa librería) ---------- */
+html body .Toastify__toast { border-radius: var(--mk-r-panel); font-family: var(--mk-fuente); box-shadow: var(--mk-sombra-cristal); }
+html body .Toastify__toast--success { background: var(--mk-success); color: #fff; }
+html body .Toastify__toast--error { background: var(--mk-error); color: #fff; }
+html body .Toastify__toast--info { background: var(--mk-petroleo); color: #fff; }
+
+/* ---------- Reducir transparencia / sin backdrop-filter: superficies opacas con la misma receta ---------- */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root { --mk-cristal-denso: rgba(245, 242, 238, .98); --mk-cristal-boton: rgba(255, 255, 255, .86); --mk-cristal-boton-hover: rgba(255, 255, 255, .95); --mk-cristal-seleccion: rgba(255, 255, 255, .97); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root { --mk-cristal-denso: rgba(245, 242, 238, .98); --mk-cristal-boton: rgba(255, 255, 255, .9); --mk-cristal-boton-hover: rgba(255, 255, 255, .96); --mk-cristal-seleccion: rgba(255, 255, 255, .97); }
+  html body header[class*="-AppHeader"], html body [class*="-ToolbarContainer"], html body [class*="-DropdownList"], html body [class$="-menu"], 
+}
+/* Sin animaciones si la persona lo prefiere */
+@media (prefers-reduced-motion: reduce) {
+  html body [class*="-LoginButton"], html body [class*="-CollectionTopNewButton"], html body [class*="-PublishButton"], html body [class*="-DeleteButton"], html body [class*="-ListCard"] { transition: none; transform: none !important; }
+}
