@@ -60,6 +60,24 @@ function validarConfigCmsContraFuenteCentral(raiz) {
     }
   });
 
+  // Galería de fotografías y video: los límites del panel (admin/config.yml) deben ser los de la fuente central, que son
+  // los que admite la ficha pública. Un solo campo de video (videoRecorrido), no dos.
+  const limites = configCentral.limitesMedia;
+  const fotografias = campos.find((f) => f.name === "fotografias");
+  const galeriaCampo = fotografias && (fotografias.fields || []).find((f) => f.name === "galeria");
+  if (!limites || !Number.isInteger(limites.fotosMax) || !Number.isInteger(limites.fotosMin)) {
+    errores.push('_data/propiedadesConfig.json no define "limitesMedia" (fotosMin / fotosMax).');
+  } else if (!galeriaCampo) {
+    errores.push('admin/config.yml no tiene "Fotografías → galeria".');
+  } else {
+    if (galeriaCampo.max !== limites.fotosMax) errores.push(`La galería del panel admite max=${galeriaCampo.max} fotografías y la fuente central dice ${limites.fotosMax}.`);
+    if (galeriaCampo.min !== limites.fotosMin) errores.push(`La galería del panel exige min=${galeriaCampo.min} fotografías y la fuente central dice ${limites.fotosMin}.`);
+  }
+  const camposVideo = campos.filter((f) => /video/i.test(f.name));
+  if (camposVideo.length !== 1 || camposVideo[0].name !== "videoRecorrido") {
+    errores.push(`Debe existir un único campo de video ("videoRecorrido"); hay: ${camposVideo.map((f) => f.name).join(", ") || "ninguno"}.`);
+  }
+
   if (errores.length > 0) {
     throw new Error(
       "Validación de configuración del CMS falló:\n" +
@@ -137,6 +155,8 @@ function validarFichas(raiz) {
   );
   const errores = [];
   const avisos = [];
+  const rutaCentral = path.join(raiz, "_data", "propiedadesConfig.json");
+  const limitesMedia = (fs.existsSync(rutaCentral) && JSON.parse(fs.readFileSync(rutaCentral, "utf8")).limitesMedia) || { fotosMax: Infinity };
   const archivos = fs.readdirSync(dir).filter((a) => a.endsWith(".json"));
   const nombresArchivo = new Set(archivos.map((a) => path.basename(a, ".json")));
   const publicos = new Map();
@@ -161,6 +181,16 @@ function validarFichas(raiz) {
         }
       });
     }
+    // Galería (avisos, nunca bloquean la publicación: la ficha pública muestra lo que haya).
+    const galeria = d.fotografias && Array.isArray(d.fotografias.galeria) ? d.fotografias.galeria : [];
+    if (galeria.length > limitesMedia.fotosMax) avisos.push(`${archivo}: tiene ${galeria.length} fotografías y el panel admite como máximo ${limitesMedia.fotosMax}; la ficha las muestra todas, pero el panel no permitirá volver a guardarla hasta quitar ${galeria.length - limitesMedia.fotosMax}.`);
+    if (galeria.some((f) => !f || !f.archivo)) avisos.push(`${archivo}: hay una fila de la galería sin archivo (se vería una imagen rota).`);
+    if (galeria.filter((f) => f && f.portada === true).length > 1) avisos.push(`${archivo}: hay más de una fotografía marcada como portada (la ficha usa la primera marcada).`);
+    const vistos = new Set();
+    galeria.forEach((f) => {
+      if (f && f.archivo && vistos.has(f.archivo)) avisos.push(`${archivo}: la fotografía ${f.archivo} está repetida en la galería.`);
+      if (f && f.archivo) vistos.add(f.archivo);
+    });
     if (d.asesor && !asesores.has(d.asesor)) avisos.push(`${archivo}: el asesor "${d.asesor}" no existe en content/asesores/ — la ficha usará el contacto corporativo.`);
     const v = d.videoRecorrido;
     if (v && (v.url || v.archivo) && !ficha.videoDe(v)) avisos.push(`${archivo}: el video del recorrido no es válido (solo https de YouTube/Vimeo o un .mp4/.webm) — no se mostrará.`);

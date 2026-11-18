@@ -1,4 +1,6 @@
 {
+  "_limitesMedia_nota": "ÚNICA fuente de los límites de fotografías y video por propiedad. admin/config.yml (Fotografías → Galería: min/max) debe coincidir (el build falla si no) y scripts/verificar-ficha.js comprueba que la ficha pública admite exactamente esa cantidad.",
+  "limitesMedia": { "fotosMin": 3, "fotosMax": 10, "videosPorPropiedad": 1 },
   "detalles": [
     { "valor": "cuarto-empleada", "etiqueta": "Cuarto de empleada", "etiquetaEn": "Maid's room" },
     { "valor": "bano-empleada", "etiqueta": "Baño de empleada", "etiquetaEn": "Maid's bathroom" },
