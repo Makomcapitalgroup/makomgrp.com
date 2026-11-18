@@ -44,3 +44,45 @@ panel a su aspecto nativo.
 ## Medición (mismos datos, mismos acordeones abiertos, 1440 px de ancho)
 
 Propiedad de Costa del Este con todas las secciones abiertas: **9 934 px → 6 147 px (−38 %)** respecto al tema anterior (9 444 px sin ningún tema).
+
+---
+
+# Pulido visual final (PR siguiente al #19)
+
+Sigue siendo solo CSS en `admin/tema-makom.css` (sin JavaScript, sin cambios de DOM, de datos ni de lógica).
+
+## Decisiones
+
+- **«Medios»**: no estaba deshabilitado; es un botón de Decap que abre la biblioteca de medios («Archivos multimedia»). Se veía gris porque Decap le da un color neutro y el tema solo
+  estilaba el enlace «Contenido». Ahora ambos comparten forma de pestaña: texto negro al 78 % (contraste ≥ 4,5:1), cursor de acción, hover, pulsado y foco 2 px terracota.
+  La pestaña activa sigue siendo la cápsula de cristal con texto terracota.
+- **«Añadir rápido»**: ofrece Propiedad, Proyecto, Perspectiva y Asesor (cada una abre el formulario de nueva entrada) y funciona desde cualquier pantalla, así que **se conserva**. Pasó a
+  contorno fino de 1 px, sin relleno ni sombra, para no competir con «+ Propiedad» (terracota). No se oculta ni se elimina nada.
+- **«+ Propiedad»**: el texto estaba 4 px por encima del centro (interlineado de 36 px dentro de un botón de 44 px). Ahora es `inline-flex` centrado; se mide en las pruebas
+  (desvío ≤ 1 px). Igual criterio para «Publicar» y «Seleccionar fotografías».
+- **Estados de guardado**: «Cambios no guardados» deja de ser rojo puro (#FF003B) y pasa a un aviso en terracota oscuro (#8F3720) sobre un tinte tenue, con punto indicador;
+  «Cambios guardados» en verde bosque. **Los errores reales no se atenúan**: los mensajes de campo pasan de #FF003B (≈ 4:1) a #C0392B (≥ 4,5:1) y los avisos de Decap (rojo, verde, azul)
+  tienen texto blanco con contraste ≥ 4,5:1. Los mensajes y su comportamiento no cambian.
+- **Secciones desplegables**: tarjeta marfil con borde de 1 px y radio de 16 px; franja superior de ~37 px en arena, flecha en un botón redondo de 30 px; abierta = franja más intensa y flecha
+  terracota, cerrada = más suave (el giro de la flecha lo hace Decap). El rótulo de la sección va en terracota oscuro, distinto de las etiquetas de campo.
+- **Legibilidad**: etiquetas 12 px / peso 500; ayudas 13 px / peso 400 (antes 12 px / 300); interruptor activado en terracota (antes igual de gris que el desactivado).
+  La altura del formulario sube de 6 147 a 6 478 px (+5 %) a 1440 px por esto y por los botones de 36 px de la galería; sigue siendo −35 % respecto a los 9 934 px de partida.
+- **Galería**: tarjetas con la misma altura por fila, acciones en cuadrícula (◀ ▶ + «Hacer portada» / «Reemplazar» + «Quitar»), botones de ≥ 36 px, insignia «Portada» más legible
+  y tarjeta de portada con borde terracota. Sin cambios en el widget.
+- **Biblioteca de medios** (la ventana de «Medios»): radio de 20 px, título ligero, «Subir nuevo» en terracota.
+- **Móvil y tableta vertical**: Decap fija el editor en `min-width: 800px`, por lo que en un teléfono el editor quedaba recortado por la derecha (el botón «Publicar» quedaba fuera de la pantalla) y a 768 px
+  se recortaban 32 px. Con `min-width: 0` y la barra de acciones en filas, el editor cabe de 375 a 900 px.
+
+## Limitaciones reales de Decap
+
+- **Listado**: lo único que Decap ofrece por entrada es el texto del `summary` de `admin/config.yml` («título — estado»). El CSS no puede resaltar «disponible» o «alquilada» dentro de ese texto
+  (no hay atributo ni clase por estado), y no se interpretan palabras del título. El refinamiento se limitó a ritmo, tipografía, hover y foco.
+- **Textos en inglés** («Add precio específico», «Insert from URL», «Copy», «Test Backend»): vienen del código de Decap, no del CSS.
+- **Pestaña «Test Backend»**: solo existe con el respaldo de prueba; con GitHub aparece el enlace al sitio.
+
+## Propuestas separadas (requieren configuración o JavaScript; NO implementadas)
+
+1. Estado legible en el listado: cambiar el `summary` de propiedades a `{{estado}} · {{titulo}}` (solo texto; cambia lo que se ve, no los datos) o, mejor, activar `view_groups` / `view_filters` nativos
+   de Decap por `estado` para agrupar o filtrar el listado. Es un cambio de funcionalidad visible: decidir con Loyra.
+2. Insignias de color por estado dentro de las tarjetas: requiere un componente propio o JavaScript sobre el listado. Descartado por duplicar la interfaz nativa.
+3. Traducir al español los textos que Decap deja en inglés: requiere un paquete de locale propio (JavaScript).
