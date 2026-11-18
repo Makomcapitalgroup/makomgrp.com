@@ -1,0 +1,108 @@
+{
+  "amenidades": [
+    "piscina",
+    "gimnasio",
+    "lobby",
+    "garita-seguridad",
+    "parque-infantil",
+    "estacionamientos-techados",
+    "area-social"
+  ],
+  "ubicacionPublicaEn": "San Francisco, Panamá",
+  "tituloEn": "3-bedroom, 205 m² apartment for sale in San Francisco, Panama City | PH Tao Tower",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "asesor": "loyra-flores",
+  "mapa": {
+    "activo": true,
+    "precision": "aproximada",
+    "nivelZoom": 15,
+    "latitud": "8.989",
+    "longitud": "-79.505"
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 320742,
+    "fechaReferencia": "2026-11"
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "archivo": "/assets/propiedades/uploads/apartamento-de-3-recamaras-y-20261118-d780d90d.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamento-de-3-recamaras-y-20261118-14c68e1e.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamento-de-3-recamaras-y-20261118-e46e2c0a.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamento-de-3-recamaras-y-20261118-b9754c4f.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamento-de-3-recamaras-y-20261118-82e2e1c5.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamento-de-3-recamaras-y-20261118-abae259c.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamento-de-3-recamaras-y-20261118-750de002.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamento-de-3-recamaras-y-20261118-95bf5c3d.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamento-de-3-recamaras-y-20261118-641390c9.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamento-de-3-recamaras-y-20261118-d95e9901.jpg",
+        "portada": true
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitacionesDesde": false,
+    "banosDesde": false,
+    "habitaciones": 3,
+    "banos": 3,
+    "estacionamientos": 2,
+    "metrajeTotal": 205.84,
+    "piso": "6"
+  },
+  "mostrarEnHome": false,
+  "zona": "ciudad-de-panama-general",
+  "descripcion": "**Apartamento de 205 m² en PH Tao Tower, San Francisco**, con 3 recámaras, 4 baños, cuarto y baño de servicio, sala, comedor, cocina y lavandería completa.\n\n**Datos principales:** piso 6, **$320,742**, 2 estacionamientos y balcón con vista a la ciudad. Ventanales de piso a techo y espacios amplios para decorar o remodelar a tu gusto.\n\n**Amenidades:** piscina, gimnasio, seguridad 24 horas, planta eléctrica y elevadores.\n\n**Ubicación:** San Francisco, cerca del Parque Omar y de las principales vías de la ciudad.\n\n¿Quieres coordinar una visita? Contáctanos y confirmamos disponibilidad y precio actualizado.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "sector": "San Francisco",
+    "distrito": "Panamá",
+    "edificioPH": "PH Tao Tower"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "**205 m² apartment in PH Tao Tower, San Francisco**, with 3 bedrooms, 4 bathrooms, maid's room and bathroom, living room, dining room, kitchen and full laundry area.\n\n**Key facts:** 6th floor, **$320,742**, 2 parking spaces and a balcony with city views. Floor-to-ceiling windows and generous space to decorate or remodel your way.\n\n**Amenities:** swimming pool, gym, 24-hour security, backup power and elevators.\n\n**Location:** San Francisco, near Parque Omar and the city's main roads.\n\nWant to schedule a visit? Contact us and we'll confirm availability and current pricing.",
+  "operacion": "venta",
+  "ubicacionPublica": "San Francisco, Panamá",
+  "titulo": "Apartamento de 3 recámaras y 205 m² en venta en San Francisco, Panamá | PH Tao Tower",
+  "fechaEntrega": "inmediata",
+  "detalles": [
+    "cuarto-empleada",
+    "bano-empleada",
+    "lavanderia",
+    "balcon",
+    "walk-in-closet",
+    "sala-familiar"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
