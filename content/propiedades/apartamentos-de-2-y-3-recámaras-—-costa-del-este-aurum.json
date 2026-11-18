@@ -1,0 +1,116 @@
+{
+  "amenidades": [
+    "piscina",
+    "gimnasio",
+    "lobby",
+    "elevadores",
+    "cerradura-digital",
+    "coworking",
+    "lounge-social",
+    "area-social",
+    "cancha-deportiva",
+    "rooftop",
+    "seguridad-24-7"
+  ],
+  "tituloEn": "2 AND 3 BEDROOM APARTMENTS — FROM $381,800 IN COSTA DEL ESTE",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "asesor": "loyra-flores",
+  "mapa": {
+    "activo": true,
+    "precision": "aproximada",
+    "nivelZoom": 15,
+    "latitud": "9.013",
+    "longitud": "-79.468"
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 381800,
+    "fechaReferencia": "2026-11",
+    "preciosEspecificos": [
+      {
+        "etiqueta": "2 recámaras",
+        "monto": 381800
+      }
+    ]
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261118-fceb88d8.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamentos-de-2-y-3-recama-20261118-5aab89cf.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamentos-de-2-y-3-recama-20261118-f238521b.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamentos-de-2-y-3-recama-20261118-acde898e.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamentos-de-2-y-3-recama-20261118-16bde011.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamentos-de-2-y-3-recama-20261118-57e38440.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamentos-de-2-y-3-recama-20261118-08cecb2d.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamentos-de-2-y-3-recama-20261118-6cea8ee4.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamentos-de-2-y-3-recama-20261118-e501748a.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamentos-de-2-y-3-recama-20261118-2f4af0f1.jpg",
+        "portada": true
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "banosDesde": true,
+    "habitaciones": 2,
+    "anoConstruccion": 2028,
+    "habitacionesMaximo": 3,
+    "estacionamientos": 1,
+    "habitacionesDesde": true,
+    "banos": 2,
+    "metrajeInterno": 83,
+    "banosMaximo": 3
+  },
+  "mostrarEnHome": false,
+  "zona": "ciudad-de-panama-general",
+  "descripcion": "Torre residencial en Costa del Este con apartamentos de **2 y 3 recámaras**, **2 baños completos** y **1 estacionamiento**. Metrajes de 83 a 100 m², con techos de 2.70 m, ventanales de piso a techo y cocinas con gabinetes importados.\n\nApartamentos desde **$381,800**.\n\n**Amenidades:** piscina, gimnasio, spa, cine, cancha de pádel y terraza skyline.\n\n**Ubicación:** Costa del Este, Ciudad de Panamá.\n\n¿Quieres conocer disponibilidad y precio actualizado? Contáctanos y un asesor de MAKOM te muestra las opciones y los planos.",
+  "planos": [],
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "sector": "Costa del Este",
+    "edificioPH": "PH AURUM"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "Residential tower in Costa del Este with **2 and 3 bedroom** apartments, **2 full bathrooms** and **1 parking space**. Sizes from 83 to 100 m², with 2.70 m ceilings, floor-to-ceiling windows and kitchens with imported cabinetry.\n\nApartments from **$381,800**.\n\n**Amenities:** pool, gym, spa, cinema, padel court and skyline terrace.\n\n**Location:** Costa del Este, Panama City.\n\nWant to know current availability and pricing? Contact us and a MAKOM advisor will show you the options and floor plans.",
+  "operacion": "venta",
+  "ubicacionPublica": "Costa del Este",
+  "titulo": "APARTAMENTOS DE 2 Y 3 RECÁMARAS — COSTA DEL ESTE / AURUM",
+  "fechaEntrega": "futura",
+  "detalles": [
+    "lavanderia",
+    "balcon"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
