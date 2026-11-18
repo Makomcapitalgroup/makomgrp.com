@@ -545,9 +545,40 @@ function pruebasCapacidadPublica() {
 
 /* ------------------------------------------------------------------ */
 
+/* Archivo de datos del listado del administrador (/admin/listado-propiedades.json): lo genera el build y lo lee admin/listado-propiedades.js */
+function pruebasListadoAdmin() {
+  seccion("listado del panel");
+  const fs2 = require("fs");
+  const ruta = path.join(SITE, "admin", "listado-propiedades.json");
+  if (!fs2.existsSync(ruta)) { ok("existe _site/admin/listado-propiedades.json (ejecute npm run build antes)", false, ruta); return; }
+  const texto = fs2.readFileSync(ruta, "utf8");
+  const feed = JSON.parse(texto);
+  const dir = path.join(RAIZ, "content", "propiedades");
+  const archivos = fs2.readdirSync(dir).filter((a) => a.endsWith(".json"));
+  const datos = Object.fromEntries(archivos.map((a) => [a.replace(/\.json$/, ""), JSON.parse(fs2.readFileSync(path.join(dir, a), "utf8"))]));
+  ok("el archivo declara version 1 y trae una fila por CADA propiedad de content/ (también borrador, archivada y vendida), con el nombre de archivo como slug", feed.version === 1 && feed.total === archivos.length && feed.propiedades.length === archivos.length && new Set(feed.propiedades.map((x) => x.slug)).size === archivos.length && feed.propiedades.every((x) => datos[x.slug]), `${feed.total} / ${archivos.length}`);
+  const permitidos = ["slug", "referenciaMakom", "titulo", "operacion", "tipo", "estado", "portada"];
+  ok("solo se publican los campos del listado (slug, referencia, título, operación, tipo, estado y portada): ningún dato interno, de precio, contacto, ubicación exacta ni descripciones", feed.propiedades.every((x) => Object.keys(x).every((k) => permitidos.includes(k)) && (!x.portada || Object.keys(x.portada).every((k) => ["original", "miniatura", "ancho", "alto"].includes(k)))) && !/direccionInterna|ubicacionInterna|precio|monto|descripcion|whatsapp|asesor|latitud|longitud|mapa|metadatos/i.test(texto), "");
+  ok("estado, operación, tipo, referencia y título coinciden con los datos de cada propiedad", feed.propiedades.every((x) => { const d = datos[x.slug]; return x.estado === (d.estado || null) && x.operacion === (d.operacion || null) && x.tipo === (d.tipo || null) && x.referenciaMakom === (d.referenciaMakom || null) && x.titulo === (d.titulo || ""); }), "");
+  ok("la portada es la marcada (o la primera) de cada galería y su miniatura es un webp de 480 px que existe en _site, de ≤ 80 KB, con la ruta que acepta el panel", feed.propiedades.every((x) => {
+    const g = (datos[x.slug].fotografias && datos[x.slug].fotografias.galeria) || [];
+    const por = g.find((f) => f.portada) || g[0] || null;
+    if (!por) return x.portada === null;
+    const m = x.portada && x.portada.miniatura;
+    const f = m && path.join(SITE, m.replace(/^\//, ""));
+    return x.portada.original === por.archivo && /^\/assets\/propiedades\/_optimizadas\/[A-Za-z0-9_.-]+\.webp$/.test(m || "") && f && fs2.existsSync(f) && fs2.statSync(f).size <= 80 * 1024 && x.portada.ancho === 480;
+  }), "");
+  ok("el archivo no está en el sitemap ni lo enlaza ninguna página pública", !/listado-propiedades/.test(fs2.readFileSync(path.join(SITE, "sitemap.xml"), "utf8")) && !/listado-propiedades/.test(fs2.readFileSync(path.join(SITE, "index.html"), "utf8")));
+  const idx = leer(path.join(RAIZ, "admin", "index.html"));
+  const sc = leer(path.join(RAIZ, "admin", "listado-propiedades.js"));
+  ok("el panel carga el script del listado DESPUÉS de Decap y el script solo usa atributos, la ruta pública de edición y los eventos oficiales (sin llamadas a servicios externos)", idx.indexOf("decap-cms") < idx.indexOf("listado-propiedades.js") && /registerEventListener/.test(sc) && !/raw\.githubusercontent|api\.github|https?:\/\//.test(sc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "")), "");
+  ok("el script no crea ni borra nodos de Decap (sin createElement, appendChild, innerHTML, insertBefore, remove())", !/createElement|appendChild|innerHTML|insertBefore|\.remove\(\)|replaceChild/.test(sc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "")), "");
+}
+
 pruebasLogica();
 pruebasCms();
 pruebasSitio("sitio (_site)", SITE);
+pruebasListadoAdmin();
 pruebasGaleriaPanel();
 if (!process.argv.includes("--rapido")) pruebasCapacidadPublica();
 if (process.argv.includes("--con-fixtures")) pruebasConFixtures();

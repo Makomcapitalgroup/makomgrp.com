@@ -1,0 +1,5 @@
+---
+permalink: "/admin/listado-propiedades.json"
+eleventyExcludeFromCollections: true
+---
+{{ collections.propiedades | listadoAdminPropiedades | dump | safe }}

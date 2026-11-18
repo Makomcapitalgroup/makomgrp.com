@@ -1,0 +1,16 @@
+{
+  "titulo": "Apartamento con la fotografía de portada rota (el archivo no existe)",
+  "operacion": "venta",
+  "tipo": "apartamento",
+  "estado": "disponible",
+  "referenciaMakom": "MKW-RE-904",
+  "fotografias": {
+    "galeria": [
+      {
+        "archivo": "/assets/propiedades/uploads/no-existe-portada-rota.jpg",
+        "portada": true
+      }
+    ]
+  },
+  "nota": "Entrada SINTÉTICA solo para pruebas del listado (no existe en el repositorio de contenido)."
+}

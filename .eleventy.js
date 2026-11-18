@@ -1080,6 +1080,39 @@ module.exports = function (eleventyConfig) {
     return { archivo: variante.url, ancho: variante.width, alto: variante.height };
   }
 
+  // Listado del administrador (Decap): datos MÍNIMOS de TODAS las propiedades (también borrador/archivada/vendida) para que el panel pueda mostrar en cada
+  // tarjeta del listado su portada y su estado (admin/listado-propiedades.js). Se publica en /admin/listado-propiedades.json: mismo origen y mismo despliegue que
+  // el panel (sin servicios externos). Es un objeto explícito, campo por campo (nunca se vuelca el JSON de la propiedad): no incluye dirección interna, precios,
+  // descripciones ni datos de contacto. Los datos ya son públicos en el repositorio; aquí solo se publican los campos del listado y una miniatura de 480 px de
+  // la portada (webp), generada con el mismo helper que la portada del Home. `slug` es el nombre de archivo (el que usa Decap en su ruta de edición).
+  eleventyConfig.addFilter("listadoAdminPropiedades", async (lista) => {
+    const filas = await Promise.all(
+      (lista || []).map(async (p) => {
+        const galeria = (p.fotografias && p.fotografias.galeria) || [];
+        const portada = galeria.find((f) => f.portada) || galeria[0] || null;
+        const miniatura = portada ? await generarVarianteOptimizada(portada.archivo, { formatos: ["webp"], anchos: [480] }) : null;
+        return {
+          slug: p.slugArchivo,
+          referenciaMakom: p.referenciaMakom || null,
+          titulo: p.titulo || "",
+          operacion: p.operacion || null,
+          tipo: p.tipo || null,
+          estado: p.estado || null,
+          portada: portada
+            ? {
+                original: portada.archivo,
+                miniatura: miniatura ? miniatura.archivo : null,
+                ancho: miniatura ? miniatura.ancho : null,
+                alto: miniatura ? miniatura.alto : null,
+              }
+            : null,
+        };
+      })
+    );
+    filas.sort((a, b) => a.slug.localeCompare(b.slug));
+    return { version: 1, total: filas.length, propiedades: filas };
+  });
+
   // Milestone 5: selecciona hasta 3 propiedades destacadas para el
   // Home (disponible/reservada + mostrarEnHome=true), ordenadas por
   // ordenHome ascendente (las que no lo tienen quedan al final,

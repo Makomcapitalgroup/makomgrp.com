@@ -144,28 +144,12 @@ function iniciarServidorPrueba(decap, dirFixtures) {
     delete c.local_backend;
     return yaml.dump(c, { lineWidth: -1 });
   };
-  const repoFiles = () => {
-    const out = { content: {} };
-    for (const col of ["propiedades", "asesores", "proyectos", "perspectivas"]) {
-      const d = path.join(RAIZ, "content", col);
-      out.content[col] = {};
-      if (!fs.existsSync(d)) continue;
-      for (const f of fs.readdirSync(d).filter((x) => x.endsWith(".json"))) out.content[col][f] = { content: fs.readFileSync(path.join(d, f), "utf8") };
-      // Datos CONGELADOS para las dos entradas que las pruebas modifican: la propiedad de Costa del Este (6 fotos, versión del PR #20) y el asesor de Loyra.
-      // Así las pruebas no dependen de lo que el equipo publique después desde el CMS real (el 18-nov Loyra le agregó fotos a esa propiedad).
-      // Entradas SINTÉTICAS (solo en el servidor de prueba; no existen en content/): sin referencia, borrador, título larguísimo, archivada, vendida y reservada.
-      if (col === "propiedades") {
-        for (const f of fs.readdirSync(path.join(RAIZ, "scripts", "fixtures")).filter((x) => /^listado-zz-.*\.json$/.test(x))) out.content[col][f.replace(/^listado-/, "")] = { content: fs.readFileSync(path.join(RAIZ, "scripts", "fixtures", f), "utf8") };
-      }
-      const congelada = { propiedades: ["panam", "propiedad-costa-del-este-base.json"], asesores: ["loyra", "asesor-loyra-base.json"] }[col];
-      if (congelada) {
-        const clave = Object.keys(out.content[col]).find((k) => k.includes(congelada[0]) && (col !== "propiedades" || k.includes("costa-del-este-panam")));
-        if (clave) out.content[col][clave] = { content: fs.readFileSync(path.join(RAIZ, "scripts", "fixtures", congelada[1]), "utf8") };
-      }
-      out["content/" + col] = out.content[col]; // el listado del backend de prueba busca la carpeta con la ruta completa
-    }
-    return "window.repoFiles=" + JSON.stringify(out) + ";";
-  };
+  const { construirRepo } = require("./lib/repo-prueba");
+  const { crearFeed } = require("./lib/listado-feed-prueba");
+  // Datos de prueba (con las entradas CONGELADAS y las SINTÉTICAS del listado) y, a partir de ellos, la réplica del archivo de datos del listado.
+  const repoDatos = construirRepo(RAIZ);
+  const feedPrueba = crearFeed(repoDatos.content.propiedades, RAIZ, sharp);
+  const repoFiles = () => "window.repoFiles=" + JSON.stringify(repoDatos) + ";";
   // Gancho de prueba: con window.__fallo = true cualquier escritura en el «repositorio» lanza un error (publicación fallida).
   const ganchos = `(function(){var base=window.repoFiles;function envolver(o){return new Proxy(o,{get:function(t,k){var v=t[k];return v&&typeof v==='object'&&Object.getPrototypeOf(v)===Object.prototype?envolver(v):v},set:function(t,k,v){if(window.__fallo)throw new Error('Fallo simulado de publicación');t[k]=v;return true},deleteProperty:function(t,k){if(window.__fallo)throw new Error('Fallo simulado de publicación');delete t[k];return true}})}var p=envolver(base);Object.defineProperty(window,'repoFiles',{get:function(){return p},set:function(v){base=v;p=envolver(v)},configurable:true});window.__crudo=base;})();`;
   const servidor = http.createServer((req, res) => {
@@ -180,10 +164,29 @@ function iniciarServidorPrueba(decap, dirFixtures) {
       return enviar(TIPOS[".html"], html);
     }
     if (u === "/admin/config.yml") return enviar(TIPOS[".yml"], configPrueba());
+    if (u === "/admin/listado-propiedades.json") {
+      globalThis.__pedidosFeed = (globalThis.__pedidosFeed || 0) + 1;
+      if (globalThis.__feedFalla) { res.writeHead(globalThis.__feedFalla, { "Content-Type": "text/plain" }); return res.end("error simulado"); }
+      if (globalThis.__feedMalo === "version") return enviar(TIPOS[".json"], JSON.stringify({ version: 2, propiedades: [] }));
+      if (globalThis.__feedMalo === "hostil") {
+        // Datos hostiles: URL externa, esquema javascript:, estado desconocido y tipos equivocados. Nada de eso debe usarse.
+        const f = JSON.parse(JSON.stringify(feedPrueba.feed));
+        f.propiedades.forEach((x, i) => { if (x.portada) x.portada.miniatura = i % 2 ? "https://hostil.example/x.webp" : "javascript:alert(1)"; x.estado = i % 3 ? "<img src=x onerror=alert(1)>" : x.estado; });
+        f.propiedades.push({ slug: 42, estado: [] }, null, "texto");
+        return enviar(TIPOS[".json"], JSON.stringify(f));
+      }
+      return enviar(TIPOS[".json"], JSON.stringify(feedPrueba.feed));
+    }
+    if (u.startsWith("/assets/propiedades/_optimizadas/th-")) {
+      if (globalThis.__miniaturasLentas) { setTimeout(() => feedPrueba.miniatura(u).then((b) => (b ? (res.writeHead(200, { "Content-Type": "image/webp" }), res.end(b)) : (res.writeHead(404), res.end("404")))), globalThis.__miniaturasLentas); return; }
+      feedPrueba.miniatura(u).then((b) => (b ? (res.writeHead(200, { "Content-Type": "image/webp", "Cache-Control": "no-store" }), res.end(b)) : (res.writeHead(404), res.end("404"))));
+      return;
+    }
     if (u === "/admin/repo-files.js") return enviar(TIPOS[".js"], repoFiles());
     if (u === "/admin/test-hooks.js") return enviar(TIPOS[".js"], ganchos);
     if (u === "/admin/decap-cms.js") return enviar(TIPOS[".js"], fs.readFileSync(decap.cache));
     if (u === "/admin/galeria-fotos.js") return enviar(TIPOS[".js"], fs.readFileSync(path.join(RAIZ, "admin", "galeria-fotos.js")));
+    if (u === "/admin/listado-propiedades.js") { if (globalThis.__sinListadoJs) { res.writeHead(404); return res.end("404"); } return enviar(TIPOS[".js"], fs.readFileSync(path.join(RAIZ, "admin", "listado-propiedades.js"))); }
     let archivo;
     if (u.startsWith("/__fixtures/")) archivo = path.join(dirFixtures, u.slice("/__fixtures/".length));
     else archivo = path.normalize(path.join(RAIZ, u));
@@ -206,7 +209,7 @@ const ENTRADA = "apartamentos-amoblados-en-venta-en-costa-del-este-panam%C3%A1";
 async function abrirPanel(cdp, base, ancho) {
   const ev = async (expr) => {
     const r = await cdp.send("Runtime.evaluate", { expression: expr, awaitPromise: true, returnByValue: true });
-    if (r.exceptionDetails) throw new Error(JSON.stringify(r.exceptionDetails).slice(0, 300));
+    if (r.exceptionDetails) throw new Error(((r.exceptionDetails.exception && r.exceptionDetails.exception.description) || JSON.stringify(r.exceptionDetails)).slice(0, 400) + " | expr: " + String(expr).slice(0, 160).replace(/\s+/g, " "));
     return r.result.value;
   };
   const p = { cdp, base, ev };
@@ -388,6 +391,12 @@ const igualesSinGaleria = (a, b) => {
 };
 
 async function escenarios(p, dirFix, n, temporales) {
+  if (process.env.SOLO_LISTADO) {
+    // Solo los grupos 16 y 17 (listado de Propiedades); inicia sesión en el panel y los ejecuta.
+    await p.cargar();
+    await grupoListado(p);
+    return;
+  }
   const f = (nombre) => path.join(dirFix, nombre);
   const fotos = (k) => Array.from({ length: k }, (_, i) => f(n(i + 1)));
   const rutaPublica = (a) => a.archivo;
@@ -851,7 +860,7 @@ async function escenarios(p, dirFix, n, temporales) {
   await dormir(400);
   const hov = await p.ev(`(() => { const e = document.querySelector('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])'); const cs = getComputedStyle(e); return cs.borderTopColor + '|' + cs.boxShadow; })()`);
   ok("listado: al pasar el ratón la entrada resalta con el borde en el acento de la colección (terracota en Propiedades) y sombra", /181, 71, 42|0\.7098\d* 0\.2784\d* 0\.1647\d*/.test(hov) && /rgba\(10, 10, 10, 0\.08\)/.test(hov), hov);
-  ok("listado: separación entre entradas y título legible (títulos de 15 px, o 16 px en la primera línea de Propiedades)", await p.ev(`(() => { const t = document.querySelector('[class*="-ListCardTitle"]'); const cs = getComputedStyle(t); const a = document.querySelectorAll('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])'); const g = a[1].getBoundingClientRect().top - a[0].getBoundingClientRect().bottom; return (cs.fontSize === '15px' || (cs.fontSize === '13px' && getComputedStyle(t, '::first-line').fontSize === '16px')) && parseFloat(cs.lineHeight) >= 20 && g >= 9; })()`));
+  ok("listado: separación entre entradas y título legible (títulos de 15 px, o 16 px en la primera línea de Propiedades)", await p.ev(`(() => { const t = document.querySelector('[class*="-ListCardTitle"]'); const cs = getComputedStyle(t); const a = document.querySelectorAll('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])'); const g = a[1].getBoundingClientRect().top - a[0].getBoundingClientRect().bottom; return (cs.fontSize === '15px' || cs.fontSize === '16px') && parseFloat(cs.lineHeight) >= 20 && g >= 9; })()`));
   // --- Editor: estados de guardado
   await p.ev(`location.hash = '#/collections/propiedades/entries/${ENTRADA}'`);
   await p.esperar("!!document.querySelector('[data-galeria-fotos]')");
@@ -1088,10 +1097,11 @@ async function escenarios(p, dirFix, n, temporales) {
     await p.esperar("!!document.querySelector('[class*=\"-ListCard\"]:not([class*=\"-ListCardLink\"]):not([class*=\"-ListCardTitle\"])')", 15000);
     await dormir(500);
     const l = JSON.parse(await p.ev(`(() => { const c = document.querySelector('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])'); const b = getComputedStyle(c, '::before'); const t = document.querySelector('[class*="-ListCardTitle"]'); const a = c.querySelectorAll('a').length; return JSON.stringify({ franja: b.backgroundColor, ancho: b.width, radio: getComputedStyle(c).borderTopLeftRadius, titulo: getComputedStyle(t).fontSize, n: document.querySelectorAll('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])').length }); })()`));
-    vistos.add(l.franja);
-    ok(`${col}: el listado muestra tarjetas con franja de acento propia de la colección (${acentos[col]}), radio de 16 px y título de 15 px (Propiedades: datos de 13 px bajo el título)`, l.franja === acentos[col] && l.ancho === "4px" && l.radio === "16px" && l.titulo === (col === "propiedades" ? "13px" : "15px") && l.n >= 1, JSON.stringify(l));
+    if (col !== "propiedades") vistos.add(l.franja);
+    // Propiedades: sus tarjetas están ENRIQUECIDAS (portada a la izquierda, ver grupo 17); las demás colecciones llevan la franja de acento de 4 px.
+    ok(`${col}: el listado muestra tarjetas ` + (col === "propiedades" ? "enriquecidas con portada (148 px), radio de 16 px y título de 16 px" : `con franja de acento propia de la colección (${acentos[col]}), radio de 16 px y título de 15 px`), col === "propiedades" ? (l.ancho === "148px" && l.radio === "16px" && l.titulo === "16px" && l.n >= 1) : (l.franja === acentos[col] && l.ancho === "4px" && l.radio === "16px" && l.titulo === "15px" && l.n >= 1), JSON.stringify(l));
   }
-  ok("los cuatro listados tienen un acento distinto entre sí (colecciones diferenciables)", vistos.size === 4, [...vistos].join(" | "));
+  ok("Proyectos, Perspectivas y Asesores tienen un acento distinto entre sí (colecciones diferenciables); Propiedades se distingue por sus tarjetas con portada", vistos.size === 3, [...vistos].join(" | "));
   await p.ev("location.hash = '#/collections/perspectivas'");
   await dormir(600);
   await p.ev(`(() => { const b = document.querySelector('[aria-label="Grid view option"]'); if (b) b.click(); })()`);
@@ -1099,6 +1109,31 @@ async function escenarios(p, dirFix, n, temporales) {
   const gr = JSON.parse(await p.ev(`(() => { const c = document.querySelector('[class*="-GridCard"]:not([class*="-GridCardLink"])'); return JSON.stringify(c ? { alto: Math.round(c.getBoundingClientRect().height), franja: getComputedStyle(c, '::before').backgroundColor } : null); })()`));
   ok("vista de cuadrícula: tarjetas de 176 px (en vez de 240 px casi vacíos) con la franja de acento de la colección", !!gr && gr.alto === 176 && gr.franja === acentos.perspectivas, JSON.stringify(gr));
   await p.ev(`(() => { const b = document.querySelector('[aria-label="List view option"]'); if (b) b.click(); })()`);
+  await grupoListado(p);
+  const ed = JSON.parse(await p.ev(`(() => { return null; })()`));
+  await enColeccion("perspectivas", "turismo-record", "!!document.querySelector('.cms-editor-visual')", "titulo");
+  const alturas = JSON.parse(await p.ev(`(() => JSON.stringify([...document.querySelectorAll('.cms-editor-visual [class*="editorStyles"]')].map((e) => Math.round(parseFloat(getComputedStyle(e).minHeight)))))()`));
+  ok("perspectivas: los editores de texto enriquecido bajan su altura mínima de 300 a 190 px (siguen creciendo con el contenido)", alturas.length === 2 && alturas.every((a) => a === 190), JSON.stringify(alturas));
+  await p.cargar();
+  const altP = JSON.parse(await p.ev(`(() => JSON.stringify([...document.querySelectorAll('.cms-editor-visual [class*="editorStyles"]')].map((e) => Math.round(parseFloat(getComputedStyle(e).minHeight)))))()`));
+  ok("propiedades: NO se altera la altura de sus editores (sigue como en el PR #20)", altP.length === 2 && altP.every((a) => a !== 190), JSON.stringify(altP));
+
+  return;
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Grupos 16 y 17: listado de Propiedades (se pueden ejecutar solos con SOLO_LISTADO=1) */
+/* ------------------------------------------------------------------ */
+async function grupoListado(p) {
+  const vista = async (ancho, alto) => { await p.cdp.send("Emulation.setDeviceMetricsOverride", { width: ancho, height: alto || 900, deviceScaleFactor: 1, mobile: ancho < 500 }); await dormir(700); };
+  const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const lum = (c) => { const [r, g, b] = c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const contraste = (a, b) => { const la = lum(a), lb = lum(b); return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05); };
+  const mezcla = (fg, bg, a) => fg.map((v, i) => Math.round(v * a + bg[i] * (1 - a)));
+  const HUESO = hex("#F5F2EE");
+  const rgbDe = (c) => { const m = String(c).match(/rgba?\(([^)]+)\)/); if (!m) return null; const v = m[1].split(",").map((x) => parseFloat(x)); return { c: v.slice(0, 3), a: v.length > 3 ? v[3] : 1 }; };
+  const sobre = (fg, bg) => { const f = rgbDe(fg), b = rgbDe(bg) || { c: HUESO, a: 1 }; return mezcla(f.c, b.c, f.a); };
   /* ---------- 16. Listado de Propiedades: summary de dos líneas, filtros nativos, jerarquía y responsive ---------- */
   grupo = "16 · listado de propiedades";
   await vista(1440);
@@ -1112,7 +1147,7 @@ async function escenarios(p, dirFix, n, temporales) {
   const cfgL = require("js-yaml").load(fs.readFileSync(path.join(RAIZ, "admin", "config.yml"), "utf8")).collections[0];
   const estadosCfg = cfgL.fields.find((f) => f.name === "estado").options.map((o) => o.value);
   const operCfg = cfgL.fields.find((f) => f.name === "operacion").options.map((o) => o.value);
-  ok("config: el summary es título + «referencia · operación · tipo · estado» con los campos reales y sin inventar datos", /\{\{titulo( \| truncate\(\d+\))?\}\}\\n\{\{referenciaMakom \| default\('sin referencia'\)\}\} · \{\{operacion\}\} · \{\{tipo\}\} · \{\{estado\}\}/.test(cfgL.summary.replace(/\n/g, "\\n")), cfgL.summary);
+  ok("config: el summary es «referencia · operación · tipo» y, debajo, el título (el estado lo muestra la insignia), con los campos reales y sin inventar datos", /^\{\{referenciaMakom \| default\('sin referencia'\)\}\} · \{\{operacion\}\} · \{\{tipo\}\}\\n\{\{titulo( \| truncate\(\d+\))?\}\}$/.test(cfgL.summary.replace(/\n/g, "\\n")), cfgL.summary);
   ok("config: hay un filtro nativo (view_filters) por CADA estado definido en el campo «Estado» y por cada operación, con el valor exacto", estadosCfg.every((v) => cfgL.view_filters.some((f) => f.field === "estado" && f.pattern === "^" + v + "$")) && operCfg.every((v) => cfgL.view_filters.some((f) => f.field === "operacion" && f.pattern === "^" + v + "$")), JSON.stringify({ estadosCfg, operCfg }));
   const cargarTodas = async () => { for (let i = 0; i < 10; i++) { await p.ev(`(() => { window.scrollTo(0, document.documentElement.scrollHeight); [...document.querySelectorAll('*')].filter((e) => e.scrollHeight > e.clientHeight + 50 && /auto|scroll/.test(getComputedStyle(e).overflowY)).forEach((e) => { e.scrollTop = e.scrollHeight; }); })()`); await dormir(500); } };
   await p.ev("location.hash = '#/collections/propiedades'");
@@ -1122,17 +1157,17 @@ async function escenarios(p, dirFix, n, temporales) {
   const total = Object.keys(await p.ev("(() => { const o = {}; Object.keys(window.__crudo.content.propiedades).forEach((k) => { o[k] = 1; }); return o; })()")).length;
   const slugsRepo = await p.ev("Object.keys(window.__crudo.content.propiedades).map((k) => k.replace(/\\.json$/, ''))");
   const contados = {}; filas.forEach((f) => { contados[f.slug] = (contados[f.slug] || 0) + 1; });
-  ok(`el listado carga TODAS las propiedades (reales + 4 sintéticas = ${total}) con su tarjeta`, filas.length === total, filas.length + " de " + total + " | repetidas: " + JSON.stringify(Object.entries(contados).filter(([k, v]) => v > 1)) + " | sin tarjeta: " + JSON.stringify(slugsRepo.filter((k) => !contados[k])) + " | sin clave: " + JSON.stringify(Object.keys(contados).filter((k) => !slugsRepo.includes(k))));
-  const mal = filas.filter((f) => { const [l1, l2] = f.texto.split("\n"); const esperado1 = f.titulo.length > 110 ? f.titulo.slice(0, 110) + "..." : f.titulo; return l1 !== esperado1 || l2 !== `${f.ref || "sin referencia"} · ${f.op} · ${f.tipo} · ${f.estado}`; });
-  ok("fidelidad: en TODAS las tarjetas la 1.ª línea es el título (cortado a 110 caracteres solo si lo excede) y la 2.ª es referencia · operación · tipo · estado, leídos de los datos de esa propiedad", mal.length === 0, JSON.stringify(mal.slice(0, 2)));
+  ok(`el listado carga TODAS las propiedades (reales + 5 sintéticas = ${total}) con su tarjeta`, filas.length === total, filas.length + " de " + total + " | repetidas: " + JSON.stringify(Object.entries(contados).filter(([k, v]) => v > 1)) + " | sin tarjeta: " + JSON.stringify(slugsRepo.filter((k) => !contados[k])) + " | sin clave: " + JSON.stringify(Object.keys(contados).filter((k) => !slugsRepo.includes(k))));
+  const mal = filas.filter((f) => { const [l1, l2] = f.texto.split("\n"); const esperado2 = f.titulo.length > 120 ? f.titulo.slice(0, 120) + "..." : f.titulo; return l1 !== `${f.ref || "sin referencia"} · ${f.op} · ${f.tipo}` || l2 !== esperado2; });
+  ok("fidelidad: en TODAS las tarjetas la 1.ª línea es referencia · operación · tipo y la 2.ª el título (cortado a 120 caracteres solo si lo excede), leídos de los datos de esa propiedad", mal.length === 0, JSON.stringify(mal.slice(0, 2)));
   const sint = Object.fromEntries(filas.filter((f) => /^zz-sintetica/.test(f.slug)).map((f) => [f.slug.replace("zz-sintetica-", ""), f]));
-  ok("casos especiales: borrador sin referencia («sin referencia»), archivada, vendida y reservada se muestran con su estado real", sint["borrador-sin-referencia"] && sint["borrador-sin-referencia"].texto.split("\n")[1] === "sin referencia · venta · penthouse · borrador" && /· archivada$/.test(sint["archivada-titulo-largo"].texto) && /· vendida$/.test(sint["vendida"].texto) && /· reservada$/.test(sint["reservada"].texto), JSON.stringify(Object.keys(sint)));
-  ok("título larguísimo (> 110 caracteres): la tarjeta lo corta con «…» solo al mostrarlo; el título guardado no cambia", sint["borrador-sin-referencia"].texto.split("\n")[0].endsWith("...") && sint["borrador-sin-referencia"].titulo.length > 150 && !sint["borrador-sin-referencia"].titulo.endsWith("..."));
+  ok("casos especiales: borrador sin referencia («sin referencia»), archivada, vendida y reservada se muestran con su referencia o «sin referencia» (el estado lo cubre la insignia, probada en el grupo 17)", sint["borrador-sin-referencia"] && sint["borrador-sin-referencia"].texto.split("\n")[0] === "sin referencia · venta · penthouse" && sint["borrador-sin-referencia"].estado === "borrador" && sint["archivada-titulo-largo"].estado === "archivada" && sint["vendida"].estado === "vendida" && sint["reservada"].estado === "reservada", JSON.stringify(Object.keys(sint)));
+  ok("título larguísimo (> 120 caracteres): la tarjeta lo corta con «…» solo al mostrarlo; el título guardado no cambia", sint["borrador-sin-referencia"].texto.split("\n")[1].endsWith("...") && sint["borrador-sin-referencia"].titulo.length > 150 && !sint["borrador-sin-referencia"].titulo.endsWith("..."));
   ok("las tarjetas enlazan a la edición de SU propiedad (#/collections/propiedades/entries/<slug>) y cada una trae el indicador de acento", await p.ev(`(() => [...document.querySelectorAll('[class*="-ListCardLink"]')].every((a) => /^#\\/collections\\/propiedades\\/entries\\/.+/.test(a.getAttribute('href'))))()`));
-  const jer = JSON.parse(await p.ev(`(() => { const t = document.querySelector('[class*="-ListCardTitle"]'); const b = getComputedStyle(t), f = getComputedStyle(t, '::first-line'); return JSON.stringify({ base: b.fontSize, ps: b.whiteSpace, f1: f.fontSize, peso: f.fontWeight, col1: f.color, col2: b.color }); })()`));
-  ok("escritorio (≥ 1100 px): jerarquía — título 16 px / 500 en negro y datos 13 px en gris, respetando el salto de línea", jer.base === "13px" && jer.f1 === "16px" && jer.peso === "500" && jer.ps === "pre-line" && jer.col1 === "rgb(10, 10, 10)" && jer.col2 !== jer.col1, JSON.stringify(jer));
+  const jer = JSON.parse(await p.ev(`(() => { const t = document.querySelector('[class*="-ListCardTitle"]'); const b = getComputedStyle(t), f = getComputedStyle(t, '::first-line'); return JSON.stringify({ base: b.fontSize, ps: b.whiteSpace, f1: f.fontSize, peso: f.fontWeight, col1: b.color, col2: f.color, up: f.textTransform, pesoBase: b.fontWeight }); })()`));
+  ok("jerarquía: título de 16 px / 500 en negro y, encima, sobretítulo de 11,5 px / 600 en mayúsculas y gris (referencia · operación · tipo), respetando el salto de línea", jer.base === "16px" && jer.pesoBase === "500" && jer.f1 === "11.5px" && jer.peso === "600" && jer.up === "uppercase" && jer.ps === "pre-line" && jer.col1 === "rgb(10, 10, 10)" && jer.col2 !== jer.col1, JSON.stringify(jer));
   const contr = contraste(sobre(jer.col2, "rgb(255,255,255)"), [255, 255, 255]);
-  ok(`contraste de la línea de datos (gris sobre blanco) ≥ 4,5:1 (${contr.toFixed(2)}:1)`, contr >= 4.5, contr);
+  ok(`contraste del sobretítulo (gris sobre blanco) ≥ 4,5:1 (${contr.toFixed(2)}:1)`, contr >= 4.5, contr);
   // Filtros nativos
   const botones = await p.ev(`[...document.querySelectorAll('[class*="-CollectionControlsContainer"] button, [class*="-CollectionControlsContainer"] [role="button"]')].map((b) => b.textContent.trim() || b.getAttribute('aria-label'))`);
   ok("los controles del listado conservan «Ordenar por» y las vistas de lista/cuadrícula y suman el filtro nativo", botones.some((b) => /Ordenar/.test(b)) && botones.includes("List view option") && botones.includes("Grid view option") && botones.some((b) => /Filter|Filtr/.test(b)), JSON.stringify(botones));
@@ -1146,13 +1181,14 @@ async function escenarios(p, dirFix, n, temporales) {
     await dormir(300);
   };
   await elegirFiltro("Archivadas");
-  const archivadas = JSON.parse(await p.ev(`(() => JSON.stringify([...document.querySelectorAll('[class*="-ListCardTitle"]')].map((t) => t.textContent.split('\\n')[1].split(' · ').pop())))()`));
+  await p.esperar("!!document.querySelector('li[data-mk-card]')", 8000);
+  const archivadas = JSON.parse(await p.ev(`(() => JSON.stringify([...document.querySelectorAll('li[data-mk-card]')].map((t) => t.getAttribute('data-mk-estado'))))()`));
   ok("filtro «Archivadas»: solo quedan propiedades con estado archivada (reales + sintéticas)", archivadas.length >= 2 && archivadas.every((e) => e === "archivada"), JSON.stringify(archivadas));
   await elegirFiltro("Archivadas");
   await cargarTodas();
   ok("al quitar el filtro vuelven todas las propiedades", (await contar()) === total, (await contar()) + " de " + total);
   await elegirFiltro("En alquiler");
-  const alq = JSON.parse(await p.ev(`(() => JSON.stringify([...document.querySelectorAll('[class*="-ListCardTitle"]')].map((t) => t.textContent.split('\\n')[1].split(' · ')[1])))()`));
+  const alq = JSON.parse(await p.ev(`(() => JSON.stringify([...document.querySelectorAll('[class*="-ListCardTitle"]')].map((t) => t.textContent.split('\\n')[0].split(' · ')[1])))()`));
   ok("filtro «En alquiler»: solo propiedades con operación alquiler", alq.length >= 3 && alq.every((e) => e === "alquiler"), JSON.stringify(alq.slice(0, 4)));
   await elegirFiltro("En alquiler");
   // Navegación a la edición
@@ -1171,9 +1207,10 @@ async function escenarios(p, dirFix, n, temporales) {
     await p.ev("location.hash = '#/collections/propiedades'");
     await p.esperar("document.querySelectorAll('[class*=\"-ListCardLink\"]').length > 0", 15000);
     await cargarTodas();
+    await p.esperar("!!document.querySelector('li[data-mk-card]')", 8000);
     await p.ev("window.scrollTo(0, 0); [...document.querySelectorAll('*')].filter((e) => e.scrollTop > 0).forEach((e) => { e.scrollTop = 0; })");
     const r = JSON.parse(await p.ev(`(() => { const vw = innerWidth; const cards = [...document.querySelectorAll('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])')]; const fuera = cards.filter((c) => { const q = c.getBoundingClientRect(); return q.right > vw + 1 || q.left < -1; }).length; const desb = [...document.querySelectorAll('[class*="-ListCardTitle"]')].filter((t) => t.scrollWidth > t.clientWidth + 1).length; const f = getComputedStyle(document.querySelector('[class*="-ListCardTitle"]'), '::first-line').fontSize; const h = cards.map((c) => c.getBoundingClientRect().height); const ctl = document.querySelector('[class*="-CollectionControlsContainer"]').getBoundingClientRect(); return JSON.stringify({ n: cards.length, fuera, desb, f1: f, hmin: Math.round(Math.min(...h)), sw: document.documentElement.scrollWidth - vw, ctlDentro: ctl.right <= vw + 1 }); })()`));
-    ok(`${w} px: las ${total} tarjetas caben en pantalla, el texto largo se ajusta sin desbordar, sin desplazamiento horizontal y los controles quedan dentro` + (w >= 1100 ? " (jerarquía 16 px)" : " (texto uniforme 15 px)"), r.n === total && r.fuera === 0 && r.desb === 0 && r.sw <= 1 && r.ctlDentro && (w >= 1100 ? r.f1 === "16px" : r.f1 === "15px") && r.hmin >= 60, JSON.stringify(r));
+    ok(`${w} px: las ${total} tarjetas caben en pantalla, el texto largo se ajusta sin desbordar, sin desplazamiento horizontal y los controles quedan dentro` + (w > 560 ? " (sobretítulo 11,5 px)" : " (sobretítulo 10,5 px)"), r.n === total && r.fuera === 0 && r.desb === 0 && r.sw <= 1 && r.ctlDentro && (w > 560 ? r.f1 === "11.5px" : r.f1 === "10.5px") && r.hmin >= 60, JSON.stringify(r));
   }
   await vista(1440);
   // Foco con teclado en las tarjetas
@@ -1184,15 +1221,306 @@ async function escenarios(p, dirFix, n, temporales) {
   const fcard = await p.ev(`(() => { const a = document.querySelector('[class*="-ListCardLink"]'); a.focus(); const c = getComputedStyle(a); const li = a.closest('li'); return a === document.activeElement && /solid/.test(c.outlineStyle) && /2px/.test(c.outlineWidth) && /181, 71, 42/.test(c.outlineColor) && getComputedStyle(li).borderTopColor.length > 0; })()`);
   ok("teclado: el enlace de la tarjeta recibe el foco con contorno de 2 px terracota", fcard === true, fcard);
 
-  const ed = JSON.parse(await p.ev(`(() => { return null; })()`));
-  await enColeccion("perspectivas", "turismo-record", "!!document.querySelector('.cms-editor-visual')", "titulo");
-  const alturas = JSON.parse(await p.ev(`(() => JSON.stringify([...document.querySelectorAll('.cms-editor-visual [class*="editorStyles"]')].map((e) => Math.round(parseFloat(getComputedStyle(e).minHeight)))))()`));
-  ok("perspectivas: los editores de texto enriquecido bajan su altura mínima de 300 a 190 px (siguen creciendo con el contenido)", alturas.length === 2 && alturas.every((a) => a === 190), JSON.stringify(alturas));
-  await p.cargar();
-  const altP = JSON.parse(await p.ev(`(() => JSON.stringify([...document.querySelectorAll('.cms-editor-visual [class*="editorStyles"]')].map((e) => Math.round(parseFloat(getComputedStyle(e).minHeight)))))()`));
-  ok("propiedades: NO se altera la altura de sus editores (sigue como en el PR #20)", altP.length === 2 && altP.every((a) => a !== 190), JSON.stringify(altP));
+  /* ---------- 17. Listado de Propiedades ENRIQUECIDO (portada, estado y acceso a editar): admin/listado-propiedades.js + /admin/listado-propiedades.json ---------- */
+  grupo = "17 · listado enriquecido";
+  {
+  await vista(1440);
+  const CARD = `[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])`;
+  const abrirListado = async ({ limpiarCache = true, hash = "#/collections/propiedades" } = {}) => {
+    if (limpiarCache) await p.ev("try { localStorage.removeItem('mk-listado-propiedades-v1'); } catch (e) {}").catch(() => {});
+    const l = p.cdp.una("Page.loadEventFired");
+    await p.cdp.send("Page.navigate", { url: p.base + "/admin/" });
+    await Promise.race([l, dormir(15000)]);
+    await p.esperar("!!document.querySelector('button')", 15000);
+    // (la copia local se borra ANTES de navegar: con la sesión ya iniciada Decap abre el listado por sí solo y el panel escribiría su copia nueva enseguida)
+    await p.ev("(() => { const b = [...document.querySelectorAll('button')].find((b) => /Iniciar sesi/i.test(b.textContent)); if (b) b.click(); })()");
+    await p.esperar("!!document.querySelector('a[href*=\"collections\"], [class*=SidebarContainer]')", 15000);
+    await p.ev(`location.hash = ${JSON.stringify(hash)}`);
+    await p.esperar(`document.querySelectorAll('${CARD.replace(/'/g, "\\'")}').length > 0`, 15000);
+  };
+  // Recorre el listado de arriba abajo en pasos de pantalla (como una persona): la paginación de Decap carga más tarjetas al llegar al final y la carga perezosa de
+  // miniaturas se activa para cada tarjeta que pasa por la pantalla. Termina de vuelta arriba.
+  const cargarTodo = async () => {
+    for (let vuelta = 0; vuelta < 4; vuelta++) {
+      const n0 = await p.ev(`document.querySelectorAll('${CARD}').length`);
+      await p.ev(`(() => { const c = [...document.querySelectorAll('*')].filter((e) => e.scrollHeight > e.clientHeight + 50 && /auto|scroll/.test(getComputedStyle(e).overflowY)).concat([document.scrollingElement]); window.__scrollers = c; c.forEach((e) => { e.scrollTop = 0; }); })()`);
+      for (let k = 0; k < 40; k++) {
+        const fin = await p.ev(`(() => { let fin = true; window.__scrollers.forEach((e) => { e.scrollTop += 420; if (e.scrollTop + e.clientHeight < e.scrollHeight - 2) fin = false; }); return fin; })()`);
+        await dormir(120);
+        if (fin) break;
+      }
+      await dormir(500);
+      if ((await p.ev(`document.querySelectorAll('${CARD}').length`)) === n0 && vuelta > 0) break;
+    }
+    await p.ev(`(window.__scrollers || []).forEach((e) => { e.scrollTop = 0; })`);
+    await dormir(300);
+  };
+  const resumenTarjetas = () => p.ev(`(() => { const t = [...document.querySelectorAll('${CARD}')]; const c = (a, v) => t.filter((x) => x.getAttribute(a) === v).length; return JSON.stringify({ n: t.length, enr: t.filter((x) => x.hasAttribute('data-mk-card')).length, ok: c('data-mk-foto', 'ok'), sin: c('data-mk-foto', 'sin'), error: c('data-mk-foto', 'error'), cargando: c('data-mk-foto', 'cargando'), estados: t.filter((x) => x.hasAttribute('data-mk-estado')).length }); })()`).then(JSON.parse);
+  const esperarTodas = async (n) => p.esperar(`document.querySelectorAll('li[data-mk-card]').length >= ${n} && !document.querySelector('li[data-mk-card][data-mk-foto="cargando"]')`, 20000);
+  const filasDatos = JSON.parse(JSON.stringify((await (async () => { const f = require("./lib/listado-feed-prueba").crearFeed(require("./lib/repo-prueba").construirRepo(RAIZ).content.propiedades, RAIZ, sharp); return f.feed; })()).propiedades));
+  const nTot = filasDatos.length;
+  const conFoto = filasDatos.filter((f) => f.portada).length;
+  const nFotoRota = filasDatos.filter((f) => f.portada && /no-existe/.test(f.portada.original)).length;
 
-  return;
+  /* ---- A. Datos y estado inicial ---- */
+  await abrirListado();
+  await cargarTodo();
+  await esperarTodas(nTot);
+  const a0 = await resumenTarjetas();
+  const est0 = JSON.parse(await p.ev("JSON.stringify(window.MakomListadoPropiedades.estado())"));
+  ok("el panel lee /admin/listado-propiedades.json (mismo origen) y marca el estado «ok» con una fila por propiedad", est0.datos === "ok" && est0.filas === nTot && (await p.ev("document.documentElement.getAttribute('data-mk-listado')")) === "ok", JSON.stringify(est0));
+  ok(`TODAS las propiedades (${nTot}) muestran su tarjeta enriquecida, con insignia de estado`, a0.n === nTot && a0.enr === nTot && a0.estados === nTot, JSON.stringify(a0));
+  ok(`portadas: ${conFoto - nFotoRota} cargan su miniatura real, ${nTot - conFoto} sin fotografía muestran el marcador de MAKOM y ${nFotoRota} con archivo roto también (sin romper la tarjeta)`, a0.ok === conFoto - nFotoRota && a0.sin === nTot - conFoto && a0.error === nFotoRota && a0.cargando === 0, JSON.stringify(a0));
+  const fid = JSON.parse(await p.ev(`(() => JSON.stringify([...document.querySelectorAll('${CARD}')].map((li) => { const a = li.querySelector('a'); const slug = decodeURIComponent(a.getAttribute('href').split('/entries/')[1]).normalize('NFC'); return { slug, estado: li.getAttribute('data-mk-estado'), badge: getComputedStyle(li, '::after').content, foto: li.getAttribute('data-mk-foto'), portada: getComputedStyle(li).getPropertyValue('--mk-portada') }; })))()`));
+  const etiquetas = { disponible: "Disponible", reservada: "Reservada", alquilada: "Alquilada", vendida: "Vendida", archivada: "Archivada", borrador: "Borrador" };
+  const malFid = fid.filter((x) => { const d = filasDatos.find((f) => f.slug.normalize("NFC") === x.slug); return !d || x.estado !== d.estado || x.badge !== `"● ${etiquetas[d.estado]}"`; });
+  ok("fidelidad: en cada tarjeta la insignia dice el estado REAL de esa propiedad (disponible, reservada, alquilada, vendida, archivada o borrador)", malFid.length === 0, JSON.stringify(malFid.slice(0, 2)));
+  const cfgEstados = require("js-yaml").load(fs.readFileSync(path.join(RAIZ, "admin", "config.yml"), "utf8")).collections[0].fields.find((f) => f.name === "estado").options.map((o) => o.value);
+  const cssTema = fs.readFileSync(path.join(RAIZ, "admin", "tema-makom.css"), "utf8");
+  ok("el tema define una insignia para CADA estado del campo «Estado» de config.yml (si se agrega uno, la prueba avisa)", cfgEstados.every((e) => cssTema.includes(`li[data-mk-estado="${e}"]::after`)), cfgEstados.join(","));
+  ok("el marcador de las propiedades sin portada usa el archivo oficial del logo de MAKOM (no uno redibujado)", /makom-capital-group-logo-positivo\.svg/.test(cssTema) && fs.existsSync(path.join(RAIZ, "assets", "logos", "makom-capital-group-logo-positivo.svg")));
+
+  /* ---- B. Persistencia del enriquecimiento ---- */
+  const tardanza = async (accion, cond) => { const t0 = Date.now(); await accion(); const ok1 = await p.esperar(cond, 8000); return { ok: ok1, ms: Date.now() - t0 }; };
+  let r = await tardanza(async () => { await p.ev(`document.querySelector('[aria-label="Grid view option"]').click()`); }, `document.querySelectorAll('li[data-mk-card]').length >= 10 && !!document.querySelector('[class*="-GridCard"][data-mk-card]')`);
+  const rg = JSON.parse(await p.ev(`(() => { const g = [...document.querySelectorAll('[class*="-GridCard"]:not([class*="-GridCardLink"])')]; const c = g[0]; const b = c ? getComputedStyle(c, '::before') : null; return JSON.stringify({ n: g.length, enr: g.filter((x) => x.hasAttribute('data-mk-card')).length, alto: c && Math.round(c.getBoundingClientRect().height), foto: b && b.height }); })()`));
+  ok("cambiar a la vista de cuadrícula: las tarjetas se reconstruyen enriquecidas de inmediato (portada arriba, 268 px de alto)", r.ok && rg.n > 0 && rg.enr === rg.n && rg.alto === 268 && rg.foto === "150px", JSON.stringify({ r, rg }));
+  r = await tardanza(async () => { await p.ev(`document.querySelector('[aria-label="List view option"]').click()`); }, `!!document.querySelector('[class*="-ListCard"][data-mk-card]')`);
+  const rl = await resumenTarjetas();
+  ok("volver a la vista de lista: vuelven enriquecidas (todas las cargadas)", r.ok && rl.n > 0 && rl.enr === rl.n, JSON.stringify(rl));
+  const msVista = r.ms;
+  // Orden
+  await p.real("Ordenar por");
+  await dormir(300);
+  const opcionesOrden = await p.ev(`[...document.querySelectorAll('[class*="-StyledMenuItem"]')].map((e) => e.textContent.trim())`);
+  await p.ev(`(() => { const o = [...document.querySelectorAll('[class*="-StyledMenuItem"]')][1]; if (o) o.click(); })()`);
+  await dormir(500);
+  await p.cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
+  const primeroAntes = await p.ev(`document.querySelector('${CARD} a').getAttribute('href')`);
+  await p.esperar(`!!document.querySelector('li[data-mk-card]')`, 5000);
+  const ro = await resumenTarjetas();
+  ok(`ordenar (${opcionesOrden.join(" / ")}): las tarjetas reordenadas siguen enriquecidas (${ro.enr} de ${ro.n})`, ro.n > 0 && ro.enr === ro.n, JSON.stringify({ ro, opcionesOrden }));
+  // Filtros
+  const elegirFiltro17 = async (texto) => {
+    if (!(await p.ev("!!document.querySelector('[class*=\"-DropdownList\"] [class*=\"-StyledMenuItem\"]')"))) { await p.real("Filter by"); await dormir(400); }
+    await p.ev(`(() => { const o = [...document.querySelectorAll('[class*="-StyledMenuItem"]')].find((e) => e.textContent.trim() === ${JSON.stringify(texto)}); if (o) o.click(); })()`);
+    await dormir(700);
+    await p.cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
+    await dormir(200);
+  };
+  await elegirFiltro17("Archivadas");
+  const rf = await resumenTarjetas();
+  const estadosFiltro = await p.ev(`[...document.querySelectorAll('${CARD}')].map((x) => x.getAttribute('data-mk-estado'))`);
+  ok("aplicar el filtro «Archivadas»: quedan solo propiedades archivadas y TODAS enriquecidas", rf.n >= 2 && rf.enr === rf.n && estadosFiltro.every((e) => e === "archivada"), JSON.stringify({ rf, estadosFiltro }));
+  await elegirFiltro17("Archivadas");
+  await cargarTodo();
+  const rf2 = await resumenTarjetas();
+  ok("quitar el filtro: vuelven todas las propiedades, enriquecidas", rf2.n === nTot && rf2.enr === nTot, JSON.stringify(rf2));
+  // Cambiar de colección y volver
+  await p.ev("location.hash = '#/collections/proyectos'");
+  await p.esperar(`!!document.querySelector('[class*="-ListCardTitle"]') && !document.querySelector('li[data-mk-card]')`, 8000);
+  const otraCol = await p.ev("document.querySelectorAll('li[data-mk-card]').length");
+  await p.ev("location.hash = '#/collections/propiedades'");
+  const t1 = Date.now();
+  await p.esperar(`document.querySelectorAll('li[data-mk-card]').length > 0`, 8000);
+  const msVuelta = Date.now() - t1;
+  const rc = await resumenTarjetas();
+  ok("cambiar de colección (Proyectos no se enriquece) y volver a Propiedades: las tarjetas se reconstruyen enriquecidas", otraCol === 0 && rc.n > 0 && rc.enr === rc.n, JSON.stringify({ otraCol, rc, msVuelta }));
+  // Abrir una propiedad y volver
+  await p.ev(`document.querySelector('${CARD} a').click()`);
+  await p.esperar("!!document.querySelector('[id^=\"titulo-field-\"]')", 15000);
+  await dormir(500);
+  const enEditor = await p.ev("document.querySelectorAll('li[data-mk-card]').length");
+  await p.ev("(() => { const a = document.querySelector('[class*=\"-ToolbarSectionBackLink\"]'); if (a) a.click(); })()");
+  await p.esperar(`document.querySelectorAll('${CARD}').length > 0`, 15000);
+  await p.esperar(`!!document.querySelector('li[data-mk-card]')`, 8000);
+  const rv = await resumenTarjetas();
+  ok("abrir una propiedad (el editor no se toca) y volver con «←»: el listado regresa enriquecido", enEditor === 0 && rv.n > 0 && rv.enr === rv.n, JSON.stringify({ enEditor, rv }));
+  // Paginación (cargar más): ya cubierta en #A (35 tarjetas, 20 por página): se comprueba que se pidieron las páginas
+  ok("paginación nativa de Decap (20 en 20 al desplazarse): las tarjetas que llegan después también salen enriquecidas", nTot > 20 && a0.n === nTot && a0.enr === nTot);
+  // Búsqueda
+  await p.ev("location.hash = '#/collections/propiedades'");
+  await dormir(500);
+  const buscar = await p.ev(`(() => { const i = document.querySelector('[class*="-SearchInput"]'); return !!i; })()`);
+  let rb = null;
+  if (buscar) {
+    const c = await p.ev(`(() => { const e = document.querySelector('[class*="-SearchInput"]'); const q = e.getBoundingClientRect(); return { x: q.left + q.width / 2, y: q.top + q.height / 2 }; })()`);
+    for (const tp of ["mouseMoved", "mousePressed", "mouseReleased"]) await p.cdp.send("Input.dispatchMouseEvent", { type: tp, x: c.x, y: c.y, button: "left", clickCount: tp === "mouseMoved" ? 0 : 1 });
+    await p.cdp.send("Input.insertText", { text: "Chame" });
+    await dormir(1200);
+    rb = await p.ev(`(() => JSON.stringify({ hash: location.hash.slice(0, 30), tarjetas: document.querySelectorAll('${CARD}').length, enr: document.querySelectorAll('li[data-mk-card]').length, lista: [...document.querySelectorAll('[class*="-ListCardTitle"]')].map((t) => t.textContent.split('\\n')[1]).slice(0, 3) }))()`).then(JSON.parse);
+  }
+  ok("buscar (barra «Buscar todas»): el resultado aparece como tarjeta enriquecida", !buscar || (rb.tarjetas >= 1 && rb.enr === rb.tarjetas), JSON.stringify({ buscar, rb }));
+
+  /* ---- C. Carga perezosa, una sola petición por miniatura y rendimiento ---- */
+  await abrirListado();
+  await esperarTodas(1);
+  await dormir(600);
+  const antesScroll = await p.ev(`performance.getEntriesByType('resource').filter((e) => /_optimizadas[/]th-/.test(e.name) && e.transferSize > 0).length`);
+  await cargarTodo();
+  await esperarTodas(nTot);
+  const peticiones = await p.ev(`performance.getEntriesByType('resource').filter((e) => /_optimizadas[/]th-/.test(e.name) && e.transferSize > 0).map((e) => e.name)`);
+  ok(`carga perezosa: al abrir el listado solo se piden las miniaturas visibles (${antesScroll} de ${conFoto}); al desplazarse se piden el resto, cada una UNA sola vez (${peticiones.length} peticiones)`, antesScroll > 0 && antesScroll < conFoto && peticiones.length === conFoto && new Set(peticiones).size === peticiones.length, JSON.stringify({ antesScroll, peticiones: peticiones.length, conFoto }));
+  const peso = await p.ev(`(async () => { const u = performance.getEntriesByType('resource').filter((e) => /_optimizadas[/]th-/.test(e.name) && e.transferSize > 0).map((e) => e.name); let tot = 0, max = 0; for (const x of u) { const b = await (await fetch(x)).blob(); tot += b.size; max = Math.max(max, b.size); } const f = await (await fetch('/admin/listado-propiedades.json')).text(); return JSON.stringify({ miniaturasKB: Math.round(tot / 1024), maxKB: Math.round(max / 1024), feedKB: +(f.length / 1024).toFixed(1) }); })()`).then(JSON.parse);
+  ok(`peso: ${peso.miniaturasKB} KB en total para ${conFoto} miniaturas webp de 480 px (la mayor ${peso.maxKB} KB) y ${peso.feedKB} KB de datos; las fotografías originales (hasta ~16 MB) NO se descargan`, peso.maxKB <= 80 && peso.feedKB < 40, JSON.stringify(peso));
+  const trasPeso = await p.ev(`performance.getEntriesByType('resource').filter((e) => /_optimizadas[/]th-/.test(e.name) && e.transferSize > 0).length`);
+  await p.ev(`document.querySelector('[aria-label="Grid view option"]').click()`);
+  await dormir(500);
+  await p.ev(`document.querySelector('[aria-label="List view option"]').click()`);
+  await dormir(500);
+  const despuesVistas = await p.ev(`performance.getEntriesByType('resource').filter((e) => /_optimizadas[/]th-/.test(e.name) && e.transferSize > 0).length`);
+  ok("cambiar de vista dos veces NO vuelve a pedir las miniaturas (se reaplican desde la memoria del panel)", despuesVistas === trasPeso, despuesVistas + " vs " + trasPeso);
+  const coste = JSON.parse(await p.ev(`(() => { const f = window.MakomListadoPropiedades.reconciliar; const t0 = performance.now(); for (let i = 0; i < 50; i++) f(); const ms = (performance.now() - t0) / 50; return JSON.stringify({ msPorReconciliacion: +ms.toFixed(2), tarjetas: document.querySelectorAll('li[data-mk-card]').length, observadas: window.MakomListadoPropiedades.estado().observadas }); })()`));
+  ok(`rendimiento: reaplicar el enriquecimiento a ${coste.tarjetas} tarjetas tarda ${coste.msPorReconciliacion} ms (≤ 10 ms) y no quedan tarjetas observadas pendientes (${coste.observadas})`, coste.msPorReconciliacion <= 10 && coste.observadas === 0, JSON.stringify(coste));
+  const sinCambios = await p.ev(`(() => { const a = window.MakomListadoPropiedades.estado().version; window.MakomListadoPropiedades.reconciliar(); return window.MakomListadoPropiedades.estado().version === a; })()`);
+  ok("reaplicar es idempotente (no cambia la versión de los datos ni vuelve a escribir en las tarjetas al día)", sinCambios);
+  // Fuera del listado el script no hace trabajo: se comprueba con el editor abierto y escritura continua
+  await p.ev(`document.querySelector('${CARD} a').click()`);
+  await p.esperar("!!document.querySelector('[id^=\"titulo-field-\"]')", 15000);
+  const trabajo = await p.ev(`(async () => { let n = 0; const orig = window.MakomListadoPropiedades.reconciliar; const mo = new MutationObserver(() => {}); const i = document.querySelector('[id^="titulo-field-"]'); i.focus(); return JSON.stringify({ hash: location.hash.slice(0, 40) }); })()`);
+  await p.cdp.send("Input.insertText", { text: " prueba de escritura continua en el editor" });
+  await dormir(500);
+  ok("en el editor (otra ruta) el observador no reaplica nada: escribir en un campo no toca el listado ni cambia los datos del script", (await p.ev("window.MakomListadoPropiedades.estado().version")) === est0.version);
+
+  /* ---- D. Errores y resiliencia ---- */
+  // D1. El archivo de datos falla y no hay copia: tarjetas nativas, todo funciona
+  globalThis.__feedFalla = 500;
+  await abrirListado();
+  await dormir(800);
+  const d1 = await resumenTarjetas();
+  const est1 = JSON.parse(await p.ev("JSON.stringify(window.MakomListadoPropiedades.estado())"));
+  ok("si el archivo de datos falla (HTTP 500) y no hay copia, las tarjetas quedan como las dibuja Decap (nativas) y el estado es «error»", d1.n > 0 && d1.enr === 0 && est1.datos === "error", JSON.stringify({ d1, est1 }));
+  await elegirFiltro17("Archivadas");
+  const f1 = await p.ev(`document.querySelectorAll('${CARD}').length`);
+  await elegirFiltro17("Archivadas");
+  await p.ev(`document.querySelector('${CARD} a').click()`);
+  const abre = await p.esperar("!!document.querySelector('[id^=\"titulo-field-\"]') && !!document.querySelector('[id^=\"titulo-field-\"]').value", 15000);
+  ok("sin enriquecimiento siguen funcionando los filtros nativos (Archivadas) y abrir una propiedad para editarla", f1 >= 2 && abre, JSON.stringify({ f1, abre }));
+  // D2. Copia previa en el navegador: se ve enriquecido aunque el archivo no responda
+  globalThis.__feedFalla = 0;
+  await abrirListado();
+  await esperarTodas(1);
+  const guardada = await p.ev("!!localStorage.getItem('mk-listado-propiedades-v1')") + " " + (await p.ev("JSON.stringify(window.MakomListadoPropiedades.estado()) + ' ls=' + localStorage.length + ' claves=' + Object.keys(localStorage).join(',')"));
+  globalThis.__feedFalla = 500;
+  await abrirListado({ limpiarCache: false });
+  await p.esperar(`document.querySelectorAll('li[data-mk-card]').length > 0`, 8000);
+  const d2 = await resumenTarjetas();
+  const est2 = JSON.parse(await p.ev("JSON.stringify(window.MakomListadoPropiedades.estado())"));
+  ok("con una copia de la última lectura correcta, el listado se ve enriquecido al instante aunque el archivo falle (estado «cache»)", /^true/.test(guardada) && d2.enr === d2.n && d2.n > 0 && est2.datos === "cache", JSON.stringify({ guardada, d2, est2 }));
+  const pedidosAntes = await p.ev("0");
+  const nPed = globalThis.__pedidosFeed;
+  await p.ev("location.hash = '#/collections/proyectos'"); await dormir(300); await p.ev("location.hash = '#/collections/propiedades'"); await dormir(600);
+  await p.ev("location.hash = '#/collections/proyectos'"); await dormir(300); await p.ev("location.hash = '#/collections/propiedades'"); await dormir(600);
+  ok("tras un fallo no se reintenta en cada cambio de pantalla (no hay tormenta de peticiones)", globalThis.__pedidosFeed === nPed, globalThis.__pedidosFeed + " vs " + nPed);
+  globalThis.__feedFalla = 0;
+  // D3. Formato desconocido y datos hostiles
+  globalThis.__feedMalo = "version";
+  await abrirListado();
+  await dormir(600);
+  const d3 = await resumenTarjetas();
+  ok("un archivo con otra versión de formato se ignora (tarjetas nativas, sin errores en la consola)", d3.n > 0 && d3.enr === 0, JSON.stringify(d3));
+  globalThis.__feedMalo = "hostil";
+  await abrirListado();
+  await dormir(800);
+  await cargarTodo();
+  const d4 = await p.ev(`(() => JSON.stringify({ tarjetas: document.querySelectorAll('${CARD}').length, estadosRaros: [...document.querySelectorAll('li[data-mk-estado]')].filter((x) => !/^(disponible|reservada|alquilada|vendida|archivada|borrador)$/.test(x.getAttribute('data-mk-estado'))).length, urlExterna: [...document.querySelectorAll('li[data-mk-miniatura]')].filter((x) => !/^\\/assets\\/propiedades\\/_optimizadas\\//.test(x.getAttribute('data-mk-miniatura'))).length, peticionesAjenas: performance.getEntriesByType('resource').filter((e) => /hostil\\.example|javascript:/.test(e.name)).length, inyeccion: !!document.querySelector('li img[src="x"], li [onerror]') }))()`).then(JSON.parse);
+  ok("datos hostiles (URL externa, «javascript:», estado con HTML, tipos equivocados): se descartan; ninguna petición a otro dominio, ningún estado inválido y nada se inyecta", d4.tarjetas > 0 && d4.estadosRaros === 0 && d4.urlExterna === 0 && d4.peticionesAjenas === 0 && !d4.inyeccion, JSON.stringify(d4));
+  globalThis.__feedMalo = null;
+  // D4. Miniaturas lentas: marcador y luego la foto, sin mover la tarjeta
+  globalThis.__miniaturasLentas = 1200;
+  await abrirListado();
+  const cargando = await p.esperar(`!!document.querySelector('li[data-mk-card][data-mk-foto="cargando"]')`, 8000);
+  const alturaAntes = await p.ev(`Math.round(document.querySelector('${CARD}').getBoundingClientRect().height)`);
+  await esperarTodas(1);
+  const alturaDespues = await p.ev(`Math.round(document.querySelector('${CARD}').getBoundingClientRect().height)`);
+  ok("miniaturas lentas: la tarjeta muestra primero el fondo neutro («cargando») y luego la foto, sin cambiar de tamaño", cargando && alturaAntes === alturaDespues, JSON.stringify({ cargando, alturaAntes, alturaDespues }));
+  globalThis.__miniaturasLentas = 0;
+  // D5. Sin el script del listado (interruptor): Decap nativo intacto
+  globalThis.__sinListadoJs = true;
+  await abrirListado();
+  await dormir(600);
+  const d5 = await resumenTarjetas();
+  ok("sin admin/listado-propiedades.js (por ejemplo, si no carga) el listado es el nativo de Decap y sigue funcionando", d5.n > 0 && d5.enr === 0 && (await p.ev("typeof window.MakomListadoPropiedades")) === "undefined", JSON.stringify(d5));
+  globalThis.__sinListadoJs = false;
+
+  /* ---- E. Cambios hechos desde el panel (eventos postSave/postPublish) ---- */
+  await abrirListado();
+  await esperarTodas(1);
+  const slugEd = "casa-en-la-chorrera-2-recámaras";
+  const slugCosta = await p.ev(`Object.keys(window.__crudo.content.propiedades).find((k) => k.includes('costa-del-este-panam')).replace(/\\.json$/, '')`);
+  await p.ev(`location.hash = '#/collections/propiedades/entries/' + ${JSON.stringify(slugCosta)}`);
+  await p.esperar("!!document.querySelector('[data-galeria-fotos]')", 20000);
+  await p.esperar("(() => { const i = document.querySelector('[id^=\"titulo-field-\"]'); return !!i && !!i.value; })()", 20000);
+  await dormir(600);
+  const antesEstado = JSON.parse(await p.ev(`JSON.stringify(window.MakomListadoPropiedades.estado())`));
+  // Cambiar el estado a «Reservada» con la interfaz real y publicar
+  await p.ev(`(() => { const i = document.querySelector('[id^="estado-field-"]'); i.scrollIntoView({ block: 'center' }); })()`);
+  const cEst = await p.ev(`(() => { const i = document.querySelector('[id^="estado-field-"]'); const q = i.closest('[class*="-ControlContainer"]').querySelector('[class$="-control"]').getBoundingClientRect(); return { x: q.left + q.width / 2, y: q.top + q.height / 2 }; })()`);
+  for (const tp of ["mouseMoved", "mousePressed", "mouseReleased"]) await p.cdp.send("Input.dispatchMouseEvent", { type: tp, x: cEst.x, y: cEst.y, button: "left", clickCount: tp === "mouseMoved" ? 0 : 1 });
+  await dormir(500);
+  await p.ev(`(() => { const o = [...document.querySelectorAll('[class$="-option"]')].find((e) => /Reservada/.test(e.textContent)); if (o) o.click(); })()`);
+  await dormir(400);
+  const pub17 = await p.publicar();
+  ok("guardar la propiedad con estado «Reservada» funciona con el listado enriquecido activo", /GUARDADOS/.test(pub17) && !/NO GUARDADOS/.test(pub17), pub17);
+  await p.ev("location.hash = '#/collections/propiedades'");
+  await p.esperar(`!!document.querySelector('li[data-mk-card]')`, 15000);
+  await cargarTodo();
+  const badgeCosta = await p.ev(`(() => { const a = [...document.querySelectorAll('a[href*="costa-del-este-panam"]')].find((x) => /apartamentos-amoblados/.test(decodeURIComponent(x.getAttribute('href')))); const li = a && a.closest('li'); return li ? JSON.stringify({ estado: li.getAttribute('data-mk-estado'), badge: getComputedStyle(li, '::after').content, foto: li.getAttribute('data-mk-foto') }) : null; })()`);
+  const bc = JSON.parse(badgeCosta);
+  ok("al guardar desde el panel, la insignia se actualiza al instante (evento postSave) sin esperar al despliegue: «Reservada», conservando la misma miniatura", bc.estado === "reservada" && bc.badge === '"● Reservada"' && bc.foto === "ok", badgeCosta);
+  await p.ev(`location.hash = '#/collections/propiedades/entries/' + ${JSON.stringify(slugCosta)}`);
+  await p.esperar("!!document.querySelector('[data-galeria-fotos]')", 20000);
+  await dormir(800);
+  await p.ev(`(() => { const b = [...document.querySelectorAll('[data-galeria-tarjeta="0"] button')].find((x) => /Hacer portada/.test(x.textContent)); if (b) b.click(); })()`);
+  await dormir(400);
+  const pub18 = await p.publicar();
+  await p.ev("location.hash = '#/collections/propiedades'");
+  await p.esperar(`!!document.querySelector('li[data-mk-card]')`, 15000);
+  await cargarTodo();
+  const foto2 = await p.ev(`(() => { const a = [...document.querySelectorAll('a[href*="costa-del-este-panam"]')].find((x) => /apartamentos-amoblados/.test(decodeURIComponent(x.getAttribute('href')))); const li = a && a.closest('li'); return li ? li.getAttribute('data-mk-foto') : null; })()`);
+  ok("si cambia la portada desde el panel, la tarjeta muestra el marcador de MAKOM hasta el próximo despliegue (nunca la foto equivocada)", /GUARDADOS/.test(pub18) && foto2 === "sin", JSON.stringify({ pub18, foto2 }));
+
+  /* ---- F. Diseño: tamaños, ajuste de texto, contraste, foco y teclado ---- */
+  await abrirListado();
+  await esperarTodas(1);
+  const dis = JSON.parse(await p.ev(`(() => { const li = [...document.querySelectorAll('${CARD}')].find((x) => x.getAttribute('data-mk-foto') === 'ok'); const b = getComputedStyle(li, '::before'); const q = li.getBoundingClientRect(); const a = getComputedStyle(li.querySelector('a'), '::after'); return JSON.stringify({ alto: Math.round(q.height), fotoAncho: b.width, fotoRadio: b.borderTopLeftRadius, fotoFondo: /url\\(/.test(b.backgroundImage), cubre: b.backgroundSize, editar: a.content, editarColor: a.color }); })()`));
+  ok("tarjeta de escritorio: portada de 148 px con esquinas de 12 px (recorte proporcional «cover»), 126–140 px de alto y acceso «Editar ›» en terracota", dis.fotoAncho === "148px" && dis.fotoRadio === "12px" && dis.fotoFondo && dis.cubre === "cover" && dis.alto >= 126 && dis.alto <= 140 && /Editar/.test(dis.editar) && dis.editarColor === "rgb(143, 55, 32)", JSON.stringify(dis));
+  const lin = JSON.parse(await p.ev(`(() => JSON.stringify([...document.querySelectorAll('${CARD}')].map((li) => { const t = li.querySelector('[class*="-ListCardTitle"]'); const cs = getComputedStyle(t); const lh = parseFloat(cs.lineHeight); const fl = 11.5 * 2; return { maxAlto: Math.round(t.getBoundingClientRect().height), recorte: t.scrollHeight > t.clientHeight + 1 }; })))()`));
+  ok("el título ocupa como máximo dos líneas (más el sobretítulo): ninguna tarjeta supera 72 px de texto, ni siquiera el título de 170 caracteres", lin.every((x) => x.maxAlto <= 72), JSON.stringify(lin.filter((x) => x.maxAlto > 72)));
+  const colores = {};
+  for (const e of cfgEstados) colores[e] = await p.ev(`(() => { const d = document.createElement('li'); d.setAttribute('data-mk-estado', '${e}'); d.setAttribute('data-mk-card', ''); document.body.appendChild(d); const c = getComputedStyle(d, '::after').color; d.remove(); return c; })()`);
+  const bajos = Object.entries(colores).filter(([e, c]) => contraste(rgbDe(c).c, [255, 255, 255]) < 4.5).map(([e, c]) => e + " " + c);
+  ok("contraste de la insignia de cada estado sobre su fondo blanco ≥ 4,5:1 (" + Object.entries(colores).map(([e, c]) => e + " " + contraste(rgbDe(c).c, [255, 255, 255]).toFixed(1)).join(", ") + ")", bajos.length === 0, JSON.stringify(bajos));
+  ok("contraste de «Editar ›» (terracota oscuro sobre blanco) ≥ 4,5:1", contraste(hex("#8F3720"), [255, 255, 255]) >= 4.5);
+  await p.cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+  await p.cdp.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+  const foco17 = await p.ev(`(() => { const a = document.querySelector('${CARD} a'); a.focus(); const c = getComputedStyle(a); return JSON.stringify({ activo: a === document.activeElement, contorno: c.outlineStyle + ' ' + c.outlineWidth + ' ' + c.outlineColor, nombre: a.textContent.replace(/\\s+/g, ' ').trim().slice(0, 60) }); })()`);
+  const f17 = JSON.parse(foco17);
+  ok("teclado: la tarjeta es un enlace con foco visible (2 px terracota) y su nombre accesible es el texto de Decap (referencia · operación · tipo y título)", f17.activo && /solid 2px rgb\(181, 71, 42\)/.test(f17.contorno) && f17.nombre.length > 10, foco17);
+  await p.cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, text: "\r" });
+  await p.cdp.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+  ok("teclado: Enter sobre la tarjeta abre la edición de esa propiedad", await p.esperar("!!document.querySelector('[id^=\"titulo-field-\"]')", 15000));
+  ok("la portada es decorativa: no se agregan imágenes ni nodos al DOM de Decap (solo atributos y una variable CSS en el <li>)", await (async () => { await abrirListado(); await esperarTodas(1); return p.ev(`(() => { const li = document.querySelector('li[data-mk-card][data-mk-foto="ok"]'); return li.querySelectorAll('img').length === 0 && [...li.attributes].every((a) => /^(class|data-mk-[a-z]+|style)$/.test(a.name)) && (li.getAttribute('style') || '').replace(/--mk-portada:[^;]+;?/, '').trim() === ''; })()`); })());
+  // Responsive: 1440, 1280, 1024, 768, 390 y 375
+  for (const w of [1440, 1280, 1024, 768, 390, 375]) {
+    await vista(w, w < 500 ? 844 : 900);
+    await abrirListado();
+    await cargarTodo();
+    await esperarTodas(nTot);
+    await p.ev("window.scrollTo(0, 0); [...document.querySelectorAll('*')].filter((e) => e.scrollTop > 0).forEach((e) => { e.scrollTop = 0; })");
+    const g = JSON.parse(await p.ev(`(() => { const vw = innerWidth; const cs = [...document.querySelectorAll('${CARD}')]; const fuera = cs.filter((c) => { const q = c.getBoundingClientRect(); return q.right > vw + 1 || q.left < -1; }).length; const b0 = getComputedStyle(cs[0], '::before'); const fotoW = parseFloat(b0.width); const insDentro = cs.filter((c) => { const a = getComputedStyle(c, '::after'); const f = getComputedStyle(c, '::before'); return c.hasAttribute('data-mk-estado') && (parseFloat(a.left) + (a.width === 'auto' ? 0 : parseFloat(a.width)) > parseFloat(f.left) + parseFloat(f.width) + 2); }).length; const alturas = cs.map((c) => Math.round(c.getBoundingClientRect().height)); const txt = cs.filter((c) => { const t = c.querySelector('[class*="-ListCardTitle"]'); return t.getBoundingClientRect().height > 74; }).length; const desb = cs.filter((c) => { const t = c.querySelector('[class*="-ListCardTitle"]'); const l = c.querySelector('a').getBoundingClientRect(); const q = t.getBoundingClientRect(); return q.right > l.right + 1; }).length; return JSON.stringify({ n: cs.length, fuera, fotoW, hmin: Math.min(...alturas), hmax: Math.max(...alturas), txtLargo: txt, desb, sw: document.documentElement.scrollWidth - vw }); })()`));
+    const esperadoFoto = w > 1099 ? 148 : w > 560 ? 120 : 84;
+    ok(`${w} px: ${nTot} tarjetas con portada de ${esperadoFoto} px, texto de ≤ 2 líneas (+ sobretítulo) sin desbordar, alto ${g.hmin}–${g.hmax} px y sin desplazamiento horizontal`, g.n === nTot && g.fuera === 0 && g.fotoW === esperadoFoto && g.txtLargo === 0 && g.desb === 0 && g.sw <= 1 && g.hmin >= 100 && g.hmax <= (w > 560 ? 140 : 132), JSON.stringify(g));
+  }
+  await vista(1440);
+  // reduce movimiento
+  await p.cdp.send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
+  await abrirListado();
+  await esperarTodas(1);
+  ok("con «reducir movimiento» el acceso «Editar ›» no se anima", await p.ev(`(() => parseFloat(getComputedStyle(document.querySelector('li[data-mk-card] a'), '::after').transitionDuration) === 0)()`));
+  await p.cdp.send("Emulation.setEmulatedMedia", { features: [] });
+
+  }
 }
 
 // De punta a punta: lo que guarda el widget (propiedad + imágenes) se construye con Eleventy y se revisa la ficha pública ES/EN.
