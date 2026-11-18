@@ -77,7 +77,7 @@ html body :focus-visible { outline: 2px solid var(--mk-terracota); outline-offse
 /* ---------- Pantalla de inicio de sesión ---------- */
 html body [class*="-StyledAuthenticationPage"] { background: var(--mk-blanco); }
 html body [class*="-StyledAuthenticationPage"] img { height: 72px; width: auto; max-width: 80vw; }
-html body [class*="-LoginButton"] {
+html body [class*="-LoginButton"]:not([class*="-LoginButtonIcon"]) {
   min-height: 48px; padding: 0 32px; border: 0; border-radius: var(--mk-r-ctl);
   background: var(--mk-terracota); color: var(--mk-blanco);
   font-size: 13px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase;
@@ -85,7 +85,7 @@ html body [class*="-LoginButton"] {
   transition: background-color var(--mk-fast) var(--mk-ease), transform var(--mk-fast) var(--mk-ease);
 }
 html body [class*="-LoginButtonIcon"] svg, html body [class*="-LoginButton"] svg { color: var(--mk-blanco); fill: currentColor; }
-html body [class*="-LoginButton"]:hover { background: var(--mk-terracota-dark); transform: translateY(-1px); }
+html body [class*="-LoginButton"]:not([class*="-LoginButtonIcon"]):hover { background: var(--mk-terracota-dark); transform: translateY(-1px); }
 
 /* ---------- Barra superior (cristal marfil) ---------- */
 html body header[class*="-AppHeader"] {
