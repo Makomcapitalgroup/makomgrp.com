@@ -711,6 +711,95 @@ async function escenarios(p, dirFix, n, temporales) {
   const foco = await p.ev("(() => { const a = document.activeElement; const c = getComputedStyle(a); return JSON.stringify([c.outlineStyle, c.outlineWidth, c.outlineColor, a.tagName]); })()");
   ok("al tabular, el elemento enfocado muestra un contorno visible (2 px terracota)", /solid/.test(foco) && /2px/.test(foco) && /181, 71, 42/.test(foco), foco);
 
+  /* ---------- 13. Formulario compacto (solo distribución; mismos campos, mismo orden, mismos datos) ---------- */
+  grupo = "13 · formulario compacto";
+  const vista = async (ancho, alto) => { await p.cdp.send("Emulation.setDeviceMetricsOverride", { width: ancho, height: alto || 900, deviceScaleFactor: 1, mobile: ancho < 500 }); await dormir(700); };
+  const abrirTodo = async () => {
+    for (let i = 0; i < 6; i++) {
+      const k = await p.ev(`(() => { let n = 0; for (const t of document.querySelectorAll('[class*="-TopBarContainer"]')) { const sib = t.nextElementSibling; const b = t.querySelector('[class*="-ExpandButton"]:not([class*="Container"])'); if (b && sib && getComputedStyle(sib).display === 'none') { b.click(); n++; } } return n; })()`);
+      await dormir(500);
+      if (!k) break;
+    }
+  };
+  // Utilidades dentro de la página: campo «hoja» (sin campos dentro) por el id que Decap le pone al control
+  const UT = `(() => {
+    const CC = '[class*="-ControlContainer"]';
+    window.__hoja = (id) => { const e = document.querySelector('[id^="' + id + '-field-"]'); const c = e && e.closest(CC); return c && !c.querySelector(CC) ? c : null; };
+    window.__caja = (id) => { const c = window.__hoja(id); if (!c) return null; const r = c.getBoundingClientRect(); return { t: Math.round(r.top + scrollY), l: Math.round(r.left), w: Math.round(r.width), h: Math.round(r.height) }; };
+    window.__panel = () => document.querySelector('[class*="-ControlPaneContainer"]:not([class*="-PreviewPane"])');
+    window.__hojas = () => [...window.__panel().querySelectorAll(CC)].filter((c) => !c.querySelector(CC));
+    return true; })()`;
+  await vista(1440);
+  await p.cargar();
+  await p.ev(UT);
+  await dormir(500);
+  ok("las secciones cerradas por defecto (video, planos, mapa, SEO, metadatos) siguen cerradas con la distribución nueva", await p.ev(`(() => ['videoRecorrido', 'mapa', 'seo', 'metadatos'].every((id) => { const o = document.querySelector('[id^="' + id + '-field-"]'); const cuerpo = o && [...o.children].find((x) => !/TopBarContainer/.test(x.className)); return cuerpo && getComputedStyle(cuerpo).display === 'none'; }))()`));
+  await abrirTodo();
+  await dormir(1500);
+  const cols = await p.ev("getComputedStyle(__panel()).gridTemplateColumns.split(' ').length");
+  ok("escritorio: el panel del formulario es una cuadrícula de 12 columnas y mide hasta 1080 px (antes 800)", cols === 12 && (await p.ev("Math.round(__panel().getBoundingClientRect().width)")) === 1080, cols);
+  const fila = async (ids) => { const cajas = []; for (const id of ids) cajas.push(await p.ev(`JSON.stringify(__caja('${id}'))`)); const c = cajas.map((x) => JSON.parse(x)); return c.every((x) => x) && c.every((x) => Math.abs(x.t - c[0].t) <= 2) && c.every((x, i) => i === 0 || x.l >= c[i - 1].l + c[i - 1].w - 2) ? true : JSON.stringify(c); };
+  ok("escritorio: Operación · Fecha de entrega · Tipo · Categoría comparten fila", (await fila(["operacion", "fechaEntrega", "tipo", "categoriaGeneral"])) === true, await fila(["operacion", "fechaEntrega", "tipo", "categoriaGeneral"]));
+  ok("escritorio: Monto · Moneda comparten fila", (await fila(["monto", "moneda"])) === true);
+  ok("escritorio: Provincia · Distrito · Corregimiento comparten fila; Sector · Edificio comparten fila", (await fila(["provincia", "distrito", "corregimiento"])) === true && (await fila(["sector", "edificioPH"])) === true);
+  ok("escritorio: Habitaciones · Baños · Estacionamientos comparten fila; Metrajes · Año · Piso comparten fila", (await fila(["habitaciones", "banos", "estacionamientos"])) === true && (await fila(["metrajeInterno", "metrajeTotal", "anoConstruccion", "piso"])) === true);
+  ok("escritorio: título, dirección interna y enlace del video conservan el ancho completo", await p.ev(`(() => ['titulo', 'direccionInterna', 'url'].every((id) => { const c = __caja(id); return c && c.w >= 780; }))()`));
+  ok("escritorio: Descripción (ES) y Descripción en inglés quedan lado a lado, cada una con ≥ 450 px, y empiezan en una fila nueva", await p.ev(`(() => { const r = [...__panel().children].filter((c) => c.querySelector('.cms-editor-visual')).map((c) => c.getBoundingClientRect()); const est = __caja('estado'); return r.length === 2 && Math.abs(r[0].top - r[1].top) < 2 && r[0].width >= 450 && r[1].width >= 450 && r[1].left >= r[0].right && r[0].top > est.t + est.h - scrollY - 2; })()`));
+  ok("escritorio: la galería (widget) conserva el ancho completo del panel", await p.ev(`(() => { const g = document.querySelector('[data-galeria-fotos]').closest('[class*="-ControlContainer"]'); const o = g.parentElement.parentElement; return g.getBoundingClientRect().width >= 1000; })()`));
+  ok("el orden de tabulación coincide con el orden visual: cada campo queda a la derecha o debajo del anterior (el DOM no se reordena)", await (async () => { const r = await p.ev(`(() => { const h = __hojas().filter((c) => c.getBoundingClientRect().width > 0 && !c.closest('[data-galeria-fotos]')); const mal = []; for (let i = 1; i < h.length; i++) { const a = h[i - 1].getBoundingClientRect(), b = h[i].getBoundingClientRect(); const mismaFila = Math.abs(b.top - a.top) <= 2 && b.left >= a.right - 2; if (!(mismaFila || b.top >= a.bottom - 2)) mal.push(i + ':' + (h[i].querySelector('label') || {}).textContent); } return JSON.stringify(mal.slice(0, 5)); })()`); return r === "[]" || r; })());
+  ok("todos los campos de las secciones abiertas son visibles y no se encogen (≥ 150 px de ancho, ≥ 40 px de alto)", await p.ev(`(() => __hojas().filter((c) => c.getBoundingClientRect().width > 0).every((c) => { const r = c.getBoundingClientRect(); return r.width >= 150 && r.height >= 40; }))()`));
+  ok("los controles de texto, número y desplegables miden ≥ 40 px de alto", await p.ev(`(() => [...__panel().querySelectorAll('input[type=text],input[type=number],[class$="-control"]')].filter((e) => e.getBoundingClientRect().width > 0 && !e.closest('[data-galeria-fotos]') && !(e.tagName === 'INPUT' && e.closest('[class$="-control"]'))).every((e) => e.getBoundingClientRect().height >= 40))()`));
+  // Mismos controles y mismo número de elementos con y sin el tema (el DOM no cambia); altura con y sin el tema
+  const conTema = JSON.parse(await p.ev(`JSON.stringify({ ids: [...document.querySelectorAll('[id*="-field-"]')].map((e) => e.id.replace(/-field-\\d+$/, '')), n: document.querySelectorAll('*').length, alto: Math.round(__panel().getBoundingClientRect().height) })`));
+  await p.ev("document.querySelector('link[href*=\"tema-makom\"]').disabled = true");
+  await dormir(800);
+  const sinTema = JSON.parse(await p.ev(`JSON.stringify({ ids: [...document.querySelectorAll('[id*="-field-"]')].map((e) => e.id.replace(/-field-\\d+$/, '')), n: document.querySelectorAll('*').length, alto: Math.round(__panel().getBoundingClientRect().height) })`));
+  await p.ev("document.querySelector('link[href*=\"tema-makom\"]').disabled = false");
+  await dormir(500);
+  ok("el tema no añade, quita ni reordena campos: mismos controles, en el mismo orden, con y sin el CSS", JSON.stringify(conTema.ids) === JSON.stringify(sinTema.ids) && conTema.ids.length > 50, conTema.ids.length + " vs " + sinTema.ids.length);
+  ok(`el formulario abierto mide ${conTema.alto} px con el tema y ${sinTema.alto} px sin él (≥ 30 % menos de desplazamiento)`, conTema.alto <= sinTema.alto * 0.7, conTema.alto + " / " + sinTema.alto);
+  // Tableta y móvil
+  await vista(1024);
+  ok("tableta (1024 px): Operación y Fecha de entrega comparten fila (2 por fila); Tipo baja a la fila siguiente", await (async () => { const a = JSON.parse(await p.ev("JSON.stringify(__caja('operacion'))")), b = JSON.parse(await p.ev("JSON.stringify(__caja('fechaEntrega'))")), c = JSON.parse(await p.ev("JSON.stringify(__caja('tipo'))")); return Math.abs(a.t - b.t) <= 2 && c.t > a.t + 20; })());
+  ok("tableta (1024 px): las descripciones vuelven a ancho completo", await p.ev(`(() => [...__panel().children].filter((c) => c.querySelector('.cms-editor-visual')).every((c) => c.getBoundingClientRect().width >= 700))()`));
+  await vista(390, 844);
+  ok("móvil (390 px): una sola columna; todos los campos ocupan el ancho del panel", await p.ev(`(() => { const w = __panel().getBoundingClientRect().width; return __hojas().filter((c) => c.getBoundingClientRect().width > 0 && !c.closest('[data-galeria-fotos]')).every((c) => c.getBoundingClientRect().width >= w - 80); })()`));
+  ok("móvil (390 px): los controles conservan alto cómodo para tocar (≥ 44 px)", await p.ev(`(() => [...__panel().querySelectorAll('input[type=text],input[type=number],[class$="-control"]')].filter((e) => e.getBoundingClientRect().width > 0 && !e.closest('[data-galeria-fotos]') && !(e.tagName === 'INPUT' && e.closest('[class$="-control"]'))).every((e) => e.getBoundingClientRect().height >= 44))()`));
+  const desborde = async () => p.ev("(() => { const s = document.querySelector('[class*=\"-PreviewPaneContainer-ControlPaneContainer\"]'); return s.scrollWidth - s.clientWidth; })()");
+  for (const w of [1440, 1024, 768]) { await vista(w); ok(`sin desplazamiento horizontal del formulario a ${w} px`, (await desborde()) <= 1, await desborde()); }
+  await vista(390, 844);
+  const conT = await desborde();
+  await p.ev("document.querySelector('link[href*=\"tema-makom\"]').disabled = true");
+  await dormir(500);
+  const sinT = await desborde();
+  await p.ev("document.querySelector('link[href*=\"tema-makom\"]').disabled = false");
+  ok(`móvil (390 px): el tema no aumenta el desborde horizontal que ya trae Decap (${conT} px con tema, ${sinT} px sin él)`, conT <= sinT + 1, conT + " vs " + sinT);
+  // Integridad de datos: editar desde la distribución compacta y publicar cambia SOLO lo editado
+  await vista(1440);
+  await p.cargar();
+  await p.ev(UT);
+  const antes = (await p.repo()).prop;
+  const escribir = async (id, texto) => {
+    const c = await p.ev(`(() => { const e = document.querySelector('[id^="${id}-field-"]'); e.scrollIntoView({ block: 'center' }); const q = e.getBoundingClientRect(); return { x: q.left + q.width / 2, y: q.top + q.height / 2 }; })()`);
+    for (const t of ["mouseMoved", "mousePressed", "mouseReleased"]) await p.cdp.send("Input.dispatchMouseEvent", { type: t, x: c.x, y: c.y, button: "left", clickCount: t === "mouseMoved" ? 0 : 1 });
+    await p.cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "a", code: "KeyA", modifiers: 4, windowsVirtualKeyCode: 65, commands: ["selectAll"] });
+    await p.cdp.send("Input.insertText", { text: texto });
+    await dormir(200);
+  };
+  await escribir("monto", "999000");
+  await escribir("habitaciones", "3");
+  await escribir("sector", "Sector de prueba");
+  const despues = await (async () => { await p.publicar(); return (await p.repo()).prop; })();
+  const difs = [];
+  const comparar = (a, b, ruta) => {
+    if (a && b && typeof a === "object" && typeof b === "object") { for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) comparar(a[k], b[k], ruta + "." + k); }
+    else if (JSON.stringify(a) !== JSON.stringify(b)) difs.push(ruta);
+  };
+  comparar(antes, despues, "");
+  const permitidas = [".precio.monto", ".detallesCuantitativos.habitaciones", ".ubicacionInterna.sector"];
+  const inesperadas = difs.filter((d) => !permitidas.includes(d) && !/^\.metadatos\./.test(d));
+  ok("editar monto, habitaciones y sector desde la distribución compacta y publicar guarda exactamente esos 3 valores y nada más (sin pérdida ni cambio de otros datos)", inesperadas.length === 0 && despues.precio.monto === 999000 && despues.detallesCuantitativos.habitaciones === 3 && despues.ubicacionInterna.sector === "Sector de prueba", JSON.stringify({ difs, inesperadas }));
+
   return;
 }
 
