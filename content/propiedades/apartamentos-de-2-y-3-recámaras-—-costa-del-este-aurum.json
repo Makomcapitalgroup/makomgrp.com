@@ -105,6 +105,9 @@
   "operacion": "venta",
   "ubicacionPublica": "Costa del Este",
   "titulo": "Apartamentos de 2 y 3 recámaras en Costa del Este, Panamá | AURUM",
+  "videoRecorrido": {
+    "archivo": "/assets/propiedades/uploads/whatsapp-video-2026-02-06-at-14.51.46.mp4"
+  },
   "fechaEntrega": "futura",
   "detalles": [
     "lavanderia",
