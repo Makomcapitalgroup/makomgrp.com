@@ -15,6 +15,15 @@
  * Configuración (admin/config.yml → Fotografías → galeria):
  *   widget: "galeria-fotos", min, max, public_folder (misma carpeta pública que el media_folder global).
  *   El mínimo y el máximo salen SOLO de ahí (fuente única: _data/propiedadesConfig.json → limitesMedia; el build las compara).
+ *   Opciones OPCIONALES (todas con el comportamiento anterior por defecto, así que Propiedades no cambia): portada: false (sin portada; los
+ *   datos quedan { archivo, alt }), min: 0, lado_max (px), nombre_campo + nombre_prefijo (para nombrar las fotos con el título/nombre de la
+ *   entrada en lugar de la referencia MKW-RE).
+ *
+ * Este archivo registra TAMBIÉN el widget «imagen-makom» (UNA imagen: imagen principal de un proyecto, portada de una perspectiva, foto de
+ * perfil de un asesor). Reutiliza las mismas funciones (procesarImagen, nombre único, guardado como archivo borrador) sin duplicarlas.
+ * Datos: una cadena con la ruta pública, igual que el widget «image» nativo (quitar la imagen la deja vacía, como el nativo).
+ * Opciones: lado_max (px, 2400 por defecto), vista: "perfil" (vista previa circular), insignia: "Imagen principal" (etiqueta sobre la vista previa),
+ * nombre_campo + nombre_prefijo, public_folder.
  *
  * API de Decap utilizada: CMS.registerWidget, window.h / window.createClass, y las propiedades que Decap entrega a todo control
  * (value, onChange, field, entry, getAsset, onPersistMedia) y el método isValid(). Decap se carga con la versión fijada en
@@ -52,11 +61,11 @@
       return o;
     });
   }
-  function salida(lista) {
+  function salida(lista, conPortada) {
     return lista.map(function (f) {
       var o = { archivo: f.archivo };
       if (f.alt) o.alt = f.alt;
-      o.portada = f.portada === true;
+      if (conPortada !== false) o.portada = f.portada === true;
       return o;
     });
   }
@@ -75,7 +84,14 @@
       .replace(/^-+|-+$/g, '')
       .slice(0, 28);
   }
-  function baseNombre(entry) {
+  function baseNombre(entry, field) {
+    // Opción del campo: nombre_campo (p. ej. «titulo» o «nombre») + nombre_prefijo (p. ej. «proyecto» o «asesor»). Sin ella: comportamiento de Propiedades.
+    var campo = field && field.get ? field.get('nombre_campo') : '';
+    if (campo) {
+      var valor = entry && entry.getIn ? entry.getIn(['data', campo]) : '';
+      var pref = field.get('nombre_prefijo') || '';
+      return aSlug(pref + ' ' + (typeof valor === 'string' ? valor : '')) || aSlug(pref) || 'imagen';
+    }
     var ref = entry && entry.getIn ? entry.getIn(['data', 'referenciaMakom']) : '';
     if (/^MKW-RE-\d+$/i.test(ref || '')) return aSlug(ref);
     var titulo = entry && entry.getIn ? entry.getIn(['data', 'titulo']) : '';
@@ -168,7 +184,7 @@
    * Devuelve { blob, ancho, alto, antes, despues, sinCambios } o lanza Error con un mensaje claro.
    * Nunca modifica el archivo original (solo lo lee).
    */
-  async function procesarImagen(file) {
+  async function procesarImagen(file, ladoMax) {
     var tipo = tipoDe(file);
     if (esHeic(file)) throw errorProceso(file);
     if (TIPOS.indexOf(tipo) === -1) {
@@ -197,7 +213,7 @@
       if (origen.close) origen.close();
       throw errorProceso(file);
     }
-    var k = Math.min(1, LADO_MAX / Math.max(w, hh)); // nunca amplía
+    var k = Math.min(1, (ladoMax || LADO_MAX) / Math.max(w, hh)); // nunca amplía
     var W = Math.max(1, Math.round(w * k));
     var H = Math.max(1, Math.round(hh * k));
     var sinGiro = true;
@@ -228,6 +244,42 @@
       return { blob: file, ancho: W, alto: H, antes: file.size, despues: file.size, sinCambios: true };
     }
     return { blob: blob, ancho: W, alto: H, antes: file.size, despues: blob.size, sinCambios: false };
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Guardado como archivo borrador de la entrada (compartido por los dos widgets) */
+  /* ------------------------------------------------------------------ */
+  function carpetaDe(field) {
+    return String((field && field.get && field.get('public_folder')) || '/assets/propiedades/uploads').replace(/\/+$/, '');
+  }
+  async function guardarImagen(props, procesada) {
+    var nombre = nombreUnico(baseNombre(props.entry, props.field));
+    var archivo = new File([procesada.blob], nombre, { type: 'image/jpeg' });
+    var res = await props.onPersistMedia(archivo, { field: props.field });
+    // El nombre ya es seguro (minúsculas, a-z, 0-9, guion y punto): Decap lo conserva tal cual, así que la ruta pública se
+    // arma con la carpeta pública del campo + ese nombre. Si Decap informa un fallo o una ruta distinta, NO se agrega la imagen.
+    if (res && typeof res.type === 'string' && /FAILURE/.test(res.type)) throw new Error('Decap no pudo registrar la imagen. Intente de nuevo.');
+    var pl = res && res.payload;
+    var devuelta = pl && (pl.path || (pl.file && pl.file.path));
+    var nombreFinal = nombre;
+    if (devuelta) {
+      nombreFinal = nombreArchivo(devuelta);
+      var carpeta = carpetaDe(props.field).replace(/^\//, '');
+      var rel = String(devuelta).replace(/^\//, '');
+      if (nombreFinal !== nombre || rel.slice(-(carpeta.length + 1 + nombre.length)) !== carpeta + '/' + nombre) {
+        throw new Error('La imagen quedó en una ruta inesperada (' + devuelta + '). No se agregó.');
+      }
+    }
+    return { ruta: carpetaDe(props.field) + '/' + nombreFinal, local: URL.createObjectURL(archivo) };
+  }
+  function miniaturaDe(props, ruta, locales) {
+    if (locales && locales[ruta]) return locales[ruta];
+    try {
+      var a = props.getAsset(ruta, props.field);
+      var u = a && (a.url || (a.toString && a.toString()));
+      if (u && u !== '[object Object]') return u;
+    } catch (e) { /* se usa la ruta pública */ }
+    return ruta;
   }
 
   /* ------------------------------------------------------------------ */
@@ -267,11 +319,13 @@
     },
 
     // ---- límites (fuente única: el campo de config.yml) ----
-    min: function () { return Number(this.props.field.get('min')) || 3; },
+    min: function () { var m = this.props.field.get('min'); return m === undefined || m === null ? 3 : (Number(m) || 0); },
+    usaPortada: function () { return this.props.field.get('portada') !== false; },
+    ladoMax: function () { return Number(this.props.field.get('lado_max')) || LADO_MAX; },
     max: function () { return Number(this.props.field.get('max')) || 10; },
-    carpetaPublica: function () { return String(this.props.field.get('public_folder') || '/assets/propiedades/uploads').replace(/\/+$/, ''); },
+    carpetaPublica: function () { return carpetaDe(this.props.field); },
     items: function () { return normalizar(plano(this.props.value)); },
-    emitir: function (lista) { this.props.onChange(salida(lista)); },
+    emitir: function (lista) { this.props.onChange(salida(lista, this.usaPortada())); },
 
     // ---- validación de Decap ----
     isValid: function () {
@@ -280,7 +334,7 @@
       if (this.state.procesando) msg = 'Espere a que terminen de procesarse las fotografías.';
       else if (n.length < this.min()) msg = 'Suba al menos ' + this.min() + ' fotografías (ahora hay ' + n.length + ').';
       else if (n.length > this.max()) msg = 'Hay ' + n.length + ' fotografías y el máximo es ' + this.max() + '. Quite ' + (n.length - this.max()) + '.';
-      else if (n.filter(function (f) { return f.portada; }).length > 1) msg = 'Hay más de una fotografía marcada como portada. Deje solo una.';
+      else if (this.usaPortada() && n.filter(function (f) { return f.portada; }).length > 1) msg = 'Hay más de una fotografía marcada como portada. Deje solo una.';
       else if (n.some(function (f) { return !f.archivo; })) msg = 'Hay una fila de la galería sin archivo. Quítela.';
       return msg ? { error: { message: msg } } : true;
     },
@@ -293,24 +347,7 @@
       this.setState(o);
     },
     guardarArchivo: async function (file, procesada) {
-      var nombre = nombreUnico(baseNombre(this.props.entry));
-      var archivo = new File([procesada.blob], nombre, { type: 'image/jpeg' });
-      var res = await this.props.onPersistMedia(archivo, { field: this.props.field });
-      // El nombre ya es seguro (minúsculas, a-z, 0-9, guion y punto): Decap lo conserva tal cual, así que la ruta pública se
-      // arma con la carpeta pública del campo + ese nombre. Si Decap informa un fallo o una ruta distinta, NO se agrega la foto.
-      if (res && typeof res.type === 'string' && /FAILURE/.test(res.type)) throw new Error('Decap no pudo registrar la imagen. Intente de nuevo.');
-      var pl = res && res.payload;
-      var devuelta = pl && (pl.path || (pl.file && pl.file.path));
-      var nombreFinal = nombre;
-      if (devuelta) {
-        nombreFinal = nombreArchivo(devuelta);
-        var carpeta = this.carpetaPublica().replace(/^\//, '');
-        var rel = String(devuelta).replace(/^\//, '');
-        if (nombreFinal !== nombre || rel.slice(-(carpeta.length + 1 + nombre.length)) !== carpeta + '/' + nombre) {
-          throw new Error('La imagen quedó en una ruta inesperada (' + devuelta + '). No se agregó a la galería.');
-        }
-      }
-      return { ruta: this.carpetaPublica() + '/' + nombreFinal, local: URL.createObjectURL(archivo) };
+      return guardarImagen(this.props, procesada);
     },
     registrar: function (ruta, local, procesada) {
       var locales = Object.assign({}, this.state.locales); locales[ruta] = local;
@@ -340,7 +377,7 @@
           if (this.items().length >= this.max()) throw new Error('Se alcanzó el máximo de ' + this.max() + ' fotografías.');
           var hu = await huella(file);
           if (hu && this._huellas[hu]) throw new Error('Ya agregó esta misma fotografía en esta sesión.');
-          var procesada = await procesarImagen(file);
+          var procesada = await procesarImagen(file, this.ladoMax());
           // Decap identifica cada archivo en borrador por el hash de su CONTENIDO: dos imágenes idénticas (aunque vengan de archivos
           // distintos, p. ej. la misma foto en PNG y en JPG) colapsarían en una y dejarían una referencia rota. Se rechaza la repetida.
           var hs = await huella(procesada.blob);
@@ -349,7 +386,7 @@
           if (this._desmontado) return;
           var actual = this.items();
           this.registrar(guardada.ruta, guardada.local, procesada);
-          actual.push({ archivo: guardada.ruta, portada: actual.length === 0 || !actual.some(function (f) { return f.portada; }) });
+          actual.push({ archivo: guardada.ruta, portada: this.usaPortada() && (actual.length === 0 || !actual.some(function (f) { return f.portada; })) });
           this.emitir(actual);
           if (hu) this._huellas[hu] = true;
           if (hs) this._salidas[hs] = true;
@@ -366,7 +403,7 @@
       this.setState({ procesando: true, total: 1, hecho: 0, errores: [], avisos: [] });
       try {
         this._salidas = this._salidas || {};
-        var procesada = await procesarImagen(file);
+        var procesada = await procesarImagen(file, this.ladoMax());
         var hs = await huella(procesada.blob);
         if (hs && this._salidas[hs]) throw new Error('Esa fotografía ya está en la lista (es la misma imagen aunque tenga otro nombre o formato).');
         var guardada = await this.guardarArchivo(file, procesada);
@@ -393,7 +430,7 @@
       var l = this.items();
       var estabaPortada = l[i] && l[i].portada;
       l.splice(i, 1);
-      if (estabaPortada && l.length) l[0].portada = true;
+      if (estabaPortada && l.length && this.usaPortada()) l[0].portada = true;
       this.emitir(l);
     },
     hacerPortada: function (i) {
@@ -406,13 +443,7 @@
       this.emitir(l);
     },
     miniatura: function (f) {
-      if (this.state.locales[f.archivo]) return this.state.locales[f.archivo];
-      try {
-        var a = this.props.getAsset(f.archivo, this.props.field);
-        var u = a && (a.url || (a.toString && a.toString()));
-        if (u && u !== '[object Object]') return u;
-      } catch (e) { /* se usa la ruta pública */ }
-      return f.archivo;
+      return miniaturaDe(this.props, f.archivo, this.state.locales);
     },
 
     // ---- eventos de arrastre ----
@@ -445,8 +476,9 @@
       var min = this.min();
       var libres = Math.max(0, max - n);
       var enMax = libres === 0;
-      var portadas = items.filter(function (f) { return f.portada; }).length;
-      var primeraPortada = portadas === 0 ? 0 : items.findIndex(function (f) { return f.portada; });
+      var conPortada = this.usaPortada();
+      var portadas = conPortada ? items.filter(function (f) { return f.portada; }).length : 0;
+      var primeraPortada = !conPortada ? -1 : portadas === 0 ? 0 : items.findIndex(function (f) { return f.portada; });
       var estado = n < min ? { t: 'Faltan ' + (min - n) + ' para el mínimo de ' + min + ' (obligatorio para publicar)', c: COL.error } : { t: enMax ? 'Máximo alcanzado' : 'Puede agregar ' + libres + ' más', c: enMax ? COL.aviso : COL.ok };
 
       var zona = h('label', {
@@ -475,7 +507,7 @@
         this.state.errores.map(function (t, i) { return h('p', { key: 'e' + i, role: 'alert', style: S.error, 'data-galeria-error': 'true' }, '✕ ' + t); }),
         this.state.avisos.map(function (t, i) { return h('p', { key: 'a' + i, style: S.aviso }, '⚠ ' + t); })
       );
-      if (portadas > 1) mensajes.push(h('p', { key: 'p2', role: 'alert', style: S.error }, '✕ Hay ' + portadas + ' fotografías marcadas como portada. Deje solo una (use «Hacer portada»).'));
+      if (conPortada && portadas > 1) mensajes.push(h('p', { key: 'p2', role: 'alert', style: S.error }, '✕ Hay ' + portadas + ' fotografías marcadas como portada. Deje solo una (use «Hacer portada»).'));
       var vistos = {};
       var repetidas = items.filter(function (f) { if (vistos[f.archivo]) return true; vistos[f.archivo] = true; return false; }).length;
       if (repetidas) mensajes.push(h('p', { key: 'rep', style: S.aviso }, '⚠ Hay ' + repetidas + ' fotografía(s) repetida(s) en la lista (la misma imagen más de una vez).'));
@@ -503,7 +535,7 @@
             h('div', { style: S.fila },
               h('button', { type: 'button', style: S.chico, disabled: i === 0, 'aria-label': 'Mover la fotografía ' + (i + 1) + ' a la izquierda', title: 'Mover antes', onClick: function () { self.mover(i, i - 1); } }, '◀'),
               h('button', { type: 'button', style: S.chico, disabled: i === n - 1, 'aria-label': 'Mover la fotografía ' + (i + 1) + ' a la derecha', title: 'Mover después', onClick: function () { self.mover(i, i + 1); } }, '▶'),
-              h('button', { type: 'button', style: Object.assign({}, S.chico, esPortada ? { background: '#fbeee9', borderColor: '#b5472a' } : {}), disabled: esPortada && portadas === 1, onClick: function () { self.hacerPortada(i); } }, esPortada ? '★ Es la portada' : 'Hacer portada')
+              conPortada ? h('button', { type: 'button', style: Object.assign({}, S.chico, esPortada ? { background: '#fbeee9', borderColor: '#b5472a' } : {}), disabled: esPortada && portadas === 1, onClick: function () { self.hacerPortada(i); } }, esPortada ? '★ Es la portada' : 'Hacer portada') : null
             ),
             h('div', { style: S.fila },
               h('label', { style: Object.assign({}, S.chico, { display: 'inline-block' }) }, 'Reemplazar',
@@ -523,7 +555,7 @@
         h('div', { style: S.barra, 'aria-live': 'polite' },
           h('span', { style: S.contador, 'data-galeria-contador': 'true' }, n + ' de ' + max + ' fotografías'),
           h('span', { style: { color: estado.c, fontWeight: 600 }, 'data-galeria-estado': 'true' }, estado.t),
-          n > 1 ? h('span', { style: S.nota }, 'Arrastre las tarjetas (o use ◀ ▶) para ordenar; la ★ es la principal.') : null
+          n > 1 ? h('span', { style: S.nota }, conPortada ? 'Arrastre las tarjetas (o use ◀ ▶) para ordenar; la ★ es la principal.' : 'Arrastre las tarjetas (o use ◀ ▶) para ordenar.') : null
         ),
         zona,
         progreso,
@@ -545,6 +577,122 @@
   });
 
   window.CMS.registerWidget('galeria-fotos', Control, Vista);
+
+  /* ------------------------------------------------------------------ */
+  /* Widget «imagen-makom»: UNA imagen (principal / portada / perfil)     */
+  /* ------------------------------------------------------------------ */
+  var SI = {
+    raiz: { fontFamily: 'inherit', color: COL.texto },
+    zona: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '16px', border: '2px dashed ' + COL.borde, borderRadius: '6px', padding: '14px', background: COL.fondo, boxSizing: 'border-box' },
+    zonaActiva: { borderColor: COL.azul, background: '#eef3fd' },
+    marco: { position: 'relative', flex: '0 0 auto', overflow: 'hidden', background: '#e9ebef', border: '1px solid ' + COL.borde },
+    imagen: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
+    vacio: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', color: COL.suave, fontSize: '13px', textAlign: 'center', padding: '8px', boxSizing: 'border-box' },
+    cuerpo: { flex: '1 1 220px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px' },
+    acciones: { display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' },
+    insignia: { position: 'absolute', top: '8px', left: '8px', background: '#b5472a', color: '#fff', borderRadius: '10px', padding: '2px 9px', fontSize: '12px', fontWeight: 700 }
+  };
+
+  var ControlImagen = window.createClass({
+    getInitialState: function () {
+      return { arrastrando: false, procesando: false, errores: [], avisos: [], info: null, locales: {} };
+    },
+    componentWillUnmount: function () {
+      this._desmontado = true;
+      var l = this.state.locales;
+      Object.keys(l).forEach(function (k) { try { URL.revokeObjectURL(l[k]); } catch (e) { /* ya liberada */ } });
+    },
+    valor: function () {
+      var v = this.props.value;
+      v = v && v.toJS ? '' : v;
+      return typeof v === 'string' ? v : '';
+    },
+    perfil: function () { return this.props.field.get('vista') === 'perfil'; },
+    ladoMax: function () { return Number(this.props.field.get('lado_max')) || LADO_MAX; },
+    isValid: function () {
+      return this.state.procesando ? { error: { message: 'Espere a que termine de procesarse la imagen.' } } : true;
+    },
+    cargar: async function (file, aviso) {
+      if (!file || this.state.procesando) return;
+      this.setState({ procesando: true, errores: [], avisos: aviso ? [aviso] : [] });
+      try {
+        var procesada = await procesarImagen(file, this.ladoMax());
+        var guardada = await guardarImagen(this.props, procesada);
+        if (this._desmontado) return;
+        var locales = Object.assign({}, this.state.locales);
+        locales[guardada.ruta] = guardada.local;
+        this.setState({ locales: locales, info: { antes: procesada.antes, despues: procesada.despues, ancho: procesada.ancho, alto: procesada.alto, sinCambios: procesada.sinCambios, ruta: guardada.ruta } });
+        this.props.onChange(guardada.ruta);
+      } catch (e) {
+        if (!this._desmontado) this.setState({ errores: [(file.name || 'Archivo') + ': ' + (e && e.message ? e.message : 'no se pudo procesar.')] });
+      }
+      if (!this._desmontado) this.setState({ procesando: false });
+    },
+    quitar: function () {
+      this.setState({ errores: [], avisos: [], info: null });
+      this.props.onChange('');
+    },
+    hayArchivos: function (e) {
+      var t = e.dataTransfer && e.dataTransfer.types;
+      return !!t && Array.prototype.indexOf.call(t, 'Files') !== -1;
+    },
+    alArrastrar: function (e) { if (!this.hayArchivos(e)) return; e.preventDefault(); if (!this.state.arrastrando) this.setState({ arrastrando: true }); },
+    alSalir: function (e) { if (!this.hayArchivos(e)) return; this.setState({ arrastrando: false }); },
+    alSoltar: function (e) {
+      if (!this.hayArchivos(e)) return;
+      e.preventDefault();
+      this.setState({ arrastrando: false });
+      var fs = Array.prototype.slice.call(e.dataTransfer.files);
+      this.cargar(fs[0], fs.length > 1 ? 'Solo se admite una imagen: se usó la primera (' + (fs[0].name || 'archivo') + ') y se omitieron las demás.' : null);
+    },
+    render: function () {
+      var self = this;
+      var ruta = this.valor();
+      var perfil = this.perfil();
+      var insignia = this.props.field.get('insignia');
+      var info = this.state.info && this.state.info.ruta === ruta ? this.state.info : null;
+      var marco = Object.assign({}, SI.marco, perfil ? { width: '120px', height: '120px', borderRadius: '50%' } : { width: '240px', height: '160px', borderRadius: '8px' });
+      var etiquetaAccion = ruta ? 'Reemplazar imagen' : 'Elegir imagen';
+      var entrada = h('input', {
+        type: 'file', accept: TIPOS.join(','), disabled: this.state.procesando, 'data-imagen-entrada': 'true',
+        style: { position: 'absolute', width: 1, height: 1, opacity: 0, overflow: 'hidden' },
+        onChange: function (e) { var f = e.target.files[0]; e.target.value = ''; self.cargar(f); }
+      });
+      return h('div', { style: SI.raiz, 'data-imagen-makom': 'true', 'data-imagen-vista': perfil ? 'perfil' : 'normal' },
+        h('div', {
+          style: Object.assign({}, SI.zona, this.state.arrastrando ? SI.zonaActiva : {}),
+          'data-imagen-zona': 'true',
+          onDragOver: this.alArrastrar, onDragEnter: this.alArrastrar, onDragLeave: this.alSalir, onDrop: this.alSoltar
+        },
+          h('div', { style: marco, 'data-imagen-marco': 'true' },
+            ruta
+              ? h('img', { src: miniaturaDe(this.props, ruta, this.state.locales), alt: 'Vista previa de la imagen actual', style: SI.imagen, 'data-imagen-vista-previa': 'true' })
+              : h('div', { style: SI.vacio, 'data-imagen-vacia': 'true' }, perfil ? 'Sin foto' : 'Sin imagen'),
+            ruta && insignia ? h('span', { style: SI.insignia, 'data-imagen-insignia': 'true' }, '★ ' + insignia) : null
+          ),
+          h('div', { style: SI.cuerpo },
+            h('div', { style: { fontSize: '14px', fontWeight: 700 } }, this.state.procesando ? 'Optimizando y subiendo…' : (ruta ? 'Imagen cargada' : 'Arrastre aquí una imagen o elíjala desde su computadora')),
+            ruta ? h('p', { style: S.nota, 'data-imagen-archivo': 'true' }, nombreArchivo(ruta) + (info ? ' · ' + (info.sinCambios ? 'subida sin cambios (' + tamano(info.despues) + ', ' + info.ancho + '×' + info.alto + ')' : 'optimizada: ' + tamano(info.antes) + ' → ' + tamano(info.despues) + ' · ' + info.ancho + '×' + info.alto) : '')) : h('p', { style: S.nota }, 'JPG, PNG o WebP. Se reduce y comprime automáticamente antes de subirla; su original no se modifica.'),
+            h('div', { style: SI.acciones },
+              h('label', { style: Object.assign({}, S.boton, this.state.procesando ? { background: '#a9b0bf', cursor: 'default' } : {}), 'data-imagen-accion': 'elegir' }, entrada, etiquetaAccion),
+              ruta ? h('button', { type: 'button', style: Object.assign({}, S.chico, { color: COL.error, borderColor: COL.error, padding: '8px 12px', fontSize: '13px' }), disabled: this.state.procesando, 'aria-label': 'Quitar la imagen', 'data-imagen-accion': 'quitar', onClick: this.quitar }, '✕ Quitar') : null
+            ),
+            this.state.errores.map(function (t, i) { return h('p', { key: i, role: 'alert', style: S.error, 'data-imagen-error': 'true' }, '✕ ' + t); }),
+            this.state.avisos.map(function (t, i) { return h('p', { key: 'a' + i, style: S.aviso, 'data-imagen-aviso': 'true' }, '⚠ ' + t); })
+          )
+        )
+      );
+    }
+  });
+
+  var VistaImagen = window.createClass({
+    render: function () {
+      var v = this.props.value;
+      var a = v && this.props.getAsset ? this.props.getAsset(v, this.props.field) : null;
+      return v ? h('img', { src: (a && (a.url || String(a))) || v, alt: '', style: { maxWidth: 240, maxHeight: 160 } }) : null;
+    }
+  });
+  window.CMS.registerWidget('imagen-makom', ControlImagen, VistaImagen);
 
   // Funciones puras expuestas solo para las pruebas automáticas (scripts/verificar-galeria-widget.js).
   window.MakomGaleriaFotos = { procesarImagen: procesarImagen, nombreUnico: nombreUnico, baseNombre: baseNombre, orientacionJPEG: orientacionJPEG, constantes: { LADO_MAX: LADO_MAX, CALIDAD: CALIDAD, PESO_OBJETIVO: PESO_OBJETIVO, PESO_SIN_TOCAR: PESO_SIN_TOCAR } };

@@ -1,0 +1,89 @@
+{
+  "amenidades": [
+    "piscina",
+    "lobby",
+    "elevadores",
+    "coworking",
+    "area-social",
+    "lounge-social",
+    "gimnasio"
+  ],
+  "tituloEn": "Furnished apartments for sale in Costa del Este, Panama City",
+  "referenciaMakom": "MKW-RE-034",
+  "mapa": {
+    "activo": true,
+    "precision": "aproximada",
+    "nivelZoom": 15,
+    "latitud": "9.013",
+    "longitud": "-79.468"
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 272420,
+    "periodicidad": null,
+    "preciosEspecificos": [
+      {
+        "monto": 272420,
+        "etiqueta": "1"
+      }
+    ]
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/genera-1-.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/generat-rec.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/genera-gym.jpg"
+      },
+      {
+        "portada": true,
+        "archivo": "/assets/propiedades/uploads/genera-4.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/genera-lou.jpg"
+      },
+      {
+        "portada": false,
+        "archivo": "/assets/propiedades/uploads/genera-out.jpg"
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitacionesDesde": false,
+    "banosDesde": false,
+    "metrajeTotal": 53,
+    "banos": 1,
+    "habitaciones": 1,
+    "estacionamientos": 1,
+    "metrajeInterno": ""
+  },
+  "mostrarEnHome": true,
+  "zona": "ciudad-de-panama-general",
+  "descripcion": "Torre de apartamentos amoblados en Costa del Este, diseñada para renta de corta y mediana estancia y administrada por un operador especializado.\n\n**Datos principales:** apartamentos de 53 a 65 m² desde $272,420, con mobiliario, aire acondicionado y cocina equipada. También hay suites Independent Living de 54 a 65 m², con evaluaciones de salud y monitoreos generales.\n\n**Amenidades:** piscina infinita con cabañas, sky pool y bar, gimnasio y wellness center, coworking y teatro al aire libre.\n\n**Ubicación:** Costa del Este, cerca de Town Center, Paseo del Mar y Hospital Pacífica Salud.\n\nConsulta con MAKOM disponibilidad y precios actualizados de las unidades.",
+  "planos": [],
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "sector": "Costa del Este",
+    "edificioPH": "PH Generation Tower"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "Furnished apartment tower in Costa del Este, designed for short and mid-term rentals and managed by a specialized operator.\n\n**Key details:** apartments from 53 to 65 m² starting at $272,420, with furniture, air conditioning and an equipped kitchen. Independent Living suites of 54 to 65 m² are also available, with health evaluations and general monitoring.\n\n**Amenities:** infinity pool with cabanas, sky pool and bar, gym and wellness center, coworking and an open-air theater.\n\n**Location:** Costa del Este, near Town Center, Paseo del Mar and Hospital Pacífica Salud.\n\nAsk MAKOM about availability and current prices for the units.",
+  "operacion": "venta",
+  "ubicacionPublica": "Costa del Este",
+  "titulo": "Apartamentos amoblados en venta en Costa del Este, Panamá. GT",
+  "fechaEntrega": "inmediata",
+  "seo": {
+    "noIndex": false
+  }
+}

@@ -616,21 +616,31 @@ collections:
         buttons: ["bold", "italic", "bulleted-list", "numbered-list"]
         required: false
 
+      # Imagen principal: widget propio «imagen-makom» (admin/galeria-fotos.js). Mismo dato que el widget «image» nativo: la ruta pública (cadena).
       - label: "Imagen principal"
         name: "imagenPrincipal"
-        widget: "image"
+        widget: "imagen-makom"
         required: false
+        insignia: "Imagen principal"
+        lado_max: 2400
+        nombre_campo: "titulo"
+        nombre_prefijo: "proyecto"
+        public_folder: "/assets/propiedades/uploads"
+        hint: "Es la imagen que ve el visitante en la tarjeta y en la ficha del proyecto."
 
-      - label: "Galería"
+      # Galería: mismo widget de carga múltiple de Propiedades, sin «portada» (la imagen principal es el campo de arriba). Mismos datos: [{ archivo, alt }].
+      - label: "Galería de fotografías"
         name: "galeria"
-        widget: "list"
+        widget: "galeria-fotos"
         required: false
-        collapsed: true
-        summary: "{{fields.archivo}}"
-        label_singular: "Fotografía"
-        fields:
-          - { label: "Archivo", name: "archivo", widget: "image" }
-          - { label: "Texto alternativo", name: "alt", widget: "string", required: false }
+        min: 0
+        max: 12
+        portada: false
+        lado_max: 2400
+        nombre_campo: "titulo"
+        nombre_prefijo: "proyecto"
+        public_folder: "/assets/propiedades/uploads"
+        hint: "Opcional. Hasta 12 fotografías. Nota: hoy la ficha pública del proyecto solo muestra la imagen principal."
 
       - label: "CTA — Texto"
         name: "ctaTexto"
@@ -744,10 +754,17 @@ collections:
         buttons: ["bold", "italic", "bulleted-list", "numbered-list"]
         required: false
 
+      # Portada: widget propio «imagen-makom» (admin/galeria-fotos.js). Mismo dato que el widget «image» nativo: la ruta pública (cadena).
       - label: "Imagen de portada"
         name: "imagenPortada"
-        widget: "image"
+        widget: "imagen-makom"
         required: false
+        insignia: "Portada"
+        lado_max: 2400
+        nombre_campo: "titulo"
+        nombre_prefijo: "perspectiva"
+        public_folder: "/assets/propiedades/uploads"
+        hint: "Se muestra arriba del artículo y como imagen al compartirlo en redes."
 
       - label: "Mostrar en página principal"
         name: "mostrarEnHome"
@@ -798,4 +815,4 @@ collections:
       - { label: "Cargo (EN)", name: "cargoEn", widget: "string", required: false, hint: "Si se deja vacío se usa el cargo en español." }
       - { label: "Número de idoneidad", name: "idoneidad", widget: "string", required: false, hint: "Solo si aplica y está confirmado. Si se deja vacío, la tarjeta no muestra ninguna línea de idoneidad." }
       - { label: "WhatsApp (solo dígitos con código de país)", name: "whatsapp", widget: "string", required: false, pattern: ["^[0-9]{8,15}$", "Solo dígitos, con código de país y sin +, espacios ni guiones (ej. 50763534377)."], hint: "El botón de WhatsApp de la ficha usa ESTE número. Si se deja vacío, la tarjeta usa el WhatsApp corporativo de MAKOM." }
-      - { label: "Foto", name: "foto", widget: "image", required: false, hint: "Opcional. Sin foto, la tarjeta muestra un monograma con las iniciales." }
+      - { label: "Foto", name: "foto", widget: "imagen-makom", required: false, vista: "perfil", lado_max: 1000, nombre_campo: "nombre", nombre_prefijo: "asesor", public_folder: "/assets/propiedades/uploads", hint: "Opcional. Sin foto, la tarjeta muestra un monograma con las iniciales." }
