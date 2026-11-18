@@ -5,19 +5,22 @@
  * Verificación de las mejoras de la ficha de propiedad (sin navegador).
  *
  *   npm run build && node scripts/verificar-ficha.js            # lógica pura + sitio generado (_site)
+ *   node scripts/verificar-ficha.js --rapido                    # sin las construcciones temporales (galería ↔ ficha pública)
  *   node scripts/verificar-ficha.js --con-fixtures              # además construye una copia con datos de prueba
  *                                                                 (asesor, video, planos, fecha de precio…) y los comprueba
  *
  * Comprueba, entre otras cosas: rangos, fecha del precio, video, zona aproximada del mapa (el punto exacto nunca se publica y
  * siempre cae dentro del círculo), asesor y WhatsApp con referencia, enlace limpio + redirección suave, canonical/hreflang/sitemap,
  * metadatos sociales ES/EN, iconos válidos, fichas antiguas sin cambios y ausencia de coordenadas exactas en todo _site.
+ * Galería: el límite de fotografías del panel (admin/config.yml) = la fuente central (_data/propiedadesConfig.json → limitesMedia)
+ * = lo que muestra la ficha pública (se construye con 1, 3, 6, el máximo y el máximo + 1 fotos, con y sin video/planos).
  * No modifica nada salvo con --con-fixtures, que restaura los archivos en un bloque finally.
  */
 
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
-const { execSync } = require("child_process");
+const { execSync, spawnSync } = require("child_process");
 const ficha = require("./ficha-propiedad");
 
 const RAIZ = path.join(__dirname, "..");
@@ -394,10 +397,156 @@ function pruebasConFixtures() {
 }
 
 /* ------------------------------------------------------------------ */
+/* 5. Galería: el límite del panel y la capacidad pública, sincronizados */
+/* ------------------------------------------------------------------ */
+
+// Parte estática (sin construir): configuración del CMS, fuente central y datos existentes.
+function pruebasGaleriaPanel() {
+  seccion("galería ↔ panel");
+  const yaml = require("js-yaml");
+  const cfg = yaml.load(leer(path.join(RAIZ, "admin", "config.yml")));
+  const central = JSON.parse(leer(path.join(RAIZ, "_data", "propiedadesConfig.json")));
+  const lim = central.limitesMedia || {};
+  const col = cfg.collections.find((c) => c.name === "propiedades");
+  const fotografias = col.fields.find((f) => f.name === "fotografias");
+  const galeria = fotografias.fields.find((f) => f.name === "galeria");
+  ok("fuente central: límites de fotografías definidos (enteros, mín ≤ máx)", Number.isInteger(lim.fotosMin) && Number.isInteger(lim.fotosMax) && lim.fotosMin >= 1 && lim.fotosMin <= lim.fotosMax, JSON.stringify(lim));
+  ok(`panel: la galería admite exactamente el máximo central (${lim.fotosMax}) y exige el mínimo central (${lim.fotosMin})`, galeria.max === lim.fotosMax && galeria.min === lim.fotosMin, `panel ${galeria.min}–${galeria.max}`);
+  ok("panel: es la lista nativa de Decap (reordenar arrastrando, papelera, «Añadir Fotografía») y no un widget propio", galeria.widget === "list" && galeria.label_singular === "Fotografía");
+  ok("panel: la fila de cada foto muestra si es la portada (★ PORTADA) mediante el resumen nativo", /ternary\('★ PORTADA/.test(galeria.summary || "") && galeria.summary.includes("fields.archivo"), galeria.summary);
+  ok("panel: la etiqueta y la ayuda dicen el máximo real, cómo ordenar y quitar, cuál es la principal y cómo guardar", String(galeria.label).includes(String(lim.fotosMax)) && galeria.hint.includes(`${lim.fotosMax}`) && /arrastre/i.test(galeria.hint) && /orden/i.test(galeria.hint) && /★ PORTADA/.test(galeria.hint) && /Publicar/.test(galeria.hint) && /quitar/i.test(galeria.hint), galeria.hint);
+  const campoNombres = galeria.fields.map((f) => f.name);
+  ok("panel: cada fila tiene archivo (imagen obligatoria), texto alternativo y «portada»", ["archivo", "alt", "portada"].every((n) => campoNombres.includes(n)) && galeria.fields.find((f) => f.name === "archivo").widget === "image" && galeria.fields.find((f) => f.name === "archivo").required !== false);
+  ok("panel: la galería es opcional como lista (las propiedades sin fotos siguen siendo válidas en los datos)", galeria.required === false);
+  // Video: un solo campo, con lo que la ficha pública admite
+  const videos = col.fields.filter((f) => /video/i.test(f.name));
+  ok("panel: un único campo de video (videoRecorrido)", videos.length === 1 && videos[0].name === "videoRecorrido", videos.map((v) => v.name).join(","));
+  const v = videos[0];
+  const subv = Object.fromEntries(v.fields.map((f) => [f.name, f]));
+  ok("panel: video = enlace (https) o archivo, con portada y título accesible (lo que lee la ficha pública)", ["url", "archivo", "poster", "titulo"].every((n) => subv[n]) && subv.archivo.widget === "file" && subv.poster.widget === "image" && v.required === false && subv.url.required === false && subv.archivo.required === false);
+  const reUrl = new RegExp(subv.url.pattern[0]);
+  ok("panel: el enlace del video solo acepta https (igual que la ficha)", reUrl.test("https://youtu.be/aqz-KE-bpKQ") && !reUrl.test("http://insegura.example.com/v.mp4") && ficha.videoDe({ url: "http://insegura.example.com/v.mp4" }) === null && ficha.videoDe({ url: "https://youtu.be/aqz-KE-bpKQ" }) !== null);
+  ok("panel ↔ ficha: la ficha acepta enlace (YouTube, Vimeo, .mp4) o archivo del sitio (.mp4/.webm) y rechaza el resto", ficha.videoDe({ url: "https://vimeo.com/123456789" }) !== null && ficha.videoDe({ url: "https://cdn.example.com/a.mp4" }) !== null && ficha.videoDe({ archivo: "/assets/propiedades/uploads/recorrido.mp4" }) !== null && ficha.videoDe({ archivo: "/assets/propiedades/uploads/recorrido.mov" }) === null && ficha.videoDe({ url: "https://example.com/pagina" }) === null);
+  ok("panel ↔ ficha: si se completan enlace y archivo se usa el enlace (como dice la ayuda)", (ficha.videoDe({ url: "https://youtu.be/aqz-KE-bpKQ", archivo: "/assets/x.mp4" }) || {}).tipo === "youtube" && /usa el enlace/.test(v.hint));
+  // Planos
+  const planos = col.fields.find((f) => f.name === "planos");
+  ok("panel: planos = lista opcional de imágenes con etiqueta ES/EN, sin límite, que la ficha admite (jpg/png/webp del sitio)", planos && planos.widget === "list" && planos.required === false && planos.max === undefined && planos.fields.find((f) => f.name === "archivo").widget === "image" && ficha.planosValidos([{ archivo: "/assets/a.jpg" }, { archivo: "/assets/a.png" }, { archivo: "/assets/a.webp" }, { archivo: "/assets/a.gif" }, { archivo: "https://x/a.jpg" }]).length === 3);
+  // Datos existentes: compatibles con el panel
+  const props = propiedades();
+  const conteo = props.map((p) => ({ ref: p.referenciaMakom, n: ((p.fotografias || {}).galeria || []).length, filas: (p.fotografias || {}).galeria || [] }));
+  ok(`datos: ninguna de las ${props.length} propiedades existentes supera el máximo del panel (máx. actual ${Math.max(...conteo.map((c) => c.n))})`, conteo.every((c) => c.n <= lim.fotosMax), conteo.filter((c) => c.n > lim.fotosMax).map((c) => c.ref).join(","));
+  ok("datos: todas cumplen el mínimo del panel (se pueden volver a guardar sin cambios)", conteo.every((c) => c.n === 0 || c.n >= lim.fotosMin), conteo.filter((c) => c.n > 0 && c.n < lim.fotosMin).map((c) => c.ref).join(","));
+  ok("datos: ninguna fila de galería sin archivo (no hay imágenes vacías)", conteo.every((c) => c.filas.every((f) => f && f.archivo)), conteo.filter((c) => c.filas.some((f) => !f.archivo)).map((c) => c.ref).join(","));
+  // Guardias del build
+  const dentro = fs.readFileSync(path.join(RAIZ, ".eleventy.js"), "utf8");
+  ok("build: falla si el panel y la fuente central difieren, y avisa de galerías fuera de límite, repetidas o sin archivo", /galeriaCampo\.max !== limites\.fotosMax/.test(dentro) && /fotosMax/.test(dentro) && /repetida en la galería/.test(dentro) && /sin archivo/.test(dentro));
+}
+
+// Parte dinámica (construye el sitio en una carpeta temporal): la ficha pública admite exactamente lo que permite el panel.
+function pruebasCapacidadPublica() {
+  seccion("galería ↔ ficha pública");
+  const central = JSON.parse(leer(path.join(RAIZ, "_data", "propiedadesConfig.json")));
+  const { fotosMax, fotosMin } = central.limitesMedia;
+  const dirProps = path.join(RAIZ, "content", "propiedades");
+  const archivo = fs.readdirSync(dirProps).find((a) => a.includes("desde-150-000"));
+  const ruta = path.join(dirProps, archivo);
+  const original = leer(ruta);
+  const copia = path.join(os.tmpdir(), "verificar-galeria-" + Date.now() + ".json");
+  fs.writeFileSync(copia, original);
+  const salida = fs.mkdtempSync(path.join(os.tmpdir(), "galeria-site-"));
+  // Fotografías reales y distintas del sitio (solo se enlazan; no se modifican ni se copian)
+  const usadas = [];
+  propiedades().forEach((p) => ((p.fotografias || {}).galeria || []).forEach((f) => { if (f.archivo && !usadas.includes(f.archivo) && fs.existsSync(path.join(RAIZ, f.archivo.replace(/^\//, ""))) && usadas.length < fotosMax + 2) usadas.push(f.archivo); }));
+  if (usadas.length < fotosMax + 1) {
+    ok("hay suficientes fotografías distintas para la prueba", false, usadas.length);
+    return;
+  }
+  const construir = () => {
+    const r = spawnSync("npx", ["eleventy", `--output=${salida}`], { cwd: RAIZ, encoding: "utf8" });
+    return { codigo: r.status, salida: (r.stdout || "") + (r.stderr || "") };
+  };
+  try {
+    const d = JSON.parse(original);
+    const slug = d.slugPublico || path.basename(archivo, ".json");
+    const paginas = () => ["es", "en"].map((i) => [i, leer(path.join(salida, i === "en" ? "en/properties" : "propiedades", slug, "index.html"))]);
+    const filas = (n, portada) => usadas.slice(0, n).map((u, i) => ({ archivo: u, alt: "F" + String(i + 1).padStart(2, "0"), portada: portada === i }));
+    const orden = (html) => [...html.matchAll(/<div class="galeria-ficha__slide"[\s\S]*?alt="(F\d\d)"/g)].map((m) => m[1]);
+    const probar = (n, portada, etiqueta, conExtras) => {
+      d.fotografias.galeria = filas(n, portada);
+      if (conExtras) {
+        d.videoRecorrido = { url: "https://www.youtube.com/watch?v=aqz-KE-bpKQ", titulo: "Recorrido" };
+        d.planos = [{ archivo: usadas[0], etiqueta: "Plano A" }];
+      } else {
+        delete d.videoRecorrido;
+        d.planos = [];
+      }
+      fs.writeFileSync(ruta, JSON.stringify(d, null, 2));
+      const b = construir();
+      ok(`${etiqueta}: el build termina bien`, b.codigo === 0, b.salida.slice(-200));
+      return b;
+    };
+
+    // Máximo del panel: 10 fotos + video + planos
+    let b = probar(fotosMax, 3, `${fotosMax} fotografías (máximo del panel) con video y planos`, true);
+    paginas().forEach(([idioma, html]) => {
+      const n = idioma.toUpperCase();
+      const ord = orden(html);
+      const esperado = ["F04", ...filas(fotosMax).map((f) => f.alt).filter((a) => a !== "F04")];
+      ok(`${n}: ${fotosMax} fotografías → ${fotosMax} diapositivas y ${fotosMax - 1} miniaturas`, ord.length === fotosMax && (html.match(/data-galeria-ir="/g) || []).length === fotosMax - 1, `${ord.length} diapositivas`);
+      ok(`${n}: el orden de la lista se conserva y la marcada como portada va primero`, JSON.stringify(ord) === JSON.stringify(esperado), ord.join(","));
+      ok(`${n}: con ${fotosMax} fotos siguen apareciendo las fichas «Video» y «Planos»`, html.includes('data-galeria-extra="video"') && html.includes('data-galeria-extra="planos"'));
+      ok(`${n}: las flechas y el contador del carrusel cubren las ${fotosMax} fotos`, html.includes(`aria-label="${fotosMax} / ${fotosMax}"`) && html.includes('data-galeria-flecha="1"'));
+    });
+    ok(`sin avisos de galería con ${fotosMax} fotos válidas`, !/tiene \d+ fotografías|repetida en la galería|sin archivo|más de una fotografía/.test(b.salida.split("\n").filter((l) => l.includes(archivo.slice(0, 20))).join("\n")), b.salida.split("\n").filter((l) => l.includes("[ficha]") && l.includes(archivo.slice(0, 20))).join(" | "));
+
+    // Sin portada marcada → la primera
+    probar(5, -1, "5 fotografías sin portada marcada", false);
+    paginas().forEach(([idioma, html]) => ok(`${idioma.toUpperCase()}: sin portada marcada la principal es la primera de la lista y se conserva el orden`, JSON.stringify(orden(html)) === JSON.stringify(["F01", "F02", "F03", "F04", "F05"]), orden(html).join(",")));
+    // Propiedades existentes: 1 a 6 fotos y sin video ni planos
+    for (const n of [1, fotosMin, 6]) {
+      probar(n, 0, `${n} fotografía(s) sin video ni planos`, false);
+      paginas().forEach(([idioma, html]) => ok(`${idioma.toUpperCase()}: ${n} foto(s) → ${n} diapositiva(s), sin fichas «Video»/«Planos»`, orden(html).length === n && !html.includes("data-galeria-extra"), orden(html).length));
+    }
+    // Sin fotografías
+    d.fotografias.galeria = [];
+    fs.writeFileSync(ruta, JSON.stringify(d, null, 2));
+    b = construir();
+    ok("sin fotografías: el build termina y la ficha muestra «próximamente»", b.codigo === 0 && paginas().every(([i, h]) => h.includes(i === "en" ? "Photos coming soon" : "Fotografías disponibles próximamente")));
+    // Un video sin fotos extra: se puede agregar y quitar sin romper la galería
+    probar(6, 1, "6 fotos con video", false);
+    d.videoRecorrido = { url: "https://youtu.be/aqz-KE-bpKQ" };
+    fs.writeFileSync(ruta, JSON.stringify(d, null, 2));
+    construir();
+    ok("agregar un video: aparece la ficha «Video» y las 6 fotos siguen en el mismo orden", paginas().every(([, h]) => h.includes('data-galeria-extra="video"') && orden(h).length === 6));
+    delete d.videoRecorrido;
+    fs.writeFileSync(ruta, JSON.stringify(d, null, 2));
+    construir();
+    ok("quitar el video (campo vacío): desaparece la ficha «Video» y las fotos no cambian", paginas().every(([, h]) => !h.includes('data-galeria-extra="video"') && orden(h).length === 6));
+
+    // Por encima del máximo (edición manual de archivos): se muestran todas (no se pierde nada) y el build avisa
+    b = probar(fotosMax + 1, 0, `${fotosMax + 1} fotografías (una más que el máximo, p. ej. edición manual)`, false);
+    ok(`${fotosMax + 1} fotos: la ficha las muestra todas (no se descarta ninguna)`, paginas().every(([, h]) => orden(h).length === fotosMax + 1));
+    ok(`${fotosMax + 1} fotos: el build avisa de que supera el máximo del panel`, new RegExp(`tiene ${fotosMax + 1} fotografías y el panel admite como máximo ${fotosMax}`).test(b.salida), b.salida.slice(-300));
+    // Filas vacías o repetidas
+    d.fotografias.galeria = [...filas(4, 0), { archivo: "", alt: "vacía" }, { ...filas(4, 0)[1] }];
+    fs.writeFileSync(ruta, JSON.stringify(d, null, 2));
+    b = construir();
+    ok("filas repetidas o sin archivo: el build avisa (no se crean ni se ocultan en silencio)", /repetida en la galería/.test(b.salida) && /sin archivo/.test(b.salida));
+  } finally {
+    fs.writeFileSync(ruta, leer(copia));
+    fs.rmSync(copia, { force: true });
+    fs.rmSync(salida, { recursive: true, force: true });
+  }
+  ok("los archivos de datos quedaron restaurados", leer(ruta) === original);
+}
+
+/* ------------------------------------------------------------------ */
 
 pruebasLogica();
 pruebasCms();
 pruebasSitio("sitio (_site)", SITE);
+pruebasGaleriaPanel();
+if (!process.argv.includes("--rapido")) pruebasCapacidadPublica();
 if (process.argv.includes("--con-fixtures")) pruebasConFixtures();
 
 const grupos = {};
