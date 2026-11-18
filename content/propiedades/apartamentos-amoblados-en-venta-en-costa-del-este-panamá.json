@@ -32,28 +32,32 @@
   "fotografias": {
     "galeria": [
       {
-        "portada": false,
-        "archivo": "/assets/propiedades/uploads/genera-1-.jpg"
+        "archivo": "/assets/propiedades/uploads/genera-1-.jpg",
+        "portada": false
       },
       {
-        "portada": false,
-        "archivo": "/assets/propiedades/uploads/generat-rec.jpg"
+        "archivo": "/assets/propiedades/uploads/generat-rec.jpg",
+        "portada": false
       },
       {
-        "portada": false,
-        "archivo": "/assets/propiedades/uploads/genera-gym.jpg"
+        "archivo": "/assets/propiedades/uploads/genera-gym.jpg",
+        "portada": false
       },
       {
-        "portada": true,
-        "archivo": "/assets/propiedades/uploads/genera-4.jpg"
+        "archivo": "/assets/propiedades/uploads/genera-4.jpg",
+        "portada": false
       },
       {
-        "portada": false,
-        "archivo": "/assets/propiedades/uploads/genera-lou.jpg"
+        "archivo": "/assets/propiedades/uploads/genera-lou.jpg",
+        "portada": false
       },
       {
-        "portada": false,
-        "archivo": "/assets/propiedades/uploads/genera-out.jpg"
+        "archivo": "/assets/propiedades/uploads/genera-out.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/mkw-re-034-20261118-6caf7a5e.jpg",
+        "portada": true
       }
     ]
   },
