@@ -51,7 +51,21 @@ collections:
     format: "json"
     extension: "json"
     identifier_field: "titulo"
-    summary: "{{titulo}} — {{estado}}"
+    # Listado: el `summary` es lo ÚNICO que Decap 3.17.3 entrega a cada tarjeta del listado (texto). Dos líneas: arriba referencia · operación · tipo · ESTADO y, debajo, el título
+    # (valores tal como están guardados). El ESTADO va en el propio texto a propósito: si el enriquecimiento visual (admin/listado-propiedades.js: portada e insignia) no carga,
+    # el listado nativo sigue mostrando el estado de cada propiedad de forma legible. El salto de línea lo respeta el tema (tema-makom.css → white-space: pre-line).
+    # `default` cubre las propiedades aún sin referencia o sin estado y `truncate(120)` evita que un título larguísimo desordene la tarjeta (solo en el listado; el título guardado no cambia).
+    summary: "{{referenciaMakom | default('sin referencia')}} · {{operacion}} · {{tipo}} · {{estado | default('sin estado')}}\n{{titulo | truncate(120)}}"
+    # Filtros nativos de Decap por estado y operación (los mismos valores de los campos «Estado» y «Operación»).
+    view_filters:
+      - { label: "Disponibles", field: "estado", pattern: "^disponible$" }
+      - { label: "Reservadas", field: "estado", pattern: "^reservada$" }
+      - { label: "Alquiladas", field: "estado", pattern: "^alquilada$" }
+      - { label: "Vendidas", field: "estado", pattern: "^vendida$" }
+      - { label: "Archivadas", field: "estado", pattern: "^archivada$" }
+      - { label: "Borradores", field: "estado", pattern: "^borrador$" }
+      - { label: "En venta", field: "operacion", pattern: "^venta$" }
+      - { label: "En alquiler", field: "operacion", pattern: "^alquiler$" }
     editor:
       preview: false
     # Milestone 12 — Etapa 4: se revirtió la carpeta de medios por

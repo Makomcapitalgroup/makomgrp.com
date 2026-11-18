@@ -1,0 +1,8 @@
+{
+  "titulo": "Terreno en Chame",
+  "operacion": "venta",
+  "tipo": "terreno",
+  "estado": "reservada",
+  "referenciaMakom": "MKW-RE-903",
+  "nota": "Entrada SINTÉTICA solo para pruebas del listado (no existe en el repositorio de contenido)."
+}

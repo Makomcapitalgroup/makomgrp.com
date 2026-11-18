@@ -123,3 +123,66 @@ Sigue siendo solo CSS en `admin/tema-makom.css` (sin JavaScript, sin cambios de 
 1. **Fotografías y tarjetas enriquecidas en los listados de las cuatro colecciones.** Decap 3.17.3 solo toma la imagen de una tarjeta de un campo llamado `image`, `thumbnail`, `thumb`, `picture`, `avatar`, `photo`, `cover`, `hero` o `logo`; los campos de MAKOM tienen otros nombres. Opciones con riesgo (a decidir): renombrar campos (cambia datos y plantillas), JavaScript que lea el estado de Decap, o sustituir componentes internos. También: `summary` con más datos por colección y `view_filters` / `view_groups` nativos por estado.
 2. **Visualización pública de la galería de Proyectos.** `_includes/proyecto.njk` solo usa `imagenPrincipal`; la galería ya se puede cargar desde el panel pero no se muestra en la ficha (requiere cambio de plantilla).
 3. **Pruebas autenticadas con Loyra y pruebas en Safari / iPhone reales.** Todo lo anterior se verificó con el Decap real y un respaldo de prueba en memoria, solo en Chrome (CDP); falta confirmar con sesión real de GitHub la carga de imágenes de las tres colecciones nuevas (un solo commit por publicación) y el comportamiento en Safari, iPhone y Firefox.
+
+---
+
+# Listado de Propiedades (rama `feat/admin-listado-propiedades`, sin fusionar)
+
+## Auditoría de Decap 3.17.3: qué recibe realmente cada tarjeta del listado
+
+- Cada tarjeta recibe **solo** el resultado de `summary` (un texto) y, en la vista de **cuadrícula**, una imagen **únicamente si** la colección tiene un campo de nivel superior de tipo `image` cuyo nombre sea exactamente `image`, `thumbnail`, `thumb`, `picture`, `avatar`, `photo`, `cover`, `hero` o `logo` (función de inferencia del bundle). La vista de lista nunca muestra imágenes. La opción `thumbnail:` de la colección no existe en esta versión.
+- En Propiedades la portada está **anidada** (`fotografias.galeria[].archivo` con `portada: true`) y la gestiona el widget propio: Decap no la ve en el listado. No hay API pública para tarjetas: `window.CMS` expone `registerWidget`, `registerPreviewTemplate`, `registerEventListener` (preSave/postSave…), `registerEditorComponent`, etc., pero ningún gancho del listado y no expone el store.
+- Soportado y oficial para el listado: `summary` (texto con filtros `default`, `truncate`, `upper`, `lower`, `date`, `ternary`), `sortable_fields`, **`view_filters`** y **`view_groups`**.
+
+## Qué se implementó (soportado y de bajo riesgo)
+
+1. `summary` de dos líneas: `{{titulo | truncate(110)}}` / `{{referenciaMakom | default('sin referencia')}} · {{operacion}} · {{tipo}} · {{estado}}` (valores tal como están guardados; los datos no cambian).
+2. CSS: respeta el salto de línea (`white-space: pre-line`); en ≥ 1100 px jerarquía por `::first-line` (título 16 px / 500, datos 13 px gris); en pantallas menores texto uniforme (si el título se parte, `::first-line` solo estilaría la primera línea visual).
+3. `view_filters` nativos por cada estado definido (Disponibles, Reservadas, Alquiladas, Vendidas, Archivadas, Borradores) y por operación (En venta, En alquiler). El menú de Decap no se cierra al elegir y cada opción alterna.
+4. Botones del listado («Ordenar por», «Filter by») con la forma de «Añadir rápido».
+
+## Qué NO es posible sin cambios de mayor riesgo (portada real, chips de color, «Editar»)
+
+| Alternativa | Qué logra | Riesgos |
+|---|---|---|
+| **A. Solo lo implementado** | Datos (ref., operación, tipo, estado) y filtros, sin tocar datos ni JavaScript | No hay foto ni color por estado |
+| **B. Script de «enriquecimiento» (prototipo evaluado)** | Portada real, chips de estado de color e indicador «Editar ›», por atributos/variables CSS en cada tarjeta | JavaScript nuevo en el panel que lee el enlace de cada tarjeta (ruta `#/collections/propiedades/entries/<slug>`) y trae el JSON de cada propiedad de `raw.githubusercontent.com` (repositorio público): depende de un servicio externo y de que el repositorio siga siendo público; la CDN de GitHub cachea 5 min (una portada recién publicada tardaría hasta 5 min en verse); los atributos se pierden al cambiar de vista/colección (hay que reaplicarlos con un `MutationObserver`); el listado pagina por desplazamiento (20 en 20) y hay que cubrir las tarjetas que llegan después. En la prueba: 20 propiedades traídas en ~0,6 s; los atributos sobreviven al reordenar pero no al cambiar de vista. Requiere pruebas propias y mantenimiento en cada actualización de Decap. |
+| **C. Campo derivado `image`** | La cuadrícula nativa mostraría la portada | Cambia el modelo de datos (clave nueva en cada JSON), requiere `preSave` para mantenerla y una migración de las propiedades existentes; solo en la vista de cuadrícula |
+| **D. Sustituir componentes internos / fork de Decap** | Control total | Alto riesgo y mantenimiento permanente; no recomendado |
+
+No se implementó B, C ni D: requieren aprobación.
+
+---
+
+# Listado de Propiedades enriquecido (prototipo B aprobado → implementación)
+
+Solo Propiedades (Proyectos, Perspectivas y Asesores quedan con el listado nativo + acento).
+
+## Arquitectura
+
+1. **Datos: `/admin/listado-propiedades.json`** (versión 2), generado por el build del sitio (`content/admin-listado-propiedades.njk` + filtro `listadoAdminPropiedades` de `.eleventy.js`). Mismo origen y mismo despliegue que el panel: **no depende de `raw.githubusercontent.com`** ni de ningún servicio externo, no hay CORS y la caché es la de GitHub Pages (el panel valida con `cache: 'no-cache'`: si no cambió, 304).
+   - **Minimización (revisión de privacidad previa a publicar).** El archivo **no lleva títulos, nombres de archivo, referencias, operación, tipo, dirección, precios, descripciones, contacto ni coordenadas**. Cada fila es una **clave** (hash cyrb53 de 14 hex del nombre de archivo, mismo algoritmo en `claveListado()` de `.eleventy.js` y en el script; una prueba comprueba que coinciden) más el **estado**. Solo las propiedades **públicas** (`disponible` y `reservada`, las del catálogo del sitio) llevan además la portada (la marcada o la primera) con una **miniatura webp de 480 px** (~20 KB, mismo helper que el Home). Las **no públicas** (borrador, alquilada, vendida, archivada) no traen foto: **no se genera ninguna miniatura de propiedades no públicas**, así que el archivo y las miniaturas no sirven para descubrirlas ni identificarlas. Lo comprueba `verificar-ficha.js` (sección «listado del panel»).
+   - **Sobretítulo «REFERENCIA · OPERACIÓN · TIPO»**: no sale del archivo sino del propio texto de la tarjeta, que Decap dibuja con los datos del panel autenticado; por eso nunca está desactualizado.
+2. **Enriquecimiento: `admin/listado-propiedades.js`**. Solo pone atributos `data-mk-*` y la variable `--mk-portada` en el `<li>` de cada tarjeta de Decap (y `data-mk-sobretitulo` en su enlace); no crea, mueve ni borra nodos y no toca textos ni funciones nativas. Todo el diseño es CSS (`tema-makom.css`).
+3. **Diseño**: lista = tarjeta horizontal (portada 148 px con esquinas de 12 px y recorte `cover`, sobretítulo «REFERENCIA · OPERACIÓN · TIPO» (una línea, dibujada por CSS con `a::before`), título de hasta 2 líneas, insignia de estado sobre la portada y «Editar ›»); cuadrícula = tarjeta vertical (portada arriba, 284 px de alto); móvil = portada de 76 px y chevrón «›». Sin portada (propiedades no públicas, sin fotografía o con archivo roto): marcador con el logo oficial `assets/logos/makom-capital-group-logo-positivo.svg`. Estados: Disponible (verde bosque), Reservada (terracota oscuro), Alquilada y Vendida (petróleo), Archivada (gris), Borrador (arena oscuro); todos ≥ 4,5:1 sobre su fondo blanco.
+4. **Procedencia de las fotografías**: las portadas reales de cada propiedad (`fotografias.galeria` → la marcada como portada o, si no, la primera), no ilustrativas ni de otras propiedades.
+
+## Cómo se mantiene tras los cambios de pantalla (sin esperas arbitrarias)
+
+- Un `MutationObserver` (solo `childList`) detecta que Decap creó o recreó tarjetas —cambio de lista/cuadrícula, de colección, orden, filtros, búsqueda, «cargar más», volver desde la edición— y en el siguiente cuadro reaplica los atributos desde los datos **que ya están en memoria** (≈ 0,1 ms para 36 tarjetas; sin red). Los atributos que se ponen no son observados (sin bucles) y fuera del listado no se hace nada.
+- Carga perezosa con `IntersectionObserver` (400 px de margen) y única por URL: al abrir el listado solo se piden las miniaturas visibles; cambiar de vista no vuelve a pedirlas.
+- Copia local (`localStorage`) de la última lectura correcta (stale-while-revalidate): el listado se ve enriquecido al instante y también si el archivo no responde. Tras un fallo no se reintenta en cada pantalla (intervalo de 2 min).
+- Al guardar desde el panel (eventos oficiales `postSave` / `postPublish`) se actualiza esa fila con los datos guardados: la insignia cambia al instante; si la portada cambió, se muestra el marcador de MAKOM hasta el siguiente despliegue (nunca una foto equivocada).
+
+## Errores y degradación
+
+**El estado nunca depende solo de las insignias:** el `summary` de `config.yml` es «referencia · operación · tipo · estado» + título, así que el listado nativo de Decap muestra el estado de cada propiedad en su propio texto (con la 1.ª línea con aspecto de sobretítulo, legible). Sin archivo de datos, con formato desconocido, con datos hostiles, con miniaturas lentas o rotas, o sin el script: las tarjetas quedan como las dibuja Decap (estado incluido) y los filtros, el orden, la búsqueda y la edición siguen funcionando (cubierto en el grupo 17 de `verificar-galeria-widget.js`). Los valores del archivo se tratan como no confiables: la miniatura solo se acepta con la forma `/assets/propiedades/_optimizadas/<nombre>.webp` la clave solo con 14 hex y el estado solo entre los 6 definidos; el sobretítulo es texto del propio panel y se pinta con CSS, nunca como HTML.
+
+## Riesgos y limitaciones
+
+- **Dependencia de Decap** (versión fijada en 3.17.3): la ruta `#/collections/propiedades/entries/<slug>` y que la tarjeta sea un `<li>` con ese enlace. Si una actualización cambia alguna, el enriquecimiento deja de aplicarse (queda el listado nativo). Se vigila con el grupo 17.
+- **Frescura**: la insignia y la portada vienen del último despliegue del sitio. Una propiedad nueva, o un cambio de estado/portada hecho desde otro equipo, se refleja cuando termina el despliegue (≈ 3 min); los cambios hechos en el mismo panel se reflejan al instante. El texto de la tarjeta (referencia, operación, tipo, estado y título) lo entrega Decap en vivo y siempre está al día.
+- **Privacidad (honesta)**: la clave es un hash no criptográfico: no oculta nada frente a quien ya conozca el nombre exacto del archivo (que además está en el repositorio público); evita que el archivo sirva para **descubrir** propiedades no públicas. Las fichas de propiedades no públicas ya eran alcanzables por URL directa con `noindex, nofollow` (comportamiento anterior, no cambiado aquí; no se cambió ningún estado comercial). El estado de cada fila (p. ej. «borrador») sí es visible en el archivo, sin forma de saber a qué propiedad corresponde sin su nombre de archivo.
+- **Peso**: 31 miniaturas nuevas en `_site/assets/propiedades/_optimizadas/` (≈ 660 KB, solo de propiedades públicas) y un JSON de ≈ 7 KB.
+- La portada es **decorativa** (el título está al lado): no lleva texto alternativo.
+- Solo Chrome verificado; no Safari/iPhone/Firefox reales.
