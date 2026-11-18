@@ -86,3 +86,34 @@ Sigue siendo solo CSS en `admin/tema-makom.css` (sin JavaScript, sin cambios de 
    de Decap por `estado` para agrupar o filtrar el listado. Es un cambio de funcionalidad visible: decidir con Loyra.
 2. Insignias de color por estado dentro de las tarjetas: requiere un componente propio o JavaScript sobre el listado. Descartado por duplicar la interfaz nativa.
 3. Traducir al español los textos que Decap deja en inglés: requiere un paquete de locale propio (JavaScript).
+
+---
+
+# Estándar compartido para las cuatro colecciones (rama `feat/admin-todas-colecciones`, sin fusionar)
+
+## Qué es compartido y qué es específico
+
+| | Propiedades | Proyectos | Perspectivas | Asesores |
+|---|---|---|---|---|
+| Cuadrícula de 12 columnas, 1080 px, 1 columna en móvil | ya (PR #19) | ✔ | ✔ | ✔ |
+| Rótulos de grupo (visuales) | — | Información general · Descripción · Imágenes · Llamado a la acción · Página principal | Información editorial · Extractos · Contenido · Portada · Página principal | Identidad · Cargo · Contacto · Fotografía de perfil |
+| Editores de texto 190 px mínimos | no (sin cambios) | ✔ | ✔ | — |
+| Imagen | `galeria-fotos` (3–10, portada) | `imagen-makom` (principal) + `galeria-fotos` (0–12, sin portada) | `imagen-makom` (portada) | `imagen-makom` (perfil, circular, 1000 px) |
+| Listado | acento terracota | acento petróleo | acento arena oscuro | acento verde bosque |
+
+- **Propiedades no cambia** (misma altura de formulario: 6 507 px a 1440 px, mismas reglas). Solo hereda el acento terracota de las tarjetas del listado.
+- **Datos**: ningún campo cambia de nombre, tipo ni obligatoriedad. `imagen-makom` guarda lo mismo que el widget `image` nativo (la ruta pública en una cadena; quitar la imagen la deja vacía, como el nativo). La galería de Proyectos guarda `[{ archivo, alt }]` (sin `portada`), igual que la lista anterior.
+- **Opciones nuevas, todas opcionales, de `galeria-fotos`**: `portada: false`, `min: 0`, `lado_max`, `nombre_campo` + `nombre_prefijo`. Sin ellas, el comportamiento de Propiedades es idéntico (las pruebas existentes de Propiedades pasan sin cambios).
+- **Nombres de archivo**: `proyecto-<título>-<aaaammdd>-<8 hex>.jpg`, `perspectiva-…`, `asesor-…` (la foto de un asesor se reduce a 1000 px; el resto a 2400 px). Misma carpeta global `assets/propiedades/uploads` (no se tocan rutas).
+
+## Hallazgos de la auditoría
+
+- **La galería de Proyectos no se muestra en el sitio público**: `_includes/proyecto.njk` solo usa `imagenPrincipal`. Se mejoró la carga en el panel y se avisa en la ayuda del campo; mostrarla en la ficha requiere un cambio de plantilla (propuesta, no implementada).
+- Ningún proyecto actual tiene imagen principal ni galería (la ficha muestra «Fotografías disponibles próximamente»).
+- **Listados con fotografías**: Decap 3.17.3 NO lo permite con los datos actuales. La tarjeta de la vista de cuadrícula toma la imagen del campo cuyo NOMBRE sea exactamente `image`, `thumbnail`, `thumb`, `picture`, `avatar`, `photo`, `cover`, `hero` o `logo` (código del bundle); los campos de MAKOM se llaman `imagenPrincipal`, `imagenPortada` y `foto`. La opción `thumbnail:` de la colección no existe en esta versión (se probó). Las vías posibles —renombrar campos (cambia los datos y las plantillas), JavaScript que lea el estado de Decap o sustituir componentes internos— quedan como propuestas con riesgos.
+- Decap re-serializa el Markdown del texto enriquecido al guardar cualquier entrada (3 saltos de línea → 2). Ocurre con la configuración anterior también; no es del widget.
+- **Móvil / tableta vertical**: `min-width: 800px` del editor de Decap (corregido ≤ 900 px; ya incluido en el PR #20).
+
+## Pruebas
+
+`node scripts/verificar-galeria-widget.js`: grupo 15 (≈ 45 comprobaciones) con el Decap real: asesor, perspectiva y proyecto (vista previa, subir, optimizar, reemplazar, quitar, publicar, datos idénticos salvo el campo editado, 12 máximo, sin portada, arrastrar y soltar, errores), estándar visual en las tres colecciones a 1440 y 390 px y acentos de los cuatro listados. Las dos entradas que las pruebas modifican (propiedad de Costa del Este y asesor Loyra) están **congeladas** en `scripts/fixtures/` para que lo que el equipo publique desde el CMS real no rompa las pruebas.
