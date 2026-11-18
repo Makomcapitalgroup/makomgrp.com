@@ -10,6 +10,7 @@
   ],
   "tituloEn": "Furnished apartments for sale in Costa del Este, Panama City",
   "referenciaMakom": "MKW-RE-034",
+  "asesor": "loyra-flores",
   "mapa": {
     "activo": true,
     "precision": "aproximada",
@@ -48,11 +49,19 @@
         "portada": false
       },
       {
+        "archivo": "/assets/propiedades/uploads/mkw-re-034-20261118-0ea3a6d0.jpg",
+        "portada": false
+      },
+      {
         "archivo": "/assets/propiedades/uploads/genera-lou.jpg",
         "portada": false
       },
       {
         "archivo": "/assets/propiedades/uploads/genera-out.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/mkw-re-034-20261118-7010a9f8.jpg",
         "portada": false
       },
       {
