@@ -417,6 +417,14 @@ async function escenarios(p, dirFix, n, temporales) {
   ok("nombres únicos «referencia-fecha-código.jpg» (no dependen del nombre original)", gal2.every((x) => RE_NOMBRE.test(nombreDe(x))), gal2.map(nombreDe).join(","));
   const dirUploads = fs.readdirSync(path.join(RAIZ, "assets", "propiedades", "uploads"));
   ok("ninguna imagen nueva pisa un archivo existente de Medios", gal2.every((x) => !dirUploads.includes(nombreDe(x))));
+  ok("cada imagen se guardó por el mecanismo de Decap en la carpeta de Medios exacta (assets/propiedades/uploads/<nombre>) y la ruta de la propiedad es esa misma con «/» inicial", gal2.every((x) => r2.archivos.filter((a) => a.ruta === "assets/propiedades/uploads/" + nombreDe(x)).length === 1 && x.archivo === "/assets/propiedades/uploads/" + nombreDe(x)), r2.archivos.map((a) => a.ruta).join(","));
+  ok("no se guardó ningún archivo que la propiedad no use (sin huérfanos en este flujo)", r2.archivos.every((a) => gal2.some((x) => nombreDe(x) === path.basename(a.ruta))));
+  // Volver a abrir la propiedad ya publicada (misma sesión del CMS): el widget lee las rutas nuevas sin errores y muestra las 5 fotos
+  await p.ev("location.hash = '#/collections/propiedades'");
+  await dormir(700);
+  await p.ev(`location.hash = '#/collections/propiedades/entries/${ENTRADA}'`);
+  await p.esperar("!!document.querySelector('[data-galeria-fotos]')");
+  ok("al reabrir la propiedad publicada, el widget lista las 5 fotos con sus rutas nuevas (miniaturas con origen definido) y la portada", (await p.n()) === 5 && (await p.ev("[...document.querySelectorAll('[data-galeria-tarjeta] img')].every((i) => !!i.getAttribute('src'))")) === true && (await p.ev("document.querySelectorAll('[data-galeria-tarjeta]')[0].textContent.includes('★ Portada')")) === true);
   const metas = [];
   for (const a of gal2) {
     const arch = r2.archivos.find((x) => x.ruta.endsWith("/" + nombreDe(a)));
