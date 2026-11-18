@@ -117,3 +117,9 @@ Sigue siendo solo CSS en `admin/tema-makom.css` (sin JavaScript, sin cambios de 
 ## Pruebas
 
 `node scripts/verificar-galeria-widget.js`: grupo 15 (≈ 45 comprobaciones) con el Decap real: asesor, perspectiva y proyecto (vista previa, subir, optimizar, reemplazar, quitar, publicar, datos idénticos salvo el campo editado, 12 máximo, sin portada, arrastrar y soltar, errores), estándar visual en las tres colecciones a 1440 y 390 px y acentos de los cuatro listados. Las dos entradas que las pruebas modifican (propiedad de Costa del Este y asesor Loyra) están **congeladas** en `scripts/fixtures/` para que lo que el equipo publique desde el CMS real no rompa las pruebas.
+
+## Pendientes independientes (no forman parte de este bloque)
+
+1. **Fotografías y tarjetas enriquecidas en los listados de las cuatro colecciones.** Decap 3.17.3 solo toma la imagen de una tarjeta de un campo llamado `image`, `thumbnail`, `thumb`, `picture`, `avatar`, `photo`, `cover`, `hero` o `logo`; los campos de MAKOM tienen otros nombres. Opciones con riesgo (a decidir): renombrar campos (cambia datos y plantillas), JavaScript que lea el estado de Decap, o sustituir componentes internos. También: `summary` con más datos por colección y `view_filters` / `view_groups` nativos por estado.
+2. **Visualización pública de la galería de Proyectos.** `_includes/proyecto.njk` solo usa `imagenPrincipal`; la galería ya se puede cargar desde el panel pero no se muestra en la ficha (requiere cambio de plantilla).
+3. **Pruebas autenticadas con Loyra y pruebas en Safari / iPhone reales.** Todo lo anterior se verificó con el Decap real y un respaldo de prueba en memoria, solo en Chrome (CDP); falta confirmar con sesión real de GitHub la carga de imágenes de las tres colecciones nuevas (un solo commit por publicación) y el comportamiento en Safari, iPhone y Firefox.
