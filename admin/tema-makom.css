@@ -98,25 +98,37 @@ html body header[class*="-AppHeader"] {
 @media (min-width: 761px) {
   html body header[class*="-AppHeader"] nav img[alt="Logo"] { display: block; flex: none; width: 118px; height: 34px; max-height: none; padding: 0; margin: 0 24px 0 20px; }
   html body header[class*="-AppHeader"] nav li:has(> img[alt="Logo"]) { display: flex; align-items: center; flex: none; }
-  html body [class*="-AppHeaderContent"] { justify-content: flex-start; }
+  html body header[class*="-AppHeader"] nav, html body header[class*="-AppHeader"] nav ul { height: 56px; align-items: center; }
+  html body [class*="-AppHeaderContent"] { justify-content: flex-start; min-height: 56px; }
   html body [class*="-AppHeaderActions"] { margin-left: auto; }
 }
 @media (max-width: 760px) { html body header[class*="-AppHeader"] nav li:has(> img[alt="Logo"]) { display: none; } }
 html body header[class*="-AppHeader"] nav li { display: flex; align-items: center; }
-html body [class*="-AppHeaderNavLink"] {
-  align-self: center; height: 36px; margin: 0 2px; padding-top: 0; padding-bottom: 0; border-radius: var(--mk-r-chip); color: var(--mk-ink-soft); font-size: 14px; font-weight: 400; letter-spacing: .01em;
-  transition: background-color var(--mk-fast) var(--mk-ease), color var(--mk-fast) var(--mk-ease);
+/* «Contenido» es un enlace y «Medios» un botón (abre la biblioteca de medios): ambos comparten forma de pestaña. Ninguno está deshabilitado en Decap;
+   la inactiva se distingue de una desactivada por tener color de texto pleno (≥ 5:1), cursor de acción y estados hover, pulsado y foco. */
+html body [class*="-AppHeaderNavLink"], html body [class*="-AppHeaderButton"] {
+  display: inline-flex; align-items: center; gap: 8px; align-self: center; height: 36px; margin: 0 2px; padding: 0 16px 0 14px; border: 0; border-radius: var(--mk-r-chip);
+  background: transparent; color: rgba(10, 10, 10, .78); font-size: 14px; font-weight: 400; letter-spacing: .01em; cursor: pointer;
+  transition: background-color var(--mk-fast) var(--mk-ease), color var(--mk-fast) var(--mk-ease), box-shadow var(--mk-fast) var(--mk-ease);
 }
-html body [class*="-AppHeaderNavLink"]:hover { background: var(--mk-hover); color: var(--mk-negro); }
-html body [class*="-AppHeaderNavLink"][aria-current="page"] { background: var(--mk-cristal-seleccion); color: var(--mk-terracota-ink); box-shadow: var(--mk-sombra-boton); }
-html body [class*="-AppHeaderNavLink"][aria-current="page"] svg { color: var(--mk-terracota); }
-/* «Añadir rápido» = acción secundaria → cápsula de cristal marfil */
+html body [class*="-AppHeaderNavLink"] svg, html body [class*="-AppHeaderButton"] svg { color: rgba(10, 10, 10, .55); transition: color var(--mk-fast) var(--mk-ease); }
+html body [class*="-AppHeaderNavLink"]:hover, html body [class*="-AppHeaderButton"]:hover { background: var(--mk-hover); color: var(--mk-negro); }
+html body [class*="-AppHeaderNavLink"]:hover svg, html body [class*="-AppHeaderButton"]:hover svg { color: var(--mk-terracota); }
+html body [class*="-AppHeaderNavLink"]:active, html body [class*="-AppHeaderButton"]:active { background: rgba(10, 10, 10, .11); }
+html body [class*="-AppHeaderNavLink"][aria-current="page"], html body [class*="-AppHeaderButton"][aria-current="page"] { background: var(--mk-cristal-seleccion); color: var(--mk-terracota-ink); font-weight: 500; box-shadow: var(--mk-sombra-boton); }
+html body [class*="-AppHeaderNavLink"][aria-current="page"] svg, html body [class*="-AppHeaderButton"][aria-current="page"] svg { color: var(--mk-terracota); }
+/* Móvil: Decap apila el icono sobre el texto y recorta la pestaña; aquí queda en una fila de 40 px */
+@media (max-width: 760px) {
+  html body [class*="-AppHeaderNavLink"], html body [class*="-AppHeaderButton"] { flex-direction: row; justify-content: center; height: 40px; min-width: 0; }
+}
+/* «Añadir rápido» (menú para crear Propiedad, Proyecto, Perspectiva o Asesor desde cualquier pantalla): útil, así que se conserva, pero discreto — contorno fino,
+   sin sombra ni cristal — para no competir con «+ Propiedad» */
 html body header[class*="-AppHeader"] [class*="-StyledDropdownButton"]:not([class*="-AvatarDropdownButton"]) {
-  border-radius: var(--mk-r-chip); background: var(--mk-cristal-boton); color: var(--mk-negro); font-weight: 500; letter-spacing: .02em;
-  box-shadow: var(--mk-sombra-boton); -webkit-backdrop-filter: blur(var(--mk-blur)) saturate(var(--mk-sat)); backdrop-filter: blur(var(--mk-blur)) saturate(var(--mk-sat));
-  transition: background-color var(--mk-fast) var(--mk-ease), transform var(--mk-fast) var(--mk-ease);
+  height: 36px; border: 1px solid rgba(10, 10, 10, .16); border-radius: var(--mk-r-chip); background: transparent; color: rgba(10, 10, 10, .82); font-size: 13px; font-weight: 500; letter-spacing: .02em; box-shadow: none;
+  transition: background-color var(--mk-fast) var(--mk-ease), border-color var(--mk-fast) var(--mk-ease);
 }
-html body header[class*="-AppHeader"] [class*="-StyledDropdownButton"]:not([class*="-AvatarDropdownButton"]):hover { background: var(--mk-cristal-boton-hover); transform: translateY(-1px); }
+html body header[class*="-AppHeader"] [class*="-StyledDropdownButton"]:not([class*="-AvatarDropdownButton"]):hover { background: var(--mk-hover); border-color: rgba(10, 10, 10, .30); color: var(--mk-negro); }
+html body header[class*="-AppHeader"] [class*="-StyledDropdownButton"]:not([class*="-AvatarDropdownButton"]):active { background: rgba(10, 10, 10, .11); }
 
 
 /* ---------- Navegación de colecciones ---------- */
@@ -137,16 +149,26 @@ html body [class*="-CollectionTopHeading"] { font-size: 28px; font-weight: 300; 
 html body [class*="-CollectionTopDescription"] { color: var(--mk-ink-soft); font-weight: 300; }
 /* Acción principal: terracota (igual que .btn--primary del sitio) */
 html body [class*="-CollectionTopNewButton"] {
-  min-height: 44px; border-radius: var(--mk-r-ctl); background: var(--mk-terracota); color: var(--mk-blanco);
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 28px; line-height: 1; text-align: center; white-space: nowrap;
+  border-radius: var(--mk-r-ctl); background: var(--mk-terracota); color: var(--mk-blanco);
   font-size: 13px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; box-shadow: none;
   transition: background-color var(--mk-fast) var(--mk-ease), transform var(--mk-fast) var(--mk-ease);
 }
 html body [class*="-CollectionTopNewButton"]:hover { background: var(--mk-terracota-dark); transform: translateY(-1px); }
-html body [class*="-ViewControlsButton"] { color: rgba(10, 10, 10, .40); border-radius: 8px; }
-html body [class*="-ViewControlsButton"]:hover { color: var(--mk-negro); }
-html body [class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"]) { background: #fff; border: 1px solid var(--mk-line); border-radius: var(--mk-r-panel); box-shadow: none; transition: border-color var(--mk-fast) var(--mk-ease), box-shadow var(--mk-fast) var(--mk-ease), transform var(--mk-fast) var(--mk-ease); }
-html body [class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"]):hover { border-color: rgba(181, 71, 42, .45); box-shadow: var(--mk-sombra-card); transform: translateY(-1px); }
-html body [class*="-ListCardTitle"] { font-size: 15px; font-weight: 400; color: var(--mk-negro); }
+html body [class*="-CollectionTopNewButton"]:active { background: var(--mk-terracota-ink); transform: translateY(0); }
+/* Controles de vista y orden (listado / cuadrícula, «Ordenar por») */
+html body [class*="-ViewControlsButton"] { width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; color: rgba(10, 10, 10, .45); border-radius: var(--mk-r-ctl); transition: background-color var(--mk-fast) var(--mk-ease), color var(--mk-fast) var(--mk-ease); }
+html body [class*="-ViewControlsButton"]:hover { color: var(--mk-negro); background: var(--mk-hover); }
+html body [class*="-ViewControlsButton"]:active { background: rgba(10, 10, 10, .11); }
+html body [class*="-CollectionControlsContainer"] [class*="-StyledWrapper"] *:not([class*="-ViewControlsButton"]):not(svg):not(path) { color: rgba(10, 10, 10, .74); }
+/* Listado: lo único que Decap ofrece por entrada es el texto del `summary` de admin/config.yml («título — estado»). Sin JavaScript no se puede resaltar el estado dentro de ese texto;
+   el refinamiento es de ritmo, tipografía y respuesta al ratón/teclado (ver docs/admin-formulario-compacto.md → propuestas). */
+html body [class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"]) { background: #fff; border: 1px solid var(--mk-line); border-radius: var(--mk-r-panel); box-shadow: none; margin-bottom: 10px; overflow: hidden; transition: border-color var(--mk-fast) var(--mk-ease), box-shadow var(--mk-fast) var(--mk-ease), transform var(--mk-fast) var(--mk-ease); }
+html body [class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"]):hover { border-color: rgba(181, 71, 42, .40); box-shadow: inset 3px 0 0 var(--mk-terracota), var(--mk-sombra-card); transform: translateY(-1px); }
+html body [class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"]):focus-within { border-color: var(--mk-terracota); box-shadow: inset 3px 0 0 var(--mk-terracota); }
+html body [class*="-ListCardLink"] { padding: 18px 24px; border-radius: var(--mk-r-panel); }
+html body [class*="-ListCardLink"]:focus-visible { outline-offset: -3px; }
+html body [class*="-ListCardTitle"] { font-size: 15px; font-weight: 400; line-height: 1.45; letter-spacing: .005em; color: var(--mk-negro); }
 
 /* ---------- Editor: barra de acciones ---------- */
 html body [class*="-ToolbarContainer"] {
@@ -154,7 +176,14 @@ html body [class*="-ToolbarContainer"] {
   -webkit-backdrop-filter: blur(var(--mk-blur)) saturate(var(--mk-sat)); backdrop-filter: blur(var(--mk-blur)) saturate(var(--mk-sat));
 }
 html body [class*="-BackCollection"] { color: var(--mk-ink-soft); font-weight: 400; }
-html body [class*="-BackStatus"] { font-size: 11px; font-weight: 600; letter-spacing: .1em; }
+/* Estados de guardado — semánticos, sin rojo de error para un simple «sin guardar»:
+   · cambios sin guardar = aviso en terracota oscuro (la acción siguiente es «Publicar», también terracota);
+   · cambios guardados   = verde bosque;
+   · un error real de guardado o publicación sigue en rojo de error (avisos de Decap y mensajes de campo, ver más abajo). */
+html body [class*="-BackStatus"] { display: inline-flex; align-items: center; gap: 7px; margin-top: 3px; padding: 3px 11px 3px 9px; border-radius: var(--mk-r-chip); font-size: 11px; font-weight: 600; letter-spacing: .08em; }
+html body [class*="-BackStatus"]::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+html body [class*="-BackStatusChanged"] { color: var(--mk-terracota-ink); background: rgba(181, 71, 42, .10); }
+html body [class*="-BackStatusUnchanged"] { color: var(--mk-success); background: rgba(45, 106, 79, .10); }
 /* «Publicar» (acción principal) = terracota; «Publicado» (estado) = verde bosque */
 html body [class*="-PublishButton"] {
   border-radius: var(--mk-r-ctl); background: var(--mk-terracota); color: var(--mk-blanco);
@@ -162,6 +191,7 @@ html body [class*="-PublishButton"] {
   transition: background-color var(--mk-fast) var(--mk-ease), transform var(--mk-fast) var(--mk-ease);
 }
 html body [class*="-PublishButton"]:hover { background: var(--mk-terracota-dark); transform: translateY(-1px); }
+html body [class*="-PublishButton"]:active { background: var(--mk-terracota-ink); transform: translateY(0); }
 html body [class*="-PublishedToolbarButton"] { border-radius: var(--mk-r-chip); background: rgba(45, 106, 79, .10); color: var(--mk-success); font-size: 13px; font-weight: 600; letter-spacing: .02em; }
 html body [class*="-PublishedToolbarButton"]::after { border-top-color: var(--mk-success); }
 /* «Eliminar entrada» = acción secundaria destructiva → cristal con texto de error */
@@ -181,12 +211,26 @@ html body [class*="-StyledMenuItem"] { border-radius: var(--mk-r-inner); color: 
 html body [class*="-StyledMenuItem"] svg, html body [class*="-MenuItemIconContainer"] svg { color: var(--mk-terracota); fill: currentColor; }
 html body [class*="-StyledMenuItem"]:hover, html body [class*="-StyledMenuItem"]:focus-visible { background: var(--mk-hover); color: var(--mk-negro); }
 
+/* Móvil y tableta vertical: Decap fija el editor en min-width: 800px y la pantalla se recorta por la derecha; aquí el editor se ajusta al ancho disponible y la barra de acciones pasa a filas */
+@media (max-width: 900px) {
+  html body [class*="-EditorContainer"] { min-width: 0; }
+  html body [class*="-ToolbarContainer"] { flex-wrap: wrap; height: auto; min-height: 56px; min-width: 0; width: 100%; max-width: 100vw; }
+  html body [class*="-ToolbarSectionBackLink"] { flex: 1 1 100%; min-width: 0; height: auto; min-height: 56px; border-right: 0; }
+  html body [class*="-ToolbarSectionMain"], html body [class*="-ToolbarSubSectionFirst"], html body [class*="-ToolbarSubSectionLast"] { flex: 0 1 auto; min-width: 0; flex-wrap: wrap; justify-content: flex-start; align-items: center; row-gap: 6px; }
+  html body [class*="-ToolbarSectionMain"] { flex: 1 1 0; padding: 4px 0 8px 12px; }
+  html body [class*="-EditorContainer"] { padding-top: 134px; }
+  html body [class*="-ToolbarSectionMeta"] { flex: 0 0 auto; }
+}
+
 /* ---------- Editor: campos ---------- */
 html body [class*="-FieldLabel"] {
   background: transparent; padding: 0 0 8px; border-radius: 0; font-size: 12px; font-weight: 400; letter-spacing: .1em; text-transform: uppercase; color: var(--mk-ink-soft);
 }
 html body [class*="-FieldLabel"]::before, html body [class*="-FieldLabel"]::after { display: none; }
-html body [class*="-ControlHint"] { color: var(--mk-ink-soft); font-size: 12.5px; font-weight: 300; line-height: 1.55; }
+html body [class*="-ControlHint"] { color: rgba(10, 10, 10, .70); font-size: 13px; font-weight: 400; line-height: 1.5; }
+/* Errores de validación de campo (Decap): rojo de error del sitio (#C0392B, ≥ 4,5:1 sobre marfil) en lugar del rojo puro #FF003B (≈ 4:1); el mensaje no cambia */
+html body [class*="-ControlErrorsList"] { color: var(--mk-error); font-weight: 600; }
+html body [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([class*="-ControlErrorsList"]) :is(input:not([role="combobox"]), textarea, [class$="-control"], > div[class^="css-"]:not([class*="Topbar"]):not([class$="-container"])) { border-color: var(--mk-error); }
 /* Campos de texto: esquinas suaves, fondo limpio y borde delicado (los desplegables react-select se tratan aparte) */
 html body [class*="-ControlContainer"] input:is([type="text"], [type="number"], [type="email"], [type="url"], [type="tel"], [type="date"], [type="datetime-local"]):not([role="combobox"]):not([aria-autocomplete]),
 html body [class*="-ControlContainer"] textarea {
@@ -220,6 +264,8 @@ html body [class*="-ControlContainer"] [class$="-multiValue"] { background: rgba
 html body [class*="-ControlContainer"] [class$="-multiValue"] > div:first-of-type { color: var(--mk-terracota-ink); font-size: 13px; padding-left: 10px; }
 /* Interruptores */
 html body [class*="-ToggleBackground"] { background: rgba(10, 10, 10, .18); }
+/* Interruptor activado = terracota (antes el activado y el desactivado eran del mismo gris y solo cambiaba la posición de la perilla) */
+html body [role="switch"][aria-checked="true"] [class*="-ToggleBackground"] { background: var(--mk-terracota); }
 /* Botones «Añadir …» de las listas = secundarios de cristal */
 html body [class*="-AddButton"] { border-radius: var(--mk-r-chip); background: var(--mk-cristal-boton); color: var(--mk-negro); font-weight: 500; box-shadow: var(--mk-sombra-boton); }
 html body [class*="-AddButton"]:hover { background: var(--mk-cristal-boton-hover); }
@@ -289,14 +335,27 @@ html body [id^="preciosEspecificos-field-"] [class*="-ControlContainer"]:not(:ha
 html body [id^="planos-field-"] [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])) { --mk-d: 6; --mk-t: 6; }
 html body [id^="planos-field-"] [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([class*="-FileWidget"]) { --mk-d: 12; --mk-t: 12; }
 
-/* Franjas de sección y de elemento de lista: tono arena de la marca en lugar del gris-lila de Decap (en todos los anchos) */
-html body [class*="-TopBarContainer"] { background: rgba(201, 185, 154, .22); }
-html body [class*="-NestedObjectLabel"] { background: rgba(201, 185, 154, .14); color: var(--mk-negro); border-radius: 0 0 var(--mk-r-inner) var(--mk-r-inner); }
-html body [class*="-StyledListItemTopBar"] { background: rgba(201, 185, 154, .30); border-radius: var(--mk-r-inner); }
+/* Secciones desplegables (Precio, Ubicación, Detalles, Fotografías, Video, Planos, Mapa, SEO…): tarjeta marfil con borde fino y radio 16; franja superior baja en tono
+   arena, con la flecha dentro de un botón redondo. Abierta = franja arena + flecha terracota; cerrada = franja más suave (la flecha la gira Decap). */
+html body [class*="-ControlContainer"] > div[id*="-field-"]:has(> [class*="-TopBarContainer"]) {
+  border: 1px solid var(--mk-line); border-radius: var(--mk-r-panel); background: rgba(255, 255, 255, .62); box-shadow: 0 1px 0 rgba(255, 255, 255, .8) inset;
+}
+html body [class*="-TopBarContainer"] {
+  background: rgba(201, 185, 154, .14); border-radius: 15px 15px 0 0; border-bottom: 1px solid transparent; transition: background-color var(--mk-fast) var(--mk-ease);
+}
+html body [class*="-TopBarContainer"]:has(+ div:not([class*="css-"])) { background: rgba(201, 185, 154, .24); border-bottom-color: rgba(201, 185, 154, .45); }
+html body [class*="-TopBarContainer"]:has(+ div[class*="css-"]) { border-radius: 15px; }
+html body [class*="-TopBarContainer"] [class*="-ExpandButton"]:not([class*="Container"]) { flex: none; width: 30px; height: 30px; padding: 0; border-radius: 50%; color: var(--mk-ink-soft); transition: background-color var(--mk-fast) var(--mk-ease), color var(--mk-fast) var(--mk-ease); }
+html body [class*="-TopBarContainer"] [class*="-ExpandButton"]:not([class*="Container"]):hover { background: rgba(10, 10, 10, .07); color: var(--mk-negro); }
+html body [class*="-TopBarContainer"]:has(+ div:not([class*="css-"])) [class*="-ExpandButton"]:not([class*="Container"]) { color: var(--mk-terracota-ink); }
+/* Rótulo de cada sección (el texto sobre la tarjeta): distinto de las etiquetas de campo */
+html body [class*="-ControlContainer"]:has(> div[id*="-field-"] > [class*="-TopBarContainer"]) > [class*="-ControlTopbar"] [class*="-FieldLabel"] { color: var(--mk-terracota-ink); font-weight: 600; letter-spacing: .1em; }
+html body [class*="-NestedObjectLabel"] { background: rgba(201, 185, 154, .12); color: var(--mk-negro); border-radius: 0 0 var(--mk-r-inner) var(--mk-r-inner); }
+html body [class*="-StyledListItemTopBar"] { background: rgba(201, 185, 154, .30); border-radius: var(--mk-r-inner) var(--mk-r-inner) 0 0; }
 
 /* --- Altura de los controles y espaciado (≥ 640 px; en móvil se conservan los controles cómodos de 48 px) --- */
 @media (min-width: 640px) {
-  html body [class*="-FieldLabel"] { padding-bottom: 6px; font-size: 11.5px; letter-spacing: .07em; }
+  html body [class*="-FieldLabel"] { padding-bottom: 6px; font-size: 12px; font-weight: 500; letter-spacing: .06em; color: rgba(10, 10, 10, .74); }
   /* Envolturas «de aspecto de campo» que Decap usa sin etiqueta (interruptor, selector de fecha, selector de archivo): mismo borde y radio que los campos */
   html body [class*="-ControlContainer"] > div[class^="css-"]:not([class*="Topbar"]):not([class$="-container"]):not([id]):not(.cms-editor-visual):not([data-galeria-fotos]):not(:has(> [class*="-ControlContainer"])) {
     border: 1px solid rgba(10, 10, 10, .14); border-radius: var(--mk-r-ctl); padding: 8px 12px; background: #fff;
@@ -304,9 +363,9 @@ html body [class*="-StyledListItemTopBar"] { background: rgba(201, 185, 154, .30
   html body [class*="-ControlContainer"] > div:has(> [role="switch"]) { display: flex; align-items: center; min-height: 44px; }
   html body [class*="-ControlContainer"] input:is([type="text"], [type="number"], [type="email"], [type="url"], [type="tel"], [type="date"], [type="datetime-local"]):not([role="combobox"]):not([aria-autocomplete]) { padding: 10px 14px; }
   html body [class*="-ControlContainer"] [class$="-control"] { min-height: 44px; padding-top: 0; padding-bottom: 0; }
-  html body [class*="-ControlHint"] { margin-top: 6px; font-size: 12px; line-height: 1.45; }
+  html body [class*="-ControlHint"] { margin-top: 7px; font-size: 13px; line-height: 1.5; }
   /* Franja superior de cada sección (solo flecha y, en listas, «Añadir»): menos alta y en tono arena de la marca */
-  html body [class*="-TopBarContainer"] { padding-top: 4px; padding-bottom: 4px; }
+  html body [class*="-TopBarContainer"] { padding-top: 3px; padding-bottom: 3px; }
 }
 
 /* ---------- Galería de carga múltiple (mismo funcionamiento; solo apariencia, por sus atributos data-*) ----------
@@ -319,6 +378,7 @@ html body [data-galeria-fotos] [data-galeria-zona] {
 }
 html body [data-galeria-fotos] [data-galeria-zona]:hover { border-color: var(--mk-terracota) !important; }
 html body [data-galeria-fotos] [data-galeria-zona] > span {
+  display: inline-flex !important; align-items: center; justify-content: center; min-height: 44px; line-height: 1; text-align: center;
   background: var(--mk-terracota) !important; border-radius: var(--mk-r-ctl) !important; padding: 12px 24px !important; font-size: 13px !important; font-weight: 500 !important; letter-spacing: .06em; text-transform: uppercase; box-shadow: none !important;
   transition: background-color var(--mk-fast) var(--mk-ease);
 }
@@ -330,13 +390,37 @@ html body [data-galeria-fotos] [data-galeria-tarjeta] button, html body [data-ga
   transition: background-color var(--mk-fast) var(--mk-ease);
 }
 html body [data-galeria-fotos] [data-galeria-tarjeta] button:hover:not(:disabled), html body [data-galeria-fotos] [data-galeria-tarjeta] label:hover { background: var(--mk-cristal-boton-hover) !important; }
+/* Tarjeta: columnas alineadas, acciones en cuadrícula (◀ ▶ + «Hacer portada» / «Reemplazar» + «Quitar»), objetivos táctiles de 36–40 px */
+html body [data-galeria-fotos] [data-galeria-lista] { align-items: stretch !important; gap: 16px !important; }
+html body [data-galeria-fotos] [data-galeria-tarjeta] { display: flex !important; flex-direction: column; overflow: hidden; }
+html body [data-galeria-fotos] [data-galeria-tarjeta] > div:nth-child(2) { display: flex !important; flex-direction: column; flex: 1 1 auto; gap: 8px; }
+html body [data-galeria-fotos] [data-galeria-tarjeta] > div:nth-child(2) > div:nth-child(1) { display: grid !important; grid-template-columns: 36px 36px minmax(0, 1fr); gap: 6px !important; }
+html body [data-galeria-fotos] [data-galeria-tarjeta] > div:nth-child(2) > div:nth-child(2) { display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px !important; }
+html body [data-galeria-fotos] [data-galeria-tarjeta] button, html body [data-galeria-fotos] [data-galeria-tarjeta] label { display: inline-flex !important; align-items: center; justify-content: center; min-height: 36px; padding: 0 6px !important; font-size: 12px !important; background: #fff !important; box-shadow: none !important; font-weight: 500 !important; line-height: 1.1; text-align: center; cursor: pointer; }
+html body [data-galeria-fotos] [data-galeria-tarjeta] button:disabled { cursor: default; opacity: .45; }
+html body [data-galeria-fotos] [data-galeria-tarjeta] button[aria-label^="Quitar"] { color: var(--mk-error) !important; }
+html body [data-galeria-fotos] [data-galeria-tarjeta] input[type="text"] { min-height: 36px; font-size: 13px !important; }
+html body [data-galeria-fotos] [data-galeria-tarjeta] p { overflow-wrap: anywhere; }
+/* «Portada»: insignia legible y tarjeta resaltada con un borde terracota */
+html body [data-galeria-fotos] [data-galeria-tarjeta] > div:first-child > span:nth-of-type(2) { background: var(--mk-terracota) !important; color: #fff !important; font-size: 12px !important; font-weight: 600 !important; letter-spacing: .02em; padding: 5px 11px !important; border-radius: var(--mk-r-chip) !important; box-shadow: 0 2px 8px rgba(10, 10, 10, .28) !important; }
+html body [data-galeria-fotos] [data-galeria-tarjeta]:has(> div:first-child > span + span) { border-color: var(--mk-terracota) !important; box-shadow: 0 0 0 1px var(--mk-terracota), var(--mk-sombra-card); }
 html body [data-galeria-fotos] [data-galeria-tarjeta] input[type="text"] { border-radius: var(--mk-r-ctl) !important; border-color: rgba(10, 10, 10, .14) !important; }
+
+/* ---------- Biblioteca de medios (se abre con «Medios»; mismas formas y colores, sin tocar su funcionamiento) ---------- */
+html body [class*="-StyledModal"] { border-radius: var(--mk-r-card); background: var(--mk-blanco); box-shadow: var(--mk-sombra-cristal); }
+html body [class*="-LibraryTitle"] { font-size: 28px; font-weight: 300; letter-spacing: -.01em; color: var(--mk-negro); }
+html body [class*="-CloseButton"] { box-shadow: var(--mk-sombra-boton); transition: background-color var(--mk-fast) var(--mk-ease); }
+html body [class*="-CloseButton"]:hover { background: var(--mk-cristal-boton-hover); }
+html body [class*="-UploadButton"] { border-radius: var(--mk-r-ctl); background: var(--mk-terracota); color: var(--mk-blanco); font-weight: 500; letter-spacing: .04em; cursor: pointer; transition: background-color var(--mk-fast) var(--mk-ease); }
+html body [class*="-UploadButton"]:hover { background: var(--mk-terracota-dark); }
+html body [class*="-ActionButton"] { border-radius: var(--mk-r-ctl); font-weight: 500; }
+html body [class*="-EmptyMessageContainer"] h1 { font-weight: 300; color: var(--mk-ink-soft); }
 
 /* ---------- Avisos de Decap (react-toastify, clases públicas de esa librería) ---------- */
 html body .Toastify__toast { border-radius: var(--mk-r-panel); font-family: var(--mk-fuente); box-shadow: var(--mk-sombra-cristal); }
-html body .Toastify__toast--success { background: var(--mk-success); color: #fff; }
-html body .Toastify__toast--error { background: var(--mk-error); color: #fff; }
-html body .Toastify__toast--info { background: var(--mk-petroleo); color: #fff; }
+html body .Toastify__toast.Toastify__toast--success { background: var(--mk-success) !important; color: #fff; }
+html body .Toastify__toast.Toastify__toast--error { background: var(--mk-error) !important; color: #fff; }
+html body .Toastify__toast.Toastify__toast--info { background: var(--mk-petroleo) !important; color: #fff; }
 
 /* ---------- Reducir transparencia / sin backdrop-filter: superficies opacas con la misma receta ---------- */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -345,9 +429,10 @@ html body .Toastify__toast--info { background: var(--mk-petroleo); color: #fff; 
 @media (prefers-reduced-transparency: reduce) {
   :root { --mk-cristal-denso: rgba(245, 242, 238, .98); --mk-cristal-boton: rgba(255, 255, 255, .9); --mk-cristal-boton-hover: rgba(255, 255, 255, .96); --mk-cristal-seleccion: rgba(255, 255, 255, .97); }
   html body header[class*="-AppHeader"], html body [class*="-ToolbarContainer"], html body [class*="-DropdownList"], html body [class$="-menu"],
-  html body [class*="-ControlContainer"] [class$="-menu"] { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  html body [class*="-ControlContainer"] [class$="-menu"], html body [class*="-StyledModal"] { -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 /* Sin animaciones si la persona lo prefiere */
 @media (prefers-reduced-motion: reduce) {
-  html body [class*="-LoginButton"], html body [class*="-CollectionTopNewButton"], html body [class*="-PublishButton"], html body [class*="-DeleteButton"], html body [class*="-ListCard"] { transition: none; transform: none !important; }
+  html body *, html body *::before, html body *::after { transition: none !important; scroll-behavior: auto !important; }
+  html body [class*="-LoginButton"], html body [class*="-CollectionTopNewButton"], html body [class*="-PublishButton"], html body [class*="-DeleteButton"], html body [class*="-ListCard"], html body [class*="-StyledDropdownButton"], html body [class*="-AppHeaderNavLink"], html body [class*="-AppHeaderButton"], html body [class*="-UploadButton"] { transform: none !important; }
 }
