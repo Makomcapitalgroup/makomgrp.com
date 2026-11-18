@@ -343,24 +343,24 @@ collections:
         widget: "object"
         collapsed: false
         fields:
-          - label: "Galería"
+          - label: "Fotografías (máx. 10)"
             name: "galeria"
             widget: "list"
             required: false
+            # Límites: ÚNICA fuente en _data/propiedadesConfig.json → limitesMedia (fotosMin / fotosMax). El build falla si este bloque
+            # no coincide con ese archivo, y scripts/verificar-ficha.js comprueba que la ficha pública muestra exactamente esa cantidad.
             min: 3
-            max: 6
+            max: 10
             collapsed: true
-            summary: "{{fields.archivo}}"
+            summary: "{{fields.portada | ternary('★ PORTADA — ','')}}{{fields.archivo}}"
             label_singular: "Fotografía"
             hint: >
-              Suba entre 3 y 6 fotografías. Arrastre para reordenar; la
-              primera se usa como portada salvo que marque otra distinta.
-              La foto principal debería medir 1600 px de ancho o más: el
-              sitio nunca amplía una imagen pequeña, así que una foto de
-              baja resolución se verá borrosa (el build avisa de ellas).
-              Si por error pulsa "Añadir Fotografía" y queda un elemento
-              sin archivo, use el ícono de la papelera de ese elemento
-              para eliminarlo antes de publicar.
+              De 3 a 10 fotografías. La barra de arriba dice cuántas hay («6 fotografías (máx. 10)»); con «Add fotografía»
+              agrega otra hasta 10 (con más, el panel no deja guardar). Se muestran en el orden de esta lista: arrastre el
+              asa (⠿) de cada fila para moverla, y use la ✕ para quitarla. La principal es la que dice «★ PORTADA»: active
+              «Usar como portada» en UNA sola foto (si no marca ninguna, es la primera). Para reemplazar una imagen, abra
+              la fila y elija otro archivo; si queda una fila sin archivo, elimínela. La principal debería medir 1600 px de
+              ancho o más (el sitio nunca amplía una imagen; el build avisa). Para guardar: «Publicar» → «Publicar ahora».
             fields:
               - { label: "Archivo", name: "archivo", widget: "image" }
               - label: "Texto alternativo"
@@ -391,9 +391,9 @@ collections:
         widget: "object"
         collapsed: true
         required: false
-        hint: "Opcional. Aparece como la ficha «Video» junto a las miniaturas de la galería. Use un enlace (YouTube, Vimeo o un .mp4 público) o suba un archivo; si completa ambos, se usa el enlace."
+        hint: "Opcional. UN solo video por propiedad: aparece como la ficha «Video» junto a las miniaturas de la galería. Use un enlace (YouTube, Vimeo o un .mp4/.webm público) o suba un archivo; si completa ambos, se usa el enlace. Para QUITARLO, vacíe el enlace y el archivo. Para CAMBIARLO, escriba otro enlace o elija otro archivo."
         fields:
-          - { label: "Enlace del video", name: "url", widget: "string", required: false, hint: "Ej.: https://www.youtube.com/watch?v=… o https://vimeo.com/… o la URL pública de un .mp4. Solo https." }
+          - { label: "Enlace del video", name: "url", widget: "string", required: false, pattern: ["^https://", "El enlace debe empezar por https://"], hint: "Ej.: https://www.youtube.com/watch?v=… o https://vimeo.com/… o la URL pública de un .mp4. Solo https." }
           - { label: "Archivo de video (.mp4 / .webm)", name: "archivo", widget: "file", required: false, hint: "Los archivos se guardan en el repositorio: manténgalos por debajo de 25 MB. Para videos largos prefiera un enlace." }
           - { label: "Imagen de portada del video", name: "poster", widget: "image", required: false, hint: "Opcional. Se muestra antes de reproducir un archivo de video." }
           - { label: "Título accesible", name: "titulo", widget: "string", required: false, hint: "Ej.: Recorrido por el apartamento modelo. Si se deja vacío se usa «Video del recorrido»." }
@@ -405,7 +405,7 @@ collections:
         collapsed: true
         label_singular: "Plano"
         summary: "{{fields.etiqueta}} {{fields.archivo}}"
-        hint: "Opcional. Aparece como la ficha «Planos» junto a las miniaturas. Suba imágenes (JPG/PNG)."
+        hint: "Opcional. Aparece como la ficha «Planos» junto a las miniaturas. Suba imágenes JPG, PNG o WebP (otros formatos no se muestran en la ficha). Sin límite de cantidad; el orden de esta lista es el de la ficha: arrastre para reordenar."
         fields:
           - { label: "Archivo", name: "archivo", widget: "image" }
           - { label: "Etiqueta (ES)", name: "etiqueta", widget: "string", required: false, hint: "Ej.: Modelo A — 1 recámara" }
