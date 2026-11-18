@@ -178,8 +178,10 @@ function iniciarServidorPrueba(decap, dirFixtures) {
       return enviar(TIPOS[".json"], JSON.stringify(feedPrueba.feed));
     }
     if (u.startsWith("/assets/propiedades/_optimizadas/th-")) {
-      if (globalThis.__miniaturasLentas) { setTimeout(() => feedPrueba.miniatura(u).then((b) => (b ? (res.writeHead(200, { "Content-Type": "image/webp" }), res.end(b)) : (res.writeHead(404), res.end("404")))), globalThis.__miniaturasLentas); return; }
-      feedPrueba.miniatura(u).then((b) => (b ? (res.writeHead(200, { "Content-Type": "image/webp", "Cache-Control": "no-store" }), res.end(b)) : (res.writeHead(404), res.end("404"))));
+      globalThis.__hitsMini = globalThis.__hitsMini || new Map();
+      globalThis.__hitsMini.set(u, (globalThis.__hitsMini.get(u) || 0) + 1);
+      if (globalThis.__miniaturasLentas) { setTimeout(() => feedPrueba.miniatura(u).then((b) => (b ? (res.writeHead(200, { "Content-Type": "image/webp", "Cache-Control": "max-age=600" }), res.end(b)) : (res.writeHead(404), res.end("404")))), globalThis.__miniaturasLentas); return; }
+      feedPrueba.miniatura(u).then((b) => (b ? (res.writeHead(200, { "Content-Type": "image/webp", "Cache-Control": "max-age=600" }), res.end(b)) : (res.writeHead(404), res.end("404"))));
       return;
     }
     if (u === "/admin/repo-files.js") return enviar(TIPOS[".js"], repoFiles());
@@ -1210,7 +1212,7 @@ async function grupoListado(p) {
     await p.esperar("!!document.querySelector('li[data-mk-card]')", 8000);
     await p.ev("window.scrollTo(0, 0); [...document.querySelectorAll('*')].filter((e) => e.scrollTop > 0).forEach((e) => { e.scrollTop = 0; })");
     const r = JSON.parse(await p.ev(`(() => { const vw = innerWidth; const cards = [...document.querySelectorAll('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])')]; const fuera = cards.filter((c) => { const q = c.getBoundingClientRect(); return q.right > vw + 1 || q.left < -1; }).length; const desb = [...document.querySelectorAll('[class*="-ListCardTitle"]')].filter((t) => t.scrollWidth > t.clientWidth + 1).length; const f = getComputedStyle(document.querySelector('[class*="-ListCardTitle"]'), '::first-line').fontSize; const h = cards.map((c) => c.getBoundingClientRect().height); const ctl = document.querySelector('[class*="-CollectionControlsContainer"]').getBoundingClientRect(); return JSON.stringify({ n: cards.length, fuera, desb, f1: f, hmin: Math.round(Math.min(...h)), sw: document.documentElement.scrollWidth - vw, ctlDentro: ctl.right <= vw + 1 }); })()`));
-    ok(`${w} px: las ${total} tarjetas caben en pantalla, el texto largo se ajusta sin desbordar, sin desplazamiento horizontal y los controles quedan dentro` + (w > 560 ? " (sobretítulo 11,5 px)" : " (sobretítulo 10,5 px)"), r.n === total && r.fuera === 0 && r.desb === 0 && r.sw <= 1 && r.ctlDentro && (w > 560 ? r.f1 === "11.5px" : r.f1 === "10.5px") && r.hmin >= 60, JSON.stringify(r));
+    ok(`${w} px: las ${total} tarjetas caben en pantalla, el texto largo se ajusta sin desbordar, sin desplazamiento horizontal y los controles quedan dentro` + (w > 560 ? " (sobretítulo 11,5 px)" : " (sobretítulo 10 px)"), r.n === total && r.fuera === 0 && r.desb === 0 && r.sw <= 1 && r.ctlDentro && (w > 560 ? r.f1 === "11.5px" : r.f1 === "10px") && r.hmin >= 60, JSON.stringify(r));
   }
   await vista(1440);
   // Foco con teclado en las tarjetas
@@ -1284,7 +1286,7 @@ async function grupoListado(p) {
   const tardanza = async (accion, cond) => { const t0 = Date.now(); await accion(); const ok1 = await p.esperar(cond, 8000); return { ok: ok1, ms: Date.now() - t0 }; };
   let r = await tardanza(async () => { await p.ev(`document.querySelector('[aria-label="Grid view option"]').click()`); }, `document.querySelectorAll('li[data-mk-card]').length >= 10 && !!document.querySelector('[class*="-GridCard"][data-mk-card]')`);
   const rg = JSON.parse(await p.ev(`(() => { const g = [...document.querySelectorAll('[class*="-GridCard"]:not([class*="-GridCardLink"])')]; const c = g[0]; const b = c ? getComputedStyle(c, '::before') : null; return JSON.stringify({ n: g.length, enr: g.filter((x) => x.hasAttribute('data-mk-card')).length, alto: c && Math.round(c.getBoundingClientRect().height), foto: b && b.height }); })()`));
-  ok("cambiar a la vista de cuadrícula: las tarjetas se reconstruyen enriquecidas de inmediato (portada arriba, 268 px de alto)", r.ok && rg.n > 0 && rg.enr === rg.n && rg.alto === 268 && rg.foto === "150px", JSON.stringify({ r, rg }));
+  ok("cambiar a la vista de cuadrícula: las tarjetas se reconstruyen enriquecidas de inmediato (portada arriba, 284 px de alto)", r.ok && rg.n > 0 && rg.enr === rg.n && rg.alto === 284 && rg.foto === "150px", JSON.stringify({ r, rg }));
   r = await tardanza(async () => { await p.ev(`document.querySelector('[aria-label="List view option"]').click()`); }, `!!document.querySelector('[class*="-ListCard"][data-mk-card]')`);
   const rl = await resumenTarjetas();
   ok("volver a la vista de lista: vuelven enriquecidas (todas las cargadas)", r.ok && rl.n > 0 && rl.enr === rl.n, JSON.stringify(rl));
@@ -1353,23 +1355,32 @@ async function grupoListado(p) {
   ok("buscar (barra «Buscar todas»): el resultado aparece como tarjeta enriquecida", !buscar || (rb.tarjetas >= 1 && rb.enr === rb.tarjetas), JSON.stringify({ buscar, rb }));
 
   /* ---- C. Carga perezosa, una sola petición por miniatura y rendimiento ---- */
+  // Se cuentan las peticiones que LLEGAN al servidor (contador por URL) con la caché del navegador vacía; el servidor responde con Cache-Control: max-age=600, como GitHub Pages.
+  globalThis.__hitsMini = new Map();
+  await p.cdp.send("Network.enable");
+  await p.cdp.send("Network.clearBrowserCache");
   await abrirListado();
   await esperarTodas(1);
   await dormir(600);
-  const antesScroll = await p.ev(`performance.getEntriesByType('resource').filter((e) => /_optimizadas[/]th-/.test(e.name) && e.transferSize > 0).length`);
+  const antesScroll = globalThis.__hitsMini.size;
   await cargarTodo();
   await esperarTodas(nTot);
-  const peticiones = await p.ev(`performance.getEntriesByType('resource').filter((e) => /_optimizadas[/]th-/.test(e.name) && e.transferSize > 0).map((e) => e.name)`);
-  ok(`carga perezosa: al abrir el listado solo se piden las miniaturas visibles (${antesScroll} de ${conFoto}); al desplazarse se piden el resto, cada una UNA sola vez (${peticiones.length} peticiones)`, antesScroll > 0 && antesScroll < conFoto && peticiones.length === conFoto && new Set(peticiones).size === peticiones.length, JSON.stringify({ antesScroll, peticiones: peticiones.length, conFoto }));
-  const peso = await p.ev(`(async () => { const u = performance.getEntriesByType('resource').filter((e) => /_optimizadas[/]th-/.test(e.name) && e.transferSize > 0).map((e) => e.name); let tot = 0, max = 0; for (const x of u) { const b = await (await fetch(x)).blob(); tot += b.size; max = Math.max(max, b.size); } const f = await (await fetch('/admin/listado-propiedades.json')).text(); return JSON.stringify({ miniaturasKB: Math.round(tot / 1024), maxKB: Math.round(max / 1024), feedKB: +(f.length / 1024).toFixed(1) }); })()`).then(JSON.parse);
-  ok(`peso: ${peso.miniaturasKB} KB en total para ${conFoto} miniaturas webp de 480 px (la mayor ${peso.maxKB} KB) y ${peso.feedKB} KB de datos; las fotografías originales (hasta ~16 MB) NO se descargan`, peso.maxKB <= 80 && peso.feedKB < 40, JSON.stringify(peso));
-  const trasPeso = await p.ev(`performance.getEntriesByType('resource').filter((e) => /_optimizadas[/]th-/.test(e.name) && e.transferSize > 0).length`);
+  const hitsTrasScroll = [...globalThis.__hitsMini.values()];
+  ok(`carga perezosa: al abrir el listado solo se piden las miniaturas visibles (${antesScroll} de ${conFoto}); al desplazarse se piden el resto, cada una UNA sola vez (${hitsTrasScroll.reduce((a, b) => a + b, 0)} peticiones al servidor)`, antesScroll > 0 && antesScroll < conFoto && globalThis.__hitsMini.size === conFoto && hitsTrasScroll.every((v) => v === 1), JSON.stringify({ antesScroll, urls: globalThis.__hitsMini.size, conFoto, repetidas: hitsTrasScroll.filter((v) => v > 1).length }));
+  const trasPeso = hitsTrasScroll.reduce((a, b) => a + b, 0);
   await p.ev(`document.querySelector('[aria-label="Grid view option"]').click()`);
   await dormir(500);
   await p.ev(`document.querySelector('[aria-label="List view option"]').click()`);
   await dormir(500);
-  const despuesVistas = await p.ev(`performance.getEntriesByType('resource').filter((e) => /_optimizadas[/]th-/.test(e.name) && e.transferSize > 0).length`);
-  ok("cambiar de vista dos veces NO vuelve a pedir las miniaturas (se reaplican desde la memoria del panel)", despuesVistas === trasPeso, despuesVistas + " vs " + trasPeso);
+  await p.ev("location.hash = '#/collections/proyectos'");
+  await dormir(500);
+  await p.ev("location.hash = '#/collections/propiedades'");
+  await esperarTodas(1);
+  await dormir(500);
+  const despuesVistas = [...globalThis.__hitsMini.values()].reduce((a, b) => a + b, 0);
+  ok("cambiar de vista (lista ↔ cuadrícula) y de colección (y volver) NO vuelve a pedir las miniaturas al servidor (se reaplican desde la memoria y la caché del navegador)", despuesVistas === trasPeso, despuesVistas + " vs " + trasPeso);
+  const peso = await p.ev(`(async () => { const u = [...new Set(performance.getEntriesByType('resource').filter((e) => /_optimizadas[/]th-/.test(e.name)).map((e) => e.name))]; let tot = 0, max = 0; for (const x of u) { const b = await (await fetch(x)).blob(); tot += b.size; max = Math.max(max, b.size); } const f = await (await fetch('/admin/listado-propiedades.json')).text(); return JSON.stringify({ miniaturasKB: Math.round(tot / 1024), maxKB: Math.round(max / 1024), feedKB: +(f.length / 1024).toFixed(1) }); })()`).then(JSON.parse);
+  ok(`peso: ${peso.miniaturasKB} KB en total para ${conFoto} miniaturas webp de 480 px (la mayor ${peso.maxKB} KB) y ${peso.feedKB} KB de datos; las fotografías originales (hasta ~16 MB) NO se descargan`, peso.maxKB <= 80 && peso.feedKB < 40, JSON.stringify(peso));
   const coste = JSON.parse(await p.ev(`(() => { const f = window.MakomListadoPropiedades.reconciliar; const t0 = performance.now(); for (let i = 0; i < 50; i++) f(); const ms = (performance.now() - t0) / 50; return JSON.stringify({ msPorReconciliacion: +ms.toFixed(2), tarjetas: document.querySelectorAll('li[data-mk-card]').length, observadas: window.MakomListadoPropiedades.estado().observadas }); })()`));
   ok(`rendimiento: reaplicar el enriquecimiento a ${coste.tarjetas} tarjetas tarda ${coste.msPorReconciliacion} ms (≤ 10 ms) y no quedan tarjetas observadas pendientes (${coste.observadas})`, coste.msPorReconciliacion <= 10 && coste.observadas === 0, JSON.stringify(coste));
   const sinCambios = await p.ev(`(() => { const a = window.MakomListadoPropiedades.estado().version; window.MakomListadoPropiedades.reconciliar(); return window.MakomListadoPropiedades.estado().version === a; })()`);
@@ -1509,7 +1520,7 @@ async function grupoListado(p) {
     await esperarTodas(nTot);
     await p.ev("window.scrollTo(0, 0); [...document.querySelectorAll('*')].filter((e) => e.scrollTop > 0).forEach((e) => { e.scrollTop = 0; })");
     const g = JSON.parse(await p.ev(`(() => { const vw = innerWidth; const cs = [...document.querySelectorAll('${CARD}')]; const fuera = cs.filter((c) => { const q = c.getBoundingClientRect(); return q.right > vw + 1 || q.left < -1; }).length; const b0 = getComputedStyle(cs[0], '::before'); const fotoW = parseFloat(b0.width); const insDentro = cs.filter((c) => { const a = getComputedStyle(c, '::after'); const f = getComputedStyle(c, '::before'); return c.hasAttribute('data-mk-estado') && (parseFloat(a.left) + (a.width === 'auto' ? 0 : parseFloat(a.width)) > parseFloat(f.left) + parseFloat(f.width) + 2); }).length; const alturas = cs.map((c) => Math.round(c.getBoundingClientRect().height)); const txt = cs.filter((c) => { const t = c.querySelector('[class*="-ListCardTitle"]'); return t.getBoundingClientRect().height > 74; }).length; const desb = cs.filter((c) => { const t = c.querySelector('[class*="-ListCardTitle"]'); const l = c.querySelector('a').getBoundingClientRect(); const q = t.getBoundingClientRect(); return q.right > l.right + 1; }).length; return JSON.stringify({ n: cs.length, fuera, fotoW, hmin: Math.min(...alturas), hmax: Math.max(...alturas), txtLargo: txt, desb, sw: document.documentElement.scrollWidth - vw }); })()`));
-    const esperadoFoto = w > 1099 ? 148 : w > 560 ? 120 : 84;
+    const esperadoFoto = w > 1099 ? 148 : w > 560 ? 120 : 76;
     ok(`${w} px: ${nTot} tarjetas con portada de ${esperadoFoto} px, texto de ≤ 2 líneas (+ sobretítulo) sin desbordar, alto ${g.hmin}–${g.hmax} px y sin desplazamiento horizontal`, g.n === nTot && g.fuera === 0 && g.fotoW === esperadoFoto && g.txtLargo === 0 && g.desb === 0 && g.sw <= 1 && g.hmin >= 100 && g.hmax <= (w > 560 ? 140 : 132), JSON.stringify(g));
   }
   await vista(1440);

@@ -201,16 +201,16 @@ html body [class*="-ListCardTitle"] { font-size: 15px; font-weight: 400; line-he
    a la primera línea el aspecto de sobretítulo (::first-line) y limita el conjunto a 3 líneas (sobretítulo + título de hasta dos). Aplica en el listado de
    Propiedades (se reconoce por la navegación lateral) y en cualquier tarjeta enriquecida (resultados de búsqueda). */
 html body:has([class*="-SidebarNavLink"][aria-current="page"][href$="collections/propiedades"]) [class*="-ListCardTitle"],
-html body li[data-mk-card] [class*="-ListCardTitle"], html body li[data-mk-card] [class*="-CardBody"] {
+html body li[data-mk-card] [class*="-ListCardTitle"], html body li[data-mk-card] [class*="-CardHeading"] {
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; white-space: pre-line; overflow-wrap: anywhere;
   font-size: 16px; font-weight: 500; line-height: 1.4; letter-spacing: .005em; color: var(--mk-negro);
 }
 html body:has([class*="-SidebarNavLink"][aria-current="page"][href$="collections/propiedades"]) [class*="-ListCardTitle"]::first-line,
-html body li[data-mk-card] [class*="-ListCardTitle"]::first-line, html body li[data-mk-card] [class*="-CardBody"]::first-line {
+html body li[data-mk-card] [class*="-ListCardTitle"]::first-line, html body li[data-mk-card] [class*="-CardHeading"]::first-line {
   font-size: 11.5px; font-weight: 600; line-height: 2; letter-spacing: .08em; text-transform: uppercase; color: var(--mk-ink-soft);
 }
 /* Decap deja dentro del título un contenedor de iconos vacío: contaría como «más contenido» y haría aparecer los puntos suspensivos del límite de líneas */
-html body [class*="-ListCardTitle"] > [class*="-TitleIcons"]:empty { display: none; }
+html body [class*="-ListCardTitle"] > [class*="-TitleIcons"]:empty, html body [class*="-CardHeading"] > [class*="-TitleIcons"]:empty { display: none; }
 
 /* Tarjeta ENRIQUECIDA (admin/listado-propiedades.js pone data-mk-card, data-mk-estado, data-mk-foto y --mk-portada en el <li>). Sin esos atributos, la tarjeta
    conserva el aspecto nativo + franja de acento de arriba. La portada es DECORATIVA (el título está al lado): no lleva texto alternativo. */
@@ -246,10 +246,16 @@ html body li[data-mk-card] [class*="-ListCardLink"]::after, html body li[data-mk
 }
 html body li[data-mk-card]:hover [class*="-ListCardLink"]::after, html body li[data-mk-card]:hover [class*="-GridCardLink"]::after { transform: translateX(3px); }
 /* Vista de cuadrícula: portada arriba */
-html body li[data-mk-card][class*="-GridCard"]:not([class*="-GridCardLink"]) { height: 268px; }
+html body li[data-mk-card][class*="-GridCard"]:not([class*="-GridCardLink"])::before {
+  content: ""; position: absolute; z-index: 0; border-radius: 10px; background-color: rgba(201, 185, 154, .26); background-repeat: no-repeat; background-position: center; background-size: cover;
+  box-shadow: inset 0 0 0 1px rgba(10, 10, 10, .07); transition: none;
+}
+html body li[data-mk-card][class*="-GridCard"]:not([class*="-GridCardLink"]) { height: 284px; }
 html body li[data-mk-card][class*="-GridCard"]:not([class*="-GridCardLink"])::before { top: 12px; left: 12px; right: 12px; bottom: auto; width: auto; height: 150px; }
 html body li[data-mk-card][data-mk-estado][class*="-GridCard"]::after { left: 22px; top: 22px; bottom: auto; }
-html body li[data-mk-card][class*="-GridCard"] [class*="-GridCardLink"] { display: block; padding: 174px 20px 18px; }
+html body li[data-mk-card][class*="-GridCard"] [class*="-GridCardLink"] { display: block; padding: 174px 20px 38px; }
+/* En la cuadrícula el sobretítulo es más angosto: «MKW-RE-016 · ALQUILER · LOCAL-COMERCIAL» debe caber en una línea (si se parte, la 2.ª línea tomaría el estilo del título) */
+html body li[data-mk-card][class*="-GridCard"] [class*="-CardHeading"]::first-line { font-size: 10px; letter-spacing: .03em; }
 html body li[data-mk-card][class*="-GridCard"] [class*="-CardBody"] { padding: 0; }
 /* Tableta */
 @media (max-width: 1099px) {
@@ -258,14 +264,14 @@ html body li[data-mk-card][class*="-GridCard"] [class*="-CardBody"] { padding: 0
 }
 /* Móvil: portada de 84 px, insignia compacta y el acceso a editar queda en un solo «›» */
 @media (max-width: 560px) {
-  html body li[data-mk-card][class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"]) { --mk-foto-w: 84px; min-height: 104px; margin-bottom: 10px; }
+  html body li[data-mk-card][class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"]) { --mk-foto-w: 76px; min-height: 104px; margin-bottom: 10px; }
   html body li[data-mk-card][class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])::before { top: 12px; bottom: 12px; left: 12px; border-radius: 10px; }
-  html body li[data-mk-card][class*="-ListCard"] [class*="-ListCardLink"] { min-height: 104px; padding: 12px 34px 12px calc(var(--mk-foto-w) + 26px); }
+  html body li[data-mk-card][class*="-ListCard"] [class*="-ListCardLink"] { min-height: 104px; padding: 12px 28px 12px calc(var(--mk-foto-w) + 24px); }
   html body li[data-mk-card][data-mk-estado]:not([class*="-GridCard"])::after { left: 17px; bottom: 17px; padding: 2px 6px; font-size: 9.5px; letter-spacing: 0; max-width: calc(var(--mk-foto-w) - 10px); overflow: hidden; }
   html body li[data-mk-card] [class*="-ListCardLink"]::after { content: "›"; right: 14px; top: 50%; bottom: auto; margin-top: -14px; font-size: 24px; line-height: 1; }
   html body li[data-mk-card]:hover [class*="-ListCardLink"]::after { transform: none; }
   html body li[data-mk-card][class*="-ListCard"] [class*="-ListCardTitle"]::first-line,
-  html body:has([class*="-SidebarNavLink"][aria-current="page"][href$="collections/propiedades"]) li[data-mk-card] [class*="-ListCardTitle"]::first-line { font-size: 10.5px; letter-spacing: .05em; }
+  html body:has([class*="-SidebarNavLink"][aria-current="page"][href$="collections/propiedades"]) li[data-mk-card] [class*="-ListCardTitle"]::first-line { font-size: 10px; letter-spacing: 0; text-transform: none; }
 }
 
 /* ---------- Editor: barra de acciones ---------- */
