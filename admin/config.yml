@@ -51,11 +51,11 @@ collections:
     format: "json"
     extension: "json"
     identifier_field: "titulo"
-    # Listado: el `summary` es lo ÚNICO que Decap 3.17.3 entrega a cada tarjeta del listado (texto). Dos líneas: arriba referencia · operación · tipo y, debajo, el título
-    # (valores tal como están guardados; el ESTADO lo muestra la insignia que pone admin/listado-propiedades.js, y también se puede filtrar). El salto de línea lo respeta el tema
-    # (tema-makom.css → white-space: pre-line). `default` cubre las propiedades aún sin referencia y
-    # `truncate(110)` evita que un título larguísimo desordene la tarjeta (solo en el listado; el título guardado no cambia).
-    summary: "{{referenciaMakom | default('sin referencia')}} · {{operacion}} · {{tipo}}\n{{titulo | truncate(120)}}"
+    # Listado: el `summary` es lo ÚNICO que Decap 3.17.3 entrega a cada tarjeta del listado (texto). Dos líneas: arriba referencia · operación · tipo · ESTADO y, debajo, el título
+    # (valores tal como están guardados). El ESTADO va en el propio texto a propósito: si el enriquecimiento visual (admin/listado-propiedades.js: portada e insignia) no carga,
+    # el listado nativo sigue mostrando el estado de cada propiedad de forma legible. El salto de línea lo respeta el tema (tema-makom.css → white-space: pre-line).
+    # `default` cubre las propiedades aún sin referencia o sin estado y `truncate(120)` evita que un título larguísimo desordene la tarjeta (solo en el listado; el título guardado no cambia).
+    summary: "{{referenciaMakom | default('sin referencia')}} · {{operacion}} · {{tipo}} · {{estado | default('sin estado')}}\n{{titulo | truncate(120)}}"
     # Filtros nativos de Decap por estado y operación (los mismos valores de los campos «Estado» y «Operación»).
     view_filters:
       - { label: "Disponibles", field: "estado", pattern: "^disponible$" }

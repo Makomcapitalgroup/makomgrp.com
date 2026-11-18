@@ -556,18 +556,29 @@ function pruebasListadoAdmin() {
   const dir = path.join(RAIZ, "content", "propiedades");
   const archivos = fs2.readdirSync(dir).filter((a) => a.endsWith(".json"));
   const datos = Object.fromEntries(archivos.map((a) => [a.replace(/\.json$/, ""), JSON.parse(fs2.readFileSync(path.join(dir, a), "utf8"))]));
-  ok("el archivo declara version 1 y trae una fila por CADA propiedad de content/ (también borrador, archivada y vendida), con el nombre de archivo como slug", feed.version === 1 && feed.total === archivos.length && feed.propiedades.length === archivos.length && new Set(feed.propiedades.map((x) => x.slug)).size === archivos.length && feed.propiedades.every((x) => datos[x.slug]), `${feed.total} / ${archivos.length}`);
-  const permitidos = ["slug", "referenciaMakom", "titulo", "operacion", "tipo", "estado", "portada"];
-  ok("solo se publican los campos del listado (slug, referencia, título, operación, tipo, estado y portada): ningún dato interno, de precio, contacto, ubicación exacta ni descripciones", feed.propiedades.every((x) => Object.keys(x).every((k) => permitidos.includes(k)) && (!x.portada || Object.keys(x.portada).every((k) => ["original", "miniatura", "ancho", "alto"].includes(k)))) && !/direccionInterna|ubicacionInterna|precio|monto|descripcion|whatsapp|asesor|latitud|longitud|mapa|metadatos/i.test(texto), "");
-  ok("estado, operación, tipo, referencia y título coinciden con los datos de cada propiedad", feed.propiedades.every((x) => { const d = datos[x.slug]; return x.estado === (d.estado || null) && x.operacion === (d.operacion || null) && x.tipo === (d.tipo || null) && x.referenciaMakom === (d.referenciaMakom || null) && x.titulo === (d.titulo || ""); }), "");
-  ok("la portada es la marcada (o la primera) de cada galería y su miniatura es un webp de 480 px que existe en _site, de ≤ 80 KB, con la ruta que acepta el panel", feed.propiedades.every((x) => {
-    const g = (datos[x.slug].fotografias && datos[x.slug].fotografias.galeria) || [];
+  const { claveListado } = require("../.eleventy.js");
+  const PUBLICOS = ["disponible", "reservada"];
+  const clavesEsperadas = archivos.map((a) => claveListado(a.replace(/\.json$/, "")));
+  const porClave = Object.fromEntries(archivos.map((a) => [claveListado(a.replace(/\.json$/, "")), datos[a.replace(/\.json$/, "")]]));
+  ok("el archivo declara version 2 y trae una fila por CADA propiedad de content/ (también borrador, archivada y vendida), identificada solo por una clave hash del nombre de archivo (14 hex, sin repetidas)", feed.version === 2 && feed.total === archivos.length && feed.propiedades.length === archivos.length && new Set(feed.propiedades.map((x) => x.k)).size === archivos.length && feed.propiedades.every((x) => /^[0-9a-f]{14}$/.test(x.k) && porClave[x.k]) && clavesEsperadas.every((k) => feed.propiedades.some((x) => x.k === k)), `${feed.total} / ${archivos.length}`);
+  const noPublicas = feed.propiedades.filter((x) => !PUBLICOS.includes(porClave[x.k].estado));
+  const publicas = feed.propiedades.filter((x) => PUBLICOS.includes(porClave[x.k].estado));
+  ok(`MINIMIZACIÓN: las ${noPublicas.length} propiedades NO públicas (borrador, alquilada, vendida, archivada) solo traen clave y estado (sin portada, miniatura, referencia, operación, tipo ni título); las ${publicas.length} públicas (disponible, reservada) solo clave, estado y portada`, noPublicas.every((x) => JSON.stringify(Object.keys(x).sort()) === JSON.stringify(["estado", "k"])) && publicas.every((x) => Object.keys(x).every((k) => ["k", "estado", "portada"].includes(k)) && (!x.portada || Object.keys(x.portada).every((k) => ["original", "miniatura", "ancho", "alto"].includes(k)))) && noPublicas.length > 0, "");
+  const titulosYRefs = Object.values(datos).flatMap((d) => [d.titulo, d.referenciaMakom]).filter((v) => typeof v === "string" && v.length > 3);
+  const noPubDatos = archivos.map((a) => a.replace(/\.json$/, "")).filter((sl) => !PUBLICOS.includes(datos[sl].estado));
+  ok("el archivo NO contiene ningún título ni referencia MAKOM (de ninguna propiedad), ningún nombre de archivo de las no públicas, ni datos internos, de precio, contacto o ubicación", titulosYRefs.every((v) => !texto.includes(v)) && noPubDatos.every((sl) => !texto.includes(sl) && !texto.includes(encodeURIComponent(sl))) && !/direccionInterna|ubicacionInterna|precio|monto|descripcion|whatsapp|asesor|latitud|longitud|mapa|metadatos|titulo|referenciaMakom|operacion|tipo\b/i.test(texto), "");
+  ok("el estado de cada fila coincide con el de su propiedad", feed.propiedades.every((x) => x.estado === (porClave[x.k].estado || null)), "");
+  ok("la portada de cada propiedad PÚBLICA es la marcada (o la primera) de su galería y su miniatura es un webp de 480 px que existe en _site, de ≤ 80 KB, con la ruta que acepta el panel", publicas.every((x) => {
+    const g = (porClave[x.k].fotografias && porClave[x.k].fotografias.galeria) || [];
     const por = g.find((f) => f.portada) || g[0] || null;
     if (!por) return x.portada === null;
     const m = x.portada && x.portada.miniatura;
     const f = m && path.join(SITE, m.replace(/^\//, ""));
     return x.portada.original === por.archivo && /^\/assets\/propiedades\/_optimizadas\/[A-Za-z0-9_.-]+\.webp$/.test(m || "") && f && fs2.existsSync(f) && fs2.statSync(f).size <= 80 * 1024 && x.portada.ancho === 480;
   }), "");
+  const conPortadaPublica = publicas.filter((x) => x.portada).length;
+  const miniaturas = fs2.readdirSync(path.join(SITE, "assets", "propiedades", "_optimizadas")).filter((f) => /-480\.webp$/.test(f));
+  ok(`no se generan miniaturas de propiedades no públicas: hay exactamente ${conPortadaPublica} miniaturas de 480 px (una por propiedad pública con portada) y todas están referenciadas por el archivo`, miniaturas.length === conPortadaPublica && miniaturas.every((f) => publicas.some((x) => x.portada && x.portada.miniatura === "/assets/propiedades/_optimizadas/" + f)), `${miniaturas.length} / ${conPortadaPublica}`);
   ok("el archivo no está en el sitemap ni lo enlaza ninguna página pública", !/listado-propiedades/.test(fs2.readFileSync(path.join(SITE, "sitemap.xml"), "utf8")) && !/listado-propiedades/.test(fs2.readFileSync(path.join(SITE, "index.html"), "utf8")));
   const idx = leer(path.join(RAIZ, "admin", "index.html"));
   const sc = leer(path.join(RAIZ, "admin", "listado-propiedades.js"));

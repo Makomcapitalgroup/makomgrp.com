@@ -311,6 +311,24 @@ function validarReferenciasMakom(raiz) {
   }
 }
 
+// Clave del listado del administrador: hash cyrb53 (dominio público) del nombre de archivo normalizado NFC, en hexadecimal de 14 dígitos.
+// admin/listado-propiedades.js usa EXACTAMENTE el mismo algoritmo.
+function claveListado(texto) {
+  const t = String(texto == null ? "" : texto).normalize("NFC");
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c6ce57;
+  for (let i = 0; i < t.length; i++) {
+    const c = t.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 2654435761);
+    h2 = Math.imul(h2 ^ c, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+  h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+  h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16).padStart(14, "0");
+}
+
 module.exports = function (eleventyConfig) {
   // Milestone 1: andamiaje delimitado. Eleventy solo copia el sitio actual
   // tal cual (passthrough), sin procesarlo como plantilla. Nada se
@@ -1080,37 +1098,33 @@ module.exports = function (eleventyConfig) {
     return { archivo: variante.url, ancho: variante.width, alto: variante.height };
   }
 
-  // Listado del administrador (Decap): datos MÍNIMOS de TODAS las propiedades (también borrador/archivada/vendida) para que el panel pueda mostrar en cada
-  // tarjeta del listado su portada y su estado (admin/listado-propiedades.js). Se publica en /admin/listado-propiedades.json: mismo origen y mismo despliegue que
-  // el panel (sin servicios externos). Es un objeto explícito, campo por campo (nunca se vuelca el JSON de la propiedad): no incluye dirección interna, precios,
-  // descripciones ni datos de contacto. Los datos ya son públicos en el repositorio; aquí solo se publican los campos del listado y una miniatura de 480 px de
-  // la portada (webp), generada con el mismo helper que la portada del Home. `slug` es el nombre de archivo (el que usa Decap en su ruta de edición).
+  // Listado del administrador (Decap): datos mínimos para que el panel muestre en cada tarjeta del listado la portada y el estado (admin/listado-propiedades.js).
+  // Se publica en /admin/listado-propiedades.json (mismo origen y despliegue que el panel; sin servicios externos).
+  // MINIMIZACIÓN de lo expuesto (revisión de privacidad):
+  //   · Ninguna fila lleva título, nombre de archivo, referencia, operación, tipo, dirección, precios, descripciones, contacto ni coordenadas. El sobretítulo de la tarjeta
+  //     sale del texto que Decap ya dibuja con los datos del panel autenticado, no de este archivo.
+  //   · Cada fila es una CLAVE derivada del nombre de archivo (hash) y el estado. Solo las propiedades PÚBLICAS (las mismas del catálogo del sitio: «disponible» y
+  //     «reservada», ver «propiedadesPublicas») llevan además su portada (con una miniatura de 480 px); esa foto ya es pública en el sitio.
+  //   · Las demás (borrador, alquilada, vendida, archivada) solo llevan estado y clave: sin portada ni miniatura (no se genera ninguna miniatura de propiedades no públicas).
+  // La clave es un hash NO criptográfico (no oculta nada frente a quien ya conozca el nombre exacto del archivo, que además está en el repositorio público): evita que el
+  // archivo sirva para DESCUBRIR propiedades no públicas. Mismo algoritmo en admin/listado-propiedades.js (las pruebas comprueban que coinciden).
+  const ESTADOS_PUBLICOS = ["disponible", "reservada"];
   eleventyConfig.addFilter("listadoAdminPropiedades", async (lista) => {
     const filas = await Promise.all(
       (lista || []).map(async (p) => {
+        const fila = { k: claveListado(p.slugArchivo), estado: p.estado || null };
+        if (!ESTADOS_PUBLICOS.includes(p.estado)) return fila;
         const galeria = (p.fotografias && p.fotografias.galeria) || [];
         const portada = galeria.find((f) => f.portada) || galeria[0] || null;
         const miniatura = portada ? await generarVarianteOptimizada(portada.archivo, { formatos: ["webp"], anchos: [480] }) : null;
-        return {
-          slug: p.slugArchivo,
-          referenciaMakom: p.referenciaMakom || null,
-          titulo: p.titulo || "",
-          operacion: p.operacion || null,
-          tipo: p.tipo || null,
-          estado: p.estado || null,
-          portada: portada
-            ? {
-                original: portada.archivo,
-                miniatura: miniatura ? miniatura.archivo : null,
-                ancho: miniatura ? miniatura.ancho : null,
-                alto: miniatura ? miniatura.alto : null,
-              }
-            : null,
-        };
+        fila.portada = portada
+          ? { original: portada.archivo, miniatura: miniatura ? miniatura.archivo : null, ancho: miniatura ? miniatura.ancho : null, alto: miniatura ? miniatura.alto : null }
+          : null;
+        return fila;
       })
     );
-    filas.sort((a, b) => a.slug.localeCompare(b.slug));
-    return { version: 1, total: filas.length, propiedades: filas };
+    filas.sort((a, b) => a.k.localeCompare(b.k));
+    return { version: 2, total: filas.length, propiedades: filas };
   });
 
   // Milestone 5: selecciona hasta 3 propiedades destacadas para el
@@ -1342,3 +1356,4 @@ module.exports = function (eleventyConfig) {
 
 // Solo para las pruebas (scripts/verificar-ficha.js): la validación de datos de fichas.
 module.exports.validarFichas = validarFichas;
+module.exports.claveListado = claveListado;

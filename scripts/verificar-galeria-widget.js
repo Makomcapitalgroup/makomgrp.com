@@ -167,12 +167,12 @@ function iniciarServidorPrueba(decap, dirFixtures) {
     if (u === "/admin/listado-propiedades.json") {
       globalThis.__pedidosFeed = (globalThis.__pedidosFeed || 0) + 1;
       if (globalThis.__feedFalla) { res.writeHead(globalThis.__feedFalla, { "Content-Type": "text/plain" }); return res.end("error simulado"); }
-      if (globalThis.__feedMalo === "version") return enviar(TIPOS[".json"], JSON.stringify({ version: 2, propiedades: [] }));
+      if (globalThis.__feedMalo === "version") return enviar(TIPOS[".json"], JSON.stringify({ version: 3, propiedades: [] }));
       if (globalThis.__feedMalo === "hostil") {
         // Datos hostiles: URL externa, esquema javascript:, estado desconocido y tipos equivocados. Nada de eso debe usarse.
         const f = JSON.parse(JSON.stringify(feedPrueba.feed));
         f.propiedades.forEach((x, i) => { if (x.portada) x.portada.miniatura = i % 2 ? "https://hostil.example/x.webp" : "javascript:alert(1)"; x.estado = i % 3 ? "<img src=x onerror=alert(1)>" : x.estado; });
-        f.propiedades.push({ slug: 42, estado: [] }, null, "texto");
+        f.propiedades.push({ k: 42, estado: [] }, { k: "no-es-hash", estado: "disponible" }, null, "texto");
         return enviar(TIPOS[".json"], JSON.stringify(f));
       }
       return enviar(TIPOS[".json"], JSON.stringify(feedPrueba.feed));
@@ -1149,7 +1149,7 @@ async function grupoListado(p) {
   const cfgL = require("js-yaml").load(fs.readFileSync(path.join(RAIZ, "admin", "config.yml"), "utf8")).collections[0];
   const estadosCfg = cfgL.fields.find((f) => f.name === "estado").options.map((o) => o.value);
   const operCfg = cfgL.fields.find((f) => f.name === "operacion").options.map((o) => o.value);
-  ok("config: el summary es «referencia · operación · tipo» y, debajo, el título (el estado lo muestra la insignia), con los campos reales y sin inventar datos", /^\{\{referenciaMakom \| default\('sin referencia'\)\}\} · \{\{operacion\}\} · \{\{tipo\}\}\\n\{\{titulo( \| truncate\(\d+\))?\}\}$/.test(cfgL.summary.replace(/\n/g, "\\n")), cfgL.summary);
+  ok("config: el summary es «referencia · operación · tipo · estado» y, debajo, el título (el estado va en el propio texto: el listado nativo lo muestra aunque falle el enriquecimiento), con los campos reales y sin inventar datos", /^\{\{referenciaMakom \| default\('sin referencia'\)\}\} · \{\{operacion\}\} · \{\{tipo\}\} · \{\{estado \| default\('sin estado'\)\}\}\\n\{\{titulo( \| truncate\(\d+\))?\}\}$/.test(cfgL.summary.replace(/\n/g, "\\n")), cfgL.summary);
   ok("config: hay un filtro nativo (view_filters) por CADA estado definido en el campo «Estado» y por cada operación, con el valor exacto", estadosCfg.every((v) => cfgL.view_filters.some((f) => f.field === "estado" && f.pattern === "^" + v + "$")) && operCfg.every((v) => cfgL.view_filters.some((f) => f.field === "operacion" && f.pattern === "^" + v + "$")), JSON.stringify({ estadosCfg, operCfg }));
   const cargarTodas = async () => { for (let i = 0; i < 10; i++) { await p.ev(`(() => { window.scrollTo(0, document.documentElement.scrollHeight); [...document.querySelectorAll('*')].filter((e) => e.scrollHeight > e.clientHeight + 50 && /auto|scroll/.test(getComputedStyle(e).overflowY)).forEach((e) => { e.scrollTop = e.scrollHeight; }); })()`); await dormir(500); } };
   await p.ev("location.hash = '#/collections/propiedades'");
@@ -1160,15 +1160,16 @@ async function grupoListado(p) {
   const slugsRepo = await p.ev("Object.keys(window.__crudo.content.propiedades).map((k) => k.replace(/\\.json$/, ''))");
   const contados = {}; filas.forEach((f) => { contados[f.slug] = (contados[f.slug] || 0) + 1; });
   ok(`el listado carga TODAS las propiedades (reales + 5 sintéticas = ${total}) con su tarjeta`, filas.length === total, filas.length + " de " + total + " | repetidas: " + JSON.stringify(Object.entries(contados).filter(([k, v]) => v > 1)) + " | sin tarjeta: " + JSON.stringify(slugsRepo.filter((k) => !contados[k])) + " | sin clave: " + JSON.stringify(Object.keys(contados).filter((k) => !slugsRepo.includes(k))));
-  const mal = filas.filter((f) => { const [l1, l2] = f.texto.split("\n"); const esperado2 = f.titulo.length > 120 ? f.titulo.slice(0, 120) + "..." : f.titulo; return l1 !== `${f.ref || "sin referencia"} · ${f.op} · ${f.tipo}` || l2 !== esperado2; });
-  ok("fidelidad: en TODAS las tarjetas la 1.ª línea es referencia · operación · tipo y la 2.ª el título (cortado a 120 caracteres solo si lo excede), leídos de los datos de esa propiedad", mal.length === 0, JSON.stringify(mal.slice(0, 2)));
+  const mal = filas.filter((f) => { const [l1, l2] = f.texto.split("\n"); const esperado2 = f.titulo.length > 120 ? f.titulo.slice(0, 120) + "..." : f.titulo; return l1 !== `${f.ref || "sin referencia"} · ${f.op} · ${f.tipo} · ${f.estado}` || l2 !== esperado2; });
+  ok("fidelidad: en TODAS las tarjetas la 1.ª línea (texto nativo de Decap) es referencia · operación · tipo · estado y la 2.ª el título (cortado a 120 caracteres solo si lo excede), leídos de los datos de esa propiedad", mal.length === 0, JSON.stringify(mal.slice(0, 2)));
   const sint = Object.fromEntries(filas.filter((f) => /^zz-sintetica/.test(f.slug)).map((f) => [f.slug.replace("zz-sintetica-", ""), f]));
-  ok("casos especiales: borrador sin referencia («sin referencia»), archivada, vendida y reservada se muestran con su referencia o «sin referencia» (el estado lo cubre la insignia, probada en el grupo 17)", sint["borrador-sin-referencia"] && sint["borrador-sin-referencia"].texto.split("\n")[0] === "sin referencia · venta · penthouse" && sint["borrador-sin-referencia"].estado === "borrador" && sint["archivada-titulo-largo"].estado === "archivada" && sint["vendida"].estado === "vendida" && sint["reservada"].estado === "reservada", JSON.stringify(Object.keys(sint)));
+  ok("casos especiales: borrador sin referencia («sin referencia»), archivada, vendida y reservada se muestran con su referencia o «sin referencia» (el estado va en el texto nativo y también en la insignia, probada en el grupo 17)", sint["borrador-sin-referencia"] && sint["borrador-sin-referencia"].texto.split("\n")[0] === "sin referencia · venta · penthouse · borrador" && sint["borrador-sin-referencia"].estado === "borrador" && sint["archivada-titulo-largo"].estado === "archivada" && sint["vendida"].estado === "vendida" && sint["reservada"].estado === "reservada", JSON.stringify(Object.keys(sint)));
   ok("título larguísimo (> 120 caracteres): la tarjeta lo corta con «…» solo al mostrarlo; el título guardado no cambia", sint["borrador-sin-referencia"].texto.split("\n")[1].endsWith("...") && sint["borrador-sin-referencia"].titulo.length > 150 && !sint["borrador-sin-referencia"].titulo.endsWith("..."));
   ok("las tarjetas enlazan a la edición de SU propiedad (#/collections/propiedades/entries/<slug>) y cada una trae el indicador de acento", await p.ev(`(() => [...document.querySelectorAll('[class*="-ListCardLink"]')].every((a) => /^#\\/collections\\/propiedades\\/entries\\/.+/.test(a.getAttribute('href'))))()`));
-  const jer = JSON.parse(await p.ev(`(() => { const t = document.querySelector('[class*="-ListCardTitle"]'); const b = getComputedStyle(t), f = getComputedStyle(t, '::first-line'); return JSON.stringify({ base: b.fontSize, ps: b.whiteSpace, f1: f.fontSize, peso: f.fontWeight, col1: b.color, col2: f.color, up: f.textTransform, pesoBase: b.fontWeight }); })()`));
-  ok("jerarquía: título de 16 px / 500 en negro y, encima, sobretítulo de 11,5 px / 600 en mayúsculas y gris (referencia · operación · tipo), respetando el salto de línea", jer.base === "16px" && jer.pesoBase === "500" && jer.f1 === "11.5px" && jer.peso === "600" && jer.up === "uppercase" && jer.ps === "pre-line" && jer.col1 === "rgb(10, 10, 10)" && jer.col2 !== jer.col1, JSON.stringify(jer));
-  const contr = contraste(sobre(jer.col2, "rgb(255,255,255)"), [255, 255, 255]);
+  // Jerarquía: dos tipos de tarjeta. PÚBLICA enriquecida: el sobretítulo lo dibuja a::before y la 1.ª línea nativa se colapsa; NO pública (o sin datos): la 1.ª línea nativa hace de sobretítulo.
+  const jer = JSON.parse(await p.ev(`(() => { const med = (a) => { const t = a.querySelector('[class*="-ListCardTitle"]'); const b = getComputedStyle(t), f = getComputedStyle(t, '::first-line'), e = getComputedStyle(a, '::before'); return { sob: a.hasAttribute('data-mk-sobretitulo'), base: b.fontSize, pesoBase: b.fontWeight, ps: b.whiteSpace, col1: b.color, f1: f.fontSize, peso1: f.fontWeight, up1: f.textTransform, col2: f.color, eF: e.fontSize, ePeso: e.fontWeight, eUp: e.textTransform, eCol: e.color, eNowrap: e.whiteSpace, eTexto: e.content }; }; const as = [...document.querySelectorAll('[class*="-ListCardLink"]')]; return JSON.stringify({ pub: med(as.find((a) => a.hasAttribute('data-mk-sobretitulo'))), sinSob: as.filter((a) => !a.hasAttribute('data-mk-sobretitulo')).length }); })()`));
+  ok("jerarquía (todas las tarjetas enriquecidas): título de 16 px / 500 en negro y, encima, sobretítulo de 11,5 px / 600 en mayúsculas y gris, en una sola línea; la 1.ª línea nativa queda colapsada (0 px)", jer.pub.sob && jer.pub.base === "16px" && jer.pub.pesoBase === "500" && jer.pub.ps === "pre-line" && jer.pub.col1 === "rgb(10, 10, 10)" && jer.pub.eF === "11.5px" && jer.pub.ePeso === "600" && jer.pub.eUp === "uppercase" && jer.pub.eNowrap === "nowrap" && jer.pub.eCol !== jer.pub.col1 && jer.pub.f1 === "0px" && jer.sinSob === 0, JSON.stringify(jer));
+  const contr = contraste(sobre(jer.pub.eCol, "rgb(255,255,255)"), [255, 255, 255]);
   ok(`contraste del sobretítulo (gris sobre blanco) ≥ 4,5:1 (${contr.toFixed(2)}:1)`, contr >= 4.5, contr);
   // Filtros nativos
   const botones = await p.ev(`[...document.querySelectorAll('[class*="-CollectionControlsContainer"] button, [class*="-CollectionControlsContainer"] [role="button"]')].map((b) => b.textContent.trim() || b.getAttribute('aria-label'))`);
@@ -1211,7 +1212,7 @@ async function grupoListado(p) {
     await cargarTodas();
     await p.esperar("!!document.querySelector('li[data-mk-card]')", 8000);
     await p.ev("window.scrollTo(0, 0); [...document.querySelectorAll('*')].filter((e) => e.scrollTop > 0).forEach((e) => { e.scrollTop = 0; })");
-    const r = JSON.parse(await p.ev(`(() => { const vw = innerWidth; const cards = [...document.querySelectorAll('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])')]; const fuera = cards.filter((c) => { const q = c.getBoundingClientRect(); return q.right > vw + 1 || q.left < -1; }).length; const desb = [...document.querySelectorAll('[class*="-ListCardTitle"]')].filter((t) => t.scrollWidth > t.clientWidth + 1).length; const f = getComputedStyle(document.querySelector('[class*="-ListCardTitle"]'), '::first-line').fontSize; const h = cards.map((c) => c.getBoundingClientRect().height); const ctl = document.querySelector('[class*="-CollectionControlsContainer"]').getBoundingClientRect(); return JSON.stringify({ n: cards.length, fuera, desb, f1: f, hmin: Math.round(Math.min(...h)), sw: document.documentElement.scrollWidth - vw, ctlDentro: ctl.right <= vw + 1 }); })()`));
+    const r = JSON.parse(await p.ev(`(() => { const vw = innerWidth; const cards = [...document.querySelectorAll('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])')]; const fuera = cards.filter((c) => { const q = c.getBoundingClientRect(); return q.right > vw + 1 || q.left < -1; }).length; const desb = [...document.querySelectorAll('[class*="-ListCardTitle"]')].filter((t) => t.scrollWidth > t.clientWidth + 1).length; const a0 = document.querySelector('[class*="-ListCardLink"]'); const f = a0.hasAttribute('data-mk-sobretitulo') ? getComputedStyle(a0, '::before').fontSize : getComputedStyle(a0.querySelector('[class*="-ListCardTitle"]'), '::first-line').fontSize; const h = cards.map((c) => c.getBoundingClientRect().height); const ctl = document.querySelector('[class*="-CollectionControlsContainer"]').getBoundingClientRect(); return JSON.stringify({ n: cards.length, fuera, desb, f1: f, hmin: Math.round(Math.min(...h)), sw: document.documentElement.scrollWidth - vw, ctlDentro: ctl.right <= vw + 1 }); })()`));
     ok(`${w} px: las ${total} tarjetas caben en pantalla, el texto largo se ajusta sin desbordar, sin desplazamiento horizontal y los controles quedan dentro` + (w > 560 ? " (sobretítulo 11,5 px)" : " (sobretítulo 10 px)"), r.n === total && r.fuera === 0 && r.desb === 0 && r.sw <= 1 && r.ctlDentro && (w > 560 ? r.f1 === "11.5px" : r.f1 === "10px") && r.hmin >= 60, JSON.stringify(r));
   }
   await vista(1440);
@@ -1229,7 +1230,7 @@ async function grupoListado(p) {
   await vista(1440);
   const CARD = `[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])`;
   const abrirListado = async ({ limpiarCache = true, hash = "#/collections/propiedades" } = {}) => {
-    if (limpiarCache) await p.ev("try { localStorage.removeItem('mk-listado-propiedades-v1'); } catch (e) {}").catch(() => {});
+    if (limpiarCache) await p.ev("try { localStorage.removeItem('mk-listado-propiedades-v1'); localStorage.removeItem('mk-listado-propiedades-v2'); } catch (e) {}").catch(() => {});
     const l = p.cdp.una("Page.loadEventFired");
     await p.cdp.send("Page.navigate", { url: p.base + "/admin/" });
     await Promise.race([l, dormir(15000)]);
@@ -1259,9 +1260,14 @@ async function grupoListado(p) {
   };
   const resumenTarjetas = () => p.ev(`(() => { const t = [...document.querySelectorAll('${CARD}')]; const c = (a, v) => t.filter((x) => x.getAttribute(a) === v).length; return JSON.stringify({ n: t.length, enr: t.filter((x) => x.hasAttribute('data-mk-card')).length, ok: c('data-mk-foto', 'ok'), sin: c('data-mk-foto', 'sin'), error: c('data-mk-foto', 'error'), cargando: c('data-mk-foto', 'cargando'), estados: t.filter((x) => x.hasAttribute('data-mk-estado')).length }); })()`).then(JSON.parse);
   const esperarTodas = async (n) => p.esperar(`document.querySelectorAll('li[data-mk-card]').length >= ${n} && !document.querySelector('li[data-mk-card][data-mk-foto="cargando"]')`, 20000);
-  const filasDatos = JSON.parse(JSON.stringify((await (async () => { const f = require("./lib/listado-feed-prueba").crearFeed(require("./lib/repo-prueba").construirRepo(RAIZ).content.propiedades, RAIZ, sharp); return f.feed; })()).propiedades));
+  const { claveListado } = require("../.eleventy.js");
+  const slugsRepo17 = Object.keys(require("./lib/repo-prueba").construirRepo(RAIZ).content.propiedades).filter((k) => k.endsWith(".json")).map((k) => k.replace(/\.json$/, ""));
+  // Filas del archivo de datos (v2) con su slug: la clave del archivo es un hash; el slug solo existe aquí, del lado de la prueba, para comparar.
+  const filasDatos = JSON.parse(JSON.stringify((await (async () => { const f = require("./lib/listado-feed-prueba").crearFeed(require("./lib/repo-prueba").construirRepo(RAIZ).content.propiedades, RAIZ, sharp); return f.feed; })()).propiedades))
+    .map((f) => ({ ...f, slug: slugsRepo17.find((s) => claveListado(s) === f.k) }));
   const nTot = filasDatos.length;
-  const conFoto = filasDatos.filter((f) => f.portada).length;
+  const conFoto = filasDatos.filter((f) => f.portada).length; // solo las públicas (disponible/reservada) traen portada en el archivo de datos
+  const nPublicas = filasDatos.filter((f) => f.estado === "disponible" || f.estado === "reservada").length;
   const nFotoRota = filasDatos.filter((f) => f.portada && /no-existe/.test(f.portada.original)).length;
 
   /* ---- A. Datos y estado inicial ---- */
@@ -1272,11 +1278,17 @@ async function grupoListado(p) {
   const est0 = JSON.parse(await p.ev("JSON.stringify(window.MakomListadoPropiedades.estado())"));
   ok("el panel lee /admin/listado-propiedades.json (mismo origen) y marca el estado «ok» con una fila por propiedad", est0.datos === "ok" && est0.filas === nTot && (await p.ev("document.documentElement.getAttribute('data-mk-listado')")) === "ok", JSON.stringify(est0));
   ok(`TODAS las propiedades (${nTot}) muestran su tarjeta enriquecida, con insignia de estado`, a0.n === nTot && a0.enr === nTot && a0.estados === nTot, JSON.stringify(a0));
-  ok(`portadas: ${conFoto - nFotoRota} cargan su miniatura real, ${nTot - conFoto} sin fotografía muestran el marcador de MAKOM y ${nFotoRota} con archivo roto también (sin romper la tarjeta)`, a0.ok === conFoto - nFotoRota && a0.sin === nTot - conFoto && a0.error === nFotoRota && a0.cargando === 0, JSON.stringify(a0));
+  ok(`portadas: ${conFoto - nFotoRota} cargan su miniatura real; ${nTot - conFoto} (las no públicas, que el archivo de datos no detalla, y las sin fotografía) muestran el marcador de MAKOM; ${nFotoRota} con archivo roto también (sin romper la tarjeta)`, a0.ok === conFoto - nFotoRota && a0.sin === nTot - conFoto && a0.error === nFotoRota && a0.cargando === 0, JSON.stringify(a0));
   const fid = JSON.parse(await p.ev(`(() => JSON.stringify([...document.querySelectorAll('${CARD}')].map((li) => { const a = li.querySelector('a'); const slug = decodeURIComponent(a.getAttribute('href').split('/entries/')[1]).normalize('NFC'); return { slug, estado: li.getAttribute('data-mk-estado'), badge: getComputedStyle(li, '::after').content, foto: li.getAttribute('data-mk-foto'), portada: getComputedStyle(li).getPropertyValue('--mk-portada') }; })))()`));
   const etiquetas = { disponible: "Disponible", reservada: "Reservada", alquilada: "Alquilada", vendida: "Vendida", archivada: "Archivada", borrador: "Borrador" };
   const malFid = fid.filter((x) => { const d = filasDatos.find((f) => f.slug.normalize("NFC") === x.slug); return !d || x.estado !== d.estado || x.badge !== `"● ${etiquetas[d.estado]}"`; });
   ok("fidelidad: en cada tarjeta la insignia dice el estado REAL de esa propiedad (disponible, reservada, alquilada, vendida, archivada o borrador)", malFid.length === 0, JSON.stringify(malFid.slice(0, 2)));
+  const sobs = JSON.parse(await p.ev(`(() => JSON.stringify([...document.querySelectorAll('${CARD}')].map((li) => { const a = li.querySelector('a'); return { slug: decodeURIComponent(a.getAttribute('href').split('/entries/')[1]).normalize('NFC'), sob: a.getAttribute('data-mk-sobretitulo'), foto: li.getAttribute('data-mk-foto'), estado: li.getAttribute('data-mk-estado'), min: li.getAttribute('data-mk-miniatura') }; })))()`));
+  const repoProps17 = require("./lib/repo-prueba").construirRepo(RAIZ).content.propiedades;
+  const malSob = sobs.filter((x) => { const d = filasDatos.find((f) => f.slug.normalize("NFC") === x.slug); const pub = d.estado === "disponible" || d.estado === "reservada"; const real = JSON.parse(repoProps17[d.slug + ".json"].content); return x.sob !== `${real.referenciaMakom || "sin referencia"} · ${real.operacion} · ${real.tipo}` || (!pub && (x.min !== null || x.foto !== "sin")); });
+  ok(`sobretítulo «referencia · operación · tipo» en las ${nTot} tarjetas, tomado del propio texto de Decap (no del archivo de datos); las ${nTot - nPublicas} no públicas solo traen estado: sin miniatura ni foto`, malSob.length === 0 && sobs.length === nTot, JSON.stringify(malSob.slice(0, 2)));
+  const paridad = JSON.parse(await p.ev(`(() => JSON.stringify(${JSON.stringify(slugsRepo17)}.map((s) => window.MakomListadoPropiedades.clave(s))))()`));
+  ok(`la clave que calcula el navegador (cyrb53 del slug NFC) coincide con la del build (claveListado) en las ${slugsRepo17.length} propiedades, incluidas las de nombre con tildes, y son todas distintas`, paridad.every((k, i) => k === claveListado(slugsRepo17[i])) && new Set(paridad).size === paridad.length && paridad.every((k) => /^[0-9a-f]{14}$/.test(k)), JSON.stringify(paridad.slice(0, 2)));
   const cfgEstados = require("js-yaml").load(fs.readFileSync(path.join(RAIZ, "admin", "config.yml"), "utf8")).collections[0].fields.find((f) => f.name === "estado").options.map((o) => o.value);
   const cssTema = fs.readFileSync(path.join(RAIZ, "admin", "tema-makom.css"), "utf8");
   ok("el tema define una insignia para CADA estado del campo «Estado» de config.yml (si se agrega uno, la prueba avisa)", cfgEstados.every((e) => cssTema.includes(`li[data-mk-estado="${e}"]::after`)), cfgEstados.join(","));
@@ -1401,6 +1413,10 @@ async function grupoListado(p) {
   const d1 = await resumenTarjetas();
   const est1 = JSON.parse(await p.ev("JSON.stringify(window.MakomListadoPropiedades.estado())"));
   ok("si el archivo de datos falla (HTTP 500) y no hay copia, las tarjetas quedan como las dibuja Decap (nativas) y el estado es «error»", d1.n > 0 && d1.enr === 0 && est1.datos === "error", JSON.stringify({ d1, est1 }));
+  await cargarTodo();
+  const nativo = JSON.parse(await p.ev(`(() => JSON.stringify([...document.querySelectorAll('${CARD}')].map((li) => { const a = li.querySelector('a'); const t = a.querySelector('[class*="-ListCardTitle"]'); return { slug: decodeURIComponent(a.getAttribute('href').split('/entries/')[1]).normalize('NFC'), l1: t.textContent.split('\\n')[0], f1: getComputedStyle(t, '::first-line').fontSize, vis: t.getBoundingClientRect().height > 0 && getComputedStyle(t).display !== 'none', sob: a.hasAttribute('data-mk-sobretitulo') }; })))()`));
+  const malNativo = nativo.filter((x) => { const d = filasDatos.find((f) => f.slug.normalize("NFC") === x.slug); return !d || !x.l1.endsWith(" · " + d.estado) || x.f1 !== "11.5px" || !x.vis || x.sob; });
+  ok(`si el enriquecimiento falla del todo, el listado nativo muestra el estado de CADA una de las ${nativo.length} propiedades en su texto («… · disponible», «… · borrador», etc.), legible (sobretítulo de 11,5 px) y sin depender de insignias`, nativo.length === nTot && malNativo.length === 0, JSON.stringify(malNativo.slice(0, 2)));
   await elegirFiltro17("Archivadas");
   const f1 = await p.ev(`document.querySelectorAll('${CARD}').length`);
   await elegirFiltro17("Archivadas");
@@ -1411,7 +1427,7 @@ async function grupoListado(p) {
   globalThis.__feedFalla = 0;
   await abrirListado();
   await esperarTodas(1);
-  const guardada = await p.ev("!!localStorage.getItem('mk-listado-propiedades-v1')") + " " + (await p.ev("JSON.stringify(window.MakomListadoPropiedades.estado()) + ' ls=' + localStorage.length + ' claves=' + Object.keys(localStorage).join(',')"));
+  const guardada = await p.ev("!!localStorage.getItem('mk-listado-propiedades-v2')") + " " + (await p.ev("JSON.stringify(window.MakomListadoPropiedades.estado()) + ' ls=' + localStorage.length + ' claves=' + Object.keys(localStorage).join(',')"));
   globalThis.__feedFalla = 500;
   await abrirListado({ limpiarCache: false });
   await p.esperar(`document.querySelectorAll('li[data-mk-card]').length > 0`, 8000);
@@ -1434,8 +1450,8 @@ async function grupoListado(p) {
   await abrirListado();
   await dormir(800);
   await cargarTodo();
-  const d4 = await p.ev(`(() => JSON.stringify({ tarjetas: document.querySelectorAll('${CARD}').length, estadosRaros: [...document.querySelectorAll('li[data-mk-estado]')].filter((x) => !/^(disponible|reservada|alquilada|vendida|archivada|borrador)$/.test(x.getAttribute('data-mk-estado'))).length, urlExterna: [...document.querySelectorAll('li[data-mk-miniatura]')].filter((x) => !/^\\/assets\\/propiedades\\/_optimizadas\\//.test(x.getAttribute('data-mk-miniatura'))).length, peticionesAjenas: performance.getEntriesByType('resource').filter((e) => /hostil\\.example|javascript:/.test(e.name)).length, inyeccion: !!document.querySelector('li img[src="x"], li [onerror]') }))()`).then(JSON.parse);
-  ok("datos hostiles (URL externa, «javascript:», estado con HTML, tipos equivocados): se descartan; ninguna petición a otro dominio, ningún estado inválido y nada se inyecta", d4.tarjetas > 0 && d4.estadosRaros === 0 && d4.urlExterna === 0 && d4.peticionesAjenas === 0 && !d4.inyeccion, JSON.stringify(d4));
+  const d4 = await p.ev(`(() => JSON.stringify({ tarjetas: document.querySelectorAll('${CARD}').length, estadosRaros: [...document.querySelectorAll('li[data-mk-estado]')].filter((x) => !/^(disponible|reservada|alquilada|vendida|archivada|borrador)$/.test(x.getAttribute('data-mk-estado'))).length, urlExterna: [...document.querySelectorAll('li[data-mk-miniatura]')].filter((x) => !/^\\/assets\\/propiedades\\/_optimizadas\\//.test(x.getAttribute('data-mk-miniatura'))).length, peticionesAjenas: performance.getEntriesByType('resource').filter((e) => /hostil\\.example|javascript:/.test(e.name)).length, inyeccion: !!document.querySelector('li img[src="x"], li [onerror]'), sobRaros: [...document.querySelectorAll('a[data-mk-sobretitulo]')].filter((a) => !/^(sin referencia|[A-Za-z0-9-]{1,24}) · (venta|alquiler) · [a-z0-9-]{1,24}$/.test(a.getAttribute('data-mk-sobretitulo'))).length }))()`).then(JSON.parse);
+  ok("datos hostiles (URL externa, «javascript:», estado con HTML, tipos equivocados): se descartan; ninguna petición a otro dominio, ningún estado inválido y nada se inyecta", d4.tarjetas > 0 && d4.estadosRaros === 0 && d4.sobRaros === 0 && d4.urlExterna === 0 && d4.peticionesAjenas === 0 && !d4.inyeccion, JSON.stringify(d4));
   globalThis.__feedMalo = null;
   // D4. Miniaturas lentas: marcador y luego la foto, sin mover la tarjeta
   globalThis.__miniaturasLentas = 1200;

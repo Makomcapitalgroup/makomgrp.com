@@ -197,9 +197,10 @@ html body [class*="-GridCardLink"] { padding: 0; border-radius: var(--mk-r-panel
 html body [class*="-GridCardLink"] [class*="-CardBody"] { padding: 20px 24px; }
 html body [class*="-ListCardTitle"] { font-size: 15px; font-weight: 400; line-height: 1.45; letter-spacing: .005em; color: var(--mk-negro); }
 /* ---------- Listado de Propiedades ----------
-   El `summary` de admin/config.yml trae DOS líneas: «referencia · operación · tipo» y debajo el título. El tema respeta el salto de línea (pre-line), da
-   a la primera línea el aspecto de sobretítulo (::first-line) y limita el conjunto a 3 líneas (sobretítulo + título de hasta dos). Aplica en el listado de
-   Propiedades (se reconoce por la navegación lateral) y en cualquier tarjeta enriquecida (resultados de búsqueda). */
+   El `summary` de admin/config.yml trae DOS líneas: «referencia · operación · tipo · estado» y debajo el título. El tema respeta el salto de línea (pre-line), da
+   a la primera línea el aspecto de sobretítulo (::first-line) y limita el conjunto a 3 líneas (sobretítulo + título de hasta dos). Esa es la tarjeta de
+   RESPALDO (sin enriquecimiento): el estado se lee en el propio texto. Aplica en el listado de Propiedades (se reconoce por la navegación lateral) y en cualquier
+   tarjeta enriquecida (resultados de búsqueda). */
 html body:has([class*="-SidebarNavLink"][aria-current="page"][href$="collections/propiedades"]) [class*="-ListCardTitle"],
 html body li[data-mk-card] [class*="-ListCardTitle"], html body li[data-mk-card] [class*="-CardHeading"] {
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; white-space: pre-line; overflow-wrap: anywhere;
@@ -226,8 +227,8 @@ html body li[data-mk-card][class*="-ListCard"]:not([class*="-ListCardLink"]):not
 html body li[data-mk-card][class*="-GridCard"]:not([class*="-GridCardLink"]):is([data-mk-foto="sin"], [data-mk-foto="error"])::before {
   background-image: url("/assets/logos/makom-capital-group-logo-positivo.svg"); background-size: 58%;
 }
-html body li[data-mk-card][class*="-ListCard"] [class*="-ListCardLink"] { display: flex; align-items: center; min-height: 126px; padding: 16px 124px 16px calc(var(--mk-foto-w) + 38px); }
-html body li[data-mk-card][class*="-ListCard"] [class*="-ListCardTitle"] { flex: 1 1 auto; min-width: 0; margin: 0; }
+html body li[data-mk-card][class*="-ListCard"] [class*="-ListCardLink"] { display: flex; flex-direction: column; justify-content: center; align-items: stretch; min-height: 126px; padding: 16px 124px 16px calc(var(--mk-foto-w) + 38px); }
+html body li[data-mk-card][class*="-ListCard"] [class*="-ListCardTitle"] { flex: 0 1 auto; min-width: 0; margin: 0; }
 /* Insignia de estado (sobre la portada) */
 html body li[data-mk-card][data-mk-estado]::after {
   position: absolute; z-index: 2; left: 24px; bottom: 24px; padding: 4px 10px; border-radius: var(--mk-r-chip); background: rgba(255, 255, 255, .94);
@@ -254,8 +255,14 @@ html body li[data-mk-card][class*="-GridCard"]:not([class*="-GridCardLink"]) { h
 html body li[data-mk-card][class*="-GridCard"]:not([class*="-GridCardLink"])::before { top: 12px; left: 12px; right: 12px; bottom: auto; width: auto; height: 150px; }
 html body li[data-mk-card][data-mk-estado][class*="-GridCard"]::after { left: 22px; top: 22px; bottom: auto; }
 html body li[data-mk-card][class*="-GridCard"] [class*="-GridCardLink"] { display: block; padding: 174px 20px 38px; }
-/* En la cuadrícula el sobretítulo es más angosto: «MKW-RE-016 · ALQUILER · LOCAL-COMERCIAL» debe caber en una línea (si se parte, la 2.ª línea tomaría el estilo del título) */
-html body li[data-mk-card][class*="-GridCard"] [class*="-CardHeading"]::first-line { font-size: 10px; letter-spacing: .03em; }
+/* Sobretítulo de las propiedades PÚBLICAS: lo dibuja el enlace (a::before, una sola línea con puntos suspensivos) con los datos validados del archivo de datos, y la
+   primera línea nativa (que repite esos datos más el estado) se colapsa. Las tarjetas sin `data-mk-sobretitulo` (no públicas o sin datos) conservan la línea nativa. */
+html body li[data-mk-card] a[data-mk-sobretitulo] [class*="-ListCardTitle"]::first-line, html body li[data-mk-card] a[data-mk-sobretitulo] [class*="-CardHeading"]::first-line { font-size: 0 !important; line-height: 0 !important; letter-spacing: 0 !important; }
+html body li[data-mk-card] a[data-mk-sobretitulo]::before {
+  content: attr(data-mk-sobretitulo); display: block; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  font-size: 11.5px; font-weight: 600; line-height: 2; letter-spacing: .08em; text-transform: uppercase; color: var(--mk-ink-soft);
+}
+html body li[data-mk-card][class*="-GridCard"] a[data-mk-sobretitulo]::before { font-size: 10px; letter-spacing: .03em; }
 html body li[data-mk-card][class*="-GridCard"] [class*="-CardBody"] { padding: 0; }
 /* Tableta */
 @media (max-width: 1099px) {
@@ -270,8 +277,8 @@ html body li[data-mk-card][class*="-GridCard"] [class*="-CardBody"] { padding: 0
   html body li[data-mk-card][data-mk-estado]:not([class*="-GridCard"])::after { left: 17px; bottom: 17px; padding: 2px 6px; font-size: 9.5px; letter-spacing: 0; max-width: calc(var(--mk-foto-w) - 10px); overflow: hidden; }
   html body li[data-mk-card] [class*="-ListCardLink"]::after { content: "›"; right: 14px; top: 50%; bottom: auto; margin-top: -14px; font-size: 24px; line-height: 1; }
   html body li[data-mk-card]:hover [class*="-ListCardLink"]::after { transform: none; }
-  html body li[data-mk-card][class*="-ListCard"] [class*="-ListCardTitle"]::first-line,
-  html body:has([class*="-SidebarNavLink"][aria-current="page"][href$="collections/propiedades"]) li[data-mk-card] [class*="-ListCardTitle"]::first-line { font-size: 10px; letter-spacing: 0; text-transform: none; }
+  html body li[data-mk-card] a[data-mk-sobretitulo]::before { font-size: 10px; letter-spacing: .02em; }
+  html body li[data-mk-card][class*="-ListCard"] a:not([data-mk-sobretitulo]) [class*="-ListCardTitle"]::first-line { font-size: 10px; letter-spacing: .02em; }
 }
 
 /* ---------- Editor: barra de acciones ---------- */
