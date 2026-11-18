@@ -9,8 +9,11 @@
 </head>
 <body>
   <!-- Decap CMS: cargado únicamente dentro de /admin/, nunca en el sitio
-       público. Versión fijada con caret (^3.0.0) para recibir parches y
-       versiones menores sin saltar a una mayor incompatible. -->
-  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+       público. Versión FIJA (la probada con el widget de galería): para actualizarla,
+       cambie el número aquí y repita scripts/verificar-galeria-widget.js. -->
+  <script src="https://unpkg.com/decap-cms@3.17.3/dist/decap-cms.js"></script>
+  <!-- Widget propio «galeria-fotos» (carga múltiple de fotografías). Debe cargarse DESPUÉS de Decap.
+       Si se quisiera volver a la lista nativa: revertir el commit que lo añadió (ver docs/galeria-carga-multiple.md). -->
+  <script src="galeria-fotos.js"></script>
 </body>
 </html>

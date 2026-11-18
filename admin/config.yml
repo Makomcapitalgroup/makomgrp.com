@@ -345,30 +345,19 @@ collections:
         fields:
           - label: "Fotografías (máx. 10)"
             name: "galeria"
-            widget: "list"
+            # Widget propio «galeria-fotos» (admin/galeria-fotos.js): carga múltiple, arrastrar y soltar, miniaturas, orden, portada,
+            # optimización previa y nombres únicos. Guarda el MISMO formato que la lista anterior: [{ archivo, alt, portada }].
+            # Límites: ÚNICA fuente en _data/propiedadesConfig.json → limitesMedia (fotosMin / fotosMax). El build falla si no coinciden.
+            widget: "galeria-fotos"
             required: false
-            # Límites: ÚNICA fuente en _data/propiedadesConfig.json → limitesMedia (fotosMin / fotosMax). El build falla si este bloque
-            # no coincide con ese archivo, y scripts/verificar-ficha.js comprueba que la ficha pública muestra exactamente esa cantidad.
             min: 3
             max: 10
-            collapsed: true
-            summary: "{{fields.portada | ternary('★ PORTADA — ','')}}{{fields.archivo}}"
-            label_singular: "Fotografía"
+            public_folder: "/assets/propiedades/uploads"
             hint: >
-              De 3 a 10 fotografías. La barra de arriba dice cuántas hay («6 fotografías (máx. 10)»); con «Add fotografía»
-              agrega otra hasta 10 (con más, el panel no deja guardar). Se muestran en el orden de esta lista: arrastre el
-              asa (⠿) de cada fila para moverla, y use la ✕ para quitarla. La principal es la que dice «★ PORTADA»: active
-              «Usar como portada» en UNA sola foto (si no marca ninguna, es la primera). Para reemplazar una imagen, abra
-              la fila y elija otro archivo; si queda una fila sin archivo, elimínela. La principal debería medir 1600 px de
-              ancho o más (el sitio nunca amplía una imagen; el build avisa). Para guardar: «Publicar» → «Publicar ahora».
-            fields:
-              - { label: "Archivo", name: "archivo", widget: "image" }
-              - label: "Texto alternativo"
-                name: "alt"
-                widget: "string"
-                required: false
-                hint: "Si se deja vacío, se genera automáticamente a partir del título y la ubicación."
-              - { label: "Usar como portada", name: "portada", widget: "boolean", default: false }
+              De 3 a 10 fotografías. Arrastre las fotos desde su computadora a la zona punteada (o pulse «Seleccionar fotografías»
+              y elija varias a la vez): se reducen y comprimen solas antes de subirse. Ordene arrastrando las tarjetas (o con ◀ ▶);
+              la ★ es la portada y se cambia con «Hacer portada». «Reemplazar» cambia una foto y «Quitar» la saca de la ficha (no borra
+              nada de Medios). La principal debería medir 1600 px o más. Para guardar: «Publicar» → «Publicar ahora».
 
       # ---------------------------------------------------------
       # 7. MAPA
