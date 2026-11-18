@@ -800,6 +800,133 @@ async function escenarios(p, dirFix, n, temporales) {
   const inesperadas = difs.filter((d) => !permitidas.includes(d) && !/^\.metadatos\./.test(d));
   ok("editar monto, habitaciones y sector desde la distribución compacta y publicar guarda exactamente esos 3 valores y nada más (sin pérdida ni cambio de otros datos)", inesperadas.length === 0 && despues.precio.monto === 999000 && despues.detallesCuantitativos.habitaciones === 3 && despues.ubicacionInterna.sector === "Sector de prueba", JSON.stringify({ difs, inesperadas }));
 
+
+  /* ---------- 14. Pulido visual final (encabezado, botones, estados, secciones, galería, listado, móvil) ---------- */
+  grupo = "14 · pulido visual";
+  const rgbDe = (c) => { const m = String(c).match(/rgba?\(([^)]+)\)/); if (!m) return null; const v = m[1].split(",").map((x) => parseFloat(x)); return { c: v.slice(0, 3), a: v.length > 3 ? v[3] : 1 }; };
+  const sobre = (fg, bg) => { const f = rgbDe(fg), b = rgbDe(bg) || { c: HUESO, a: 1 }; return mezcla(f.c, b.c, f.a); };
+  const centrado = (sel) => `(() => { const b = document.querySelector(${JSON.stringify(sel)}); if (!b) return null; const r = document.createRange(); r.selectNodeContents(b); const t = r.getBoundingClientRect(), q = b.getBoundingClientRect(); return JSON.stringify({ dx: +(((t.left + t.right) / 2) - ((q.left + q.right) / 2)).toFixed(1), dy: +(((t.top + t.bottom) / 2) - ((q.top + q.bottom) / 2)).toFixed(1), h: Math.round(q.height) }); })()`;
+  await vista(1440);
+  await p.cargar();
+  await p.ev(UT);
+  await p.ev("location.hash = '#/collections/propiedades'");
+  await dormir(1500);
+  // --- Encabezado: Medios vs inactiva vs deshabilitada
+  const med = JSON.parse(await p.ev(`(() => { const b = [...document.querySelectorAll('header nav button')].find((x) => /Medios/.test(x.textContent)); const cs = getComputedStyle(b); const a = [...document.querySelectorAll('header nav a')].find((x) => /Contenido/.test(x.textContent)); const hdr = document.querySelector('header[class*="-AppHeader"]'); const r = b.getBoundingClientRect(), h = hdr.getBoundingClientRect(); return JSON.stringify({ disabled: b.disabled, color: cs.color, cursor: cs.cursor, h: Math.round(r.height), top: Math.round(r.top), hdr: Math.round(h.height), activo: getComputedStyle(a).color }); })()`));
+  ok("«Medios» no está deshabilitado en Decap y se ve activo: botón habilitado, cursor de acción y texto con contraste ≥ 4,5:1 sobre el marfil", !med.disabled && med.cursor === "pointer" && contraste(sobre(med.color, "rgb(245,242,238)"), HUESO) >= 4.5, JSON.stringify(med));
+  ok("encabezado de 56 px con las pestañas centradas verticalmente (no se recortan ni suben)", med.hdr === 56 && med.top >= 8 && med.h === 36, JSON.stringify(med));
+  await p.real("Medios");
+  await dormir(1000);
+  ok("«Medios» sigue abriendo la biblioteca de medios (ventana «Archivos multimedia»)", await p.ev("/Archivos multimedia/.test(document.body.innerText)"));
+  const modal = JSON.parse(await p.ev(`(() => { const t = [...document.querySelectorAll('h1')].find((e) => /Archivos multimedia/.test(e.textContent)); const m = t && t.closest('[class*="-StyledModal"]'); const u = document.querySelector('[class*="-UploadButton"]'); return JSON.stringify({ radio: m && getComputedStyle(m).borderTopLeftRadius, subir: u && getComputedStyle(u).backgroundColor }); })()`));
+  ok("la ventana de medios usa el radio de 20 px y «Subir nuevo» en terracota", modal.radio === "20px" && modal.subir === "rgb(181, 71, 42)", JSON.stringify(modal));
+  await p.cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
+  await dormir(500);
+  // --- Añadir rápido
+  const aniadir = JSON.parse(await p.ev(`(() => { const b = [...document.querySelectorAll('header [class*="-StyledDropdownButton"]')].find((x) => /Añadir rápido/.test(x.textContent)); const cs = getComputedStyle(b); return JSON.stringify({ bg: cs.backgroundColor, sombra: cs.boxShadow, borde: cs.borderTopWidth, h: Math.round(b.getBoundingClientRect().height) }); })()`));
+  ok("«Añadir rápido» es discreto: sin relleno ni sombra, contorno de 1 px, 36 px de alto (no compite con «+ Propiedad»)", aniadir.sombra === "none" && /rgba\(0, 0, 0, 0\)|transparent/.test(aniadir.bg) && aniadir.borde === "1px" && aniadir.h === 36, JSON.stringify(aniadir));
+  await p.real("Añadir rápido");
+  await dormir(400);
+  const opciones = await p.ev("[...document.querySelectorAll('[class*=\"-DropdownList\"] [class*=\"-StyledMenuItem\"]')].map((e) => e.textContent.trim()).join('|')");
+  ok("«Añadir rápido» conserva sus 4 opciones (Propiedad, Proyecto, Perspectiva, Asesor)", opciones === "Propiedad|Proyecto|Perspectiva|Asesor", opciones);
+  await p.cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
+  await dormir(300);
+  // --- Botones centrados
+  const cNuevo = JSON.parse(await p.ev(centrado('[class*="-CollectionTopNewButton"]')));
+  ok("«+ Propiedad»: texto centrado en el botón (desvío ≤ 1 px en horizontal y vertical) y 44 px de alto", Math.abs(cNuevo.dx) <= 1 && Math.abs(cNuevo.dy) <= 1 && cNuevo.h === 44, JSON.stringify(cNuevo));
+  // --- Listado: hover y foco
+  const caja1 = JSON.parse(await p.ev(`(() => { const e = document.querySelector('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])'); const q = e.getBoundingClientRect(); return JSON.stringify({ x: q.left + q.width / 2, y: q.top + q.height / 2 }); })()`));
+  await p.cdp.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: caja1.x, y: caja1.y });
+  await dormir(400);
+  const hov = await p.ev(`(() => { const e = document.querySelector('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])'); const cs = getComputedStyle(e); return cs.borderTopColor + '|' + cs.boxShadow; })()`);
+  ok("listado: al pasar el ratón la entrada resalta con borde y filo terracota", /181, 71, 42/.test(hov), hov);
+  ok("listado: separación entre entradas y título legible (15 px, interlineado 1,45)", await p.ev(`(() => { const t = document.querySelector('[class*="-ListCardTitle"]'); const cs = getComputedStyle(t); const a = document.querySelectorAll('[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])'); const g = a[1].getBoundingClientRect().top - a[0].getBoundingClientRect().bottom; return cs.fontSize === '15px' && parseFloat(cs.lineHeight) >= 21 && g >= 9; })()`));
+  // --- Editor: estados de guardado
+  await p.ev(`location.hash = '#/collections/propiedades/entries/${ENTRADA}'`);
+  await p.esperar("!!document.querySelector('[data-galeria-fotos]')");
+  await dormir(800);
+  const estG = JSON.parse(await p.ev(`(() => { const e = document.querySelector('[class*="-BackStatus"]'); const cs = getComputedStyle(e); return JSON.stringify({ t: e.textContent.trim(), color: cs.color, bg: cs.backgroundColor, radio: cs.borderTopLeftRadius }); })()`));
+  ok("«Cambios guardados»: verde bosque con fondo tenue y contraste ≥ 4,5:1", /guardados/i.test(estG.t) && estG.color === "rgb(45, 106, 79)" && contraste(hex("#2D6A4F"), sobre(estG.bg, "rgb(245,242,238)")) >= 4.5, JSON.stringify(estG));
+  await p.escribirAlt(0, "x");
+  await dormir(400);
+  const estS = JSON.parse(await p.ev(`(() => { const e = document.querySelector('[class*="-BackStatus"]'); const cs = getComputedStyle(e); return JSON.stringify({ t: e.textContent.trim(), color: cs.color, bg: cs.backgroundColor }); })()`));
+  ok("«Cambios no guardados»: aviso en terracota oscuro (no el rojo de error #FF003B), con fondo tenue y contraste ≥ 4,5:1", /no guardados/i.test(estS.t) && estS.color === "rgb(143, 55, 32)" && contraste(hex("#8F3720"), sobre(estS.bg, "rgb(245,242,238)")) >= 4.5, JSON.stringify(estS));
+  const cPub = JSON.parse(await p.ev(centrado('[class*="-PublishButton"]')));
+  ok("«Publicar»: texto centrado verticalmente en el botón (desvío ≤ 1,5 px)", Math.abs(cPub.dy) <= 1.5, JSON.stringify(cPub));
+  // --- Secciones desplegables
+  const sec = JSON.parse(await p.ev(`(() => { const o = document.querySelector('[id^="precio-field-"]'); const cs = getComputedStyle(o); const tb = o.querySelector('[class*="-TopBarContainer"]'); const bt = tb.querySelector('[class*="-ExpandButton"]:not([class*="Container"])'); return JSON.stringify({ borde: cs.borderTopWidth, radio: cs.borderTopLeftRadius, alto: Math.round(tb.getBoundingClientRect().height), btn: Math.round(bt.getBoundingClientRect().width), bgAbierto: getComputedStyle(tb).backgroundColor, color: getComputedStyle(bt).color }); })()`));
+  ok("secciones: tarjeta con borde de 1 px y radio de 16 px, franja superior de ≤ 42 px y botón de flecha de 30 px", sec.borde === "1px" && sec.radio === "16px" && sec.alto <= 42 && sec.btn === 30, JSON.stringify(sec));
+  await p.ev(`(() => { const o = document.querySelector('[id^="precio-field-"]'); o.querySelector('[class*="-ExpandButton"]:not([class*="Container"])').click(); })()`);
+  await dormir(500);
+  const cerr = JSON.parse(await p.ev(`(() => { const o = document.querySelector('[id^="precio-field-"]'); const tb = o.querySelector('[class*="-TopBarContainer"]'); return JSON.stringify({ bg: getComputedStyle(tb).backgroundColor, color: getComputedStyle(tb.querySelector('[class*="-ExpandButton"]:not([class*="Container"])')).color, cuerpo: getComputedStyle(o.children[1]).display }); })()`));
+  ok("secciones: abierta y cerrada se distinguen (fondo y color de la flecha distintos) y cerrar oculta el cuerpo, como en Decap", cerr.bg !== sec.bgAbierto && cerr.color !== sec.color && cerr.cuerpo === "none", JSON.stringify({ sec, cerr }));
+  await p.ev(`(() => { const o = document.querySelector('[id^="precio-field-"]'); o.querySelector('[class*="-ExpandButton"]:not([class*="Container"])').click(); })()`);
+  await dormir(500);
+  // --- Legibilidad: etiquetas y ayudas
+  const leg = JSON.parse(await p.ev(`(() => { const l = document.querySelector('[class*="-FieldLabel"]'); const h = document.querySelector('[class*="-ControlHint"]'); const a = getComputedStyle(l), b = getComputedStyle(h); return JSON.stringify({ lf: a.fontSize, lw: a.fontWeight, lc: a.color, hf: b.fontSize, hw: b.fontWeight, hc: b.color }); })()`));
+  ok("legibilidad: etiquetas de 12 px / peso 500 y ayudas de 13 px / peso 400, ambas con contraste ≥ 4,5:1 sobre el marfil", leg.lf === "12px" && leg.lw === "500" && leg.hf === "13px" && leg.hw === "400" && contraste(sobre(leg.lc, "rgb(245,242,238)"), HUESO) >= 4.5 && contraste(sobre(leg.hc, "rgb(245,242,238)"), HUESO) >= 4.5, JSON.stringify(leg));
+  const tog = await p.ev(`(() => { const on = document.querySelector('[role="switch"][aria-checked="true"] [class*="-ToggleBackground"]'); const off = document.querySelector('[role="switch"][aria-checked="false"] [class*="-ToggleBackground"]'); return JSON.stringify({ on: on && getComputedStyle(on).backgroundColor, off: off && getComputedStyle(off).backgroundColor }); })()`);
+  ok("interruptores: el activado va en terracota y el desactivado en gris (se distinguen por color, no solo por la posición)", JSON.parse(tog).on === "rgb(181, 71, 42)" && JSON.parse(tog).off !== "rgb(181, 71, 42)", tog);
+  // --- Galería
+  const gal = JSON.parse(await p.ev(`(() => { document.querySelector('[data-galeria-fotos]').scrollIntoView({ block: 'center' }); const t = [...document.querySelectorAll('[data-galeria-tarjeta]')]; const filas = {}; t.forEach((e) => { const r = e.getBoundingClientRect(); (filas[Math.round(r.top)] = filas[Math.round(r.top)] || []).push(Math.round(r.height)); }); const igual = Object.values(filas).every((a) => a.every((h) => Math.abs(h - a[0]) <= 1)); const port = document.querySelector('[data-galeria-tarjeta]:has(> div:first-child > span + span)'); const insig = port && port.querySelector('div:first-child > span:nth-of-type(2)'); const btns = [...document.querySelectorAll('[data-galeria-tarjeta] button, [data-galeria-tarjeta] label')]; return JSON.stringify({ n: t.length, porFila: Object.values(filas).map((a) => a.length).join(','), igual, portadaBorde: port && getComputedStyle(port).borderTopColor, insig: insig && [getComputedStyle(insig).backgroundColor, getComputedStyle(insig).color, getComputedStyle(insig).fontSize], minAlto: Math.min(...btns.map((b) => b.getBoundingClientRect().height)), desbordan: btns.filter((b) => b.scrollWidth > b.clientWidth + 1).length }); })()`));
+  ok("galería: varias fotos por fila, tarjetas de la misma fila con la misma altura y la portada con borde terracota", gal.n >= 6 && /^[3-9]/.test(gal.porFila) && gal.igual && /181, 71, 42/.test(gal.portadaBorde), JSON.stringify(gal));
+  ok("galería: insignia «Portada» blanca sobre terracota (≥ 4,5:1, 12 px) y botones de ≥ 36 px de alto sin texto desbordado", gal.insig && gal.insig[0] === "rgb(181, 71, 42)" && gal.insig[2] === "12px" && contraste([255, 255, 255], hex("#B5472A")) >= 4.5 && gal.minAlto >= 36 && gal.desbordan === 0, JSON.stringify(gal));
+  const cSel = JSON.parse(await p.ev(centrado('[data-galeria-zona] > span')));
+  ok("galería: «Seleccionar fotografías» con el texto centrado (desvío ≤ 1 px)", Math.abs(cSel.dx) <= 1 && Math.abs(cSel.dy) <= 1, JSON.stringify(cSel));
+  ok("galería: el widget conserva su funcionamiento con el tema (mover, portada, quitar siguen en la tarjeta con sus etiquetas de accesibilidad)", await p.ev(`(() => { const t = document.querySelector('[data-galeria-tarjeta="1"]'); return !!t.querySelector('button[aria-label^="Mover la fotografía 2 a la izquierda"]') && !!t.querySelector('button[aria-label^="Quitar la fotografía 2"]') && !!t.querySelector('input[type=file][data-galeria-reemplazo]'); })()`));
+  // --- Errores reales: rojo accesible, mismo mensaje
+  await p.ev("location.hash = '#/collections/propiedades/new'");
+  await dormir(1800);
+  await p.real("Publicar");
+  await dormir(400);
+  await p.real("Publicar ahora");
+  await dormir(1500);
+  const err = JSON.parse(await p.ev(`(() => { const e = document.querySelector('[class*="-ControlErrorsList"]'); const cs = getComputedStyle(e); const campo = e.closest('[class*="-ControlContainer"]'); return JSON.stringify({ t: e.textContent.trim().slice(0, 60), color: cs.color, peso: cs.fontWeight, n: document.querySelectorAll('[class*="-ControlErrorsList"]').length, toast: !!document.querySelector('.Toastify__toast--error'), toastBg: (document.querySelector('.Toastify__toast--error') ? getComputedStyle(document.querySelector('.Toastify__toast--error')).backgroundColor : '') }); })()`));
+  ok("errores reales: mensajes de campo en rojo de error #C0392B (≥ 4,5:1), siguen visibles y con el texto original de Decap", /obligatorio/i.test(err.t) && err.color === "rgb(192, 57, 43)" && contraste(hex("#C0392B"), HUESO) >= 4.5 && err.n >= 4, JSON.stringify(err));
+  ok("errores reales: el aviso de error de Decap sigue visible en rojo", err.toast && err.toastBg === "rgb(192, 57, 43)", JSON.stringify(err));
+  // --- Foco con teclado en las pestañas, «Añadir rápido» y la flecha de sección
+  await p.ev(`location.hash = '#/collections/propiedades'`);
+  await dormir(1200);
+  // Una pulsación de Tab real fija la modalidad «teclado»; luego se enfoca cada elemento y se lee su contorno (:focus-visible)
+  await p.cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+  await p.cdp.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+  const foco2 = [];
+  for (const n of ["Contenido", "Medios", "Añadir rápido"]) {
+    foco2.push(await p.ev(`(() => { const a = [...document.querySelectorAll('header nav a, header nav button, header [class*="-StyledDropdownButton"]')].find((x) => x.textContent.trim().startsWith(${JSON.stringify(n)})); a.focus(); const c = getComputedStyle(a); return ${JSON.stringify(n)} + '|' + (document.activeElement === a) + '|' + c.outlineStyle + '|' + c.outlineWidth + '|' + c.outlineColor; })()`));
+  }
+  ok("teclado: Contenido, Medios y «Añadir rápido» reciben el foco con contorno visible de 2 px terracota", ["Contenido", "Medios", "Añadir rápido"].every((n) => foco2.some((f) => f.startsWith(n) && /\|true\|solid\|2px\|rgb\(181, 71, 42\)/.test(f))), JSON.stringify(foco2));
+
+  /* ---------- Compatibilidad a varios anchos: 1440, 1280, 1024, 768, 390 y 375 ---------- */
+  for (const w of [1440, 1280, 1024, 768, 390, 375]) {
+    await vista(w, w < 500 ? 844 : 900);
+    await p.cargar();
+    await p.ev(UT);
+    await abrirTodo();
+    await dormir(800);
+    const g = JSON.parse(await p.ev(`(() => { const vw = innerWidth; const fuera = [...document.querySelectorAll('input, [class$="-control"], [class*="-ToolbarContainer"], [class*="-ControlContainer"]')].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && (r.right > vw + 1 || r.left < -1); }).length; const bot = [...document.querySelectorAll('[class*="-ToolbarContainer"] button, [class*="-ToolbarContainer"] a')].filter((b) => b.getBoundingClientRect().right > vw + 1).length; const tb = document.querySelector('[class*="-ToolbarContainer"]'); const ed = document.querySelector('[class*="-EditorContainer"]'); const pane = document.querySelector('[class*="-PreviewPaneContainer-ControlPaneContainer"]'); const top = tb.getBoundingClientRect().bottom; const primero = document.querySelector('[id^="titulo-field-"]').getBoundingClientRect().top; return JSON.stringify({ vw, fuera, bot, tbW: Math.round(tb.getBoundingClientRect().width), edMin: getComputedStyle(ed).minWidth, solapa: primero < top - 1, desborde: pane.scrollWidth - pane.clientWidth }); })()`));
+    ok(`${w} px: el editor cabe en la pantalla (barra de acciones, botones y campos dentro del ancho, sin solaparse con el primer campo, sin desborde horizontal)`, g.fuera === 0 && g.bot === 0 && g.tbW === g.vw && !g.solapa && g.desborde <= 1, JSON.stringify(g));
+    if (w <= 400) {
+      const t = JSON.parse(await p.ev(`(() => { const e = [...document.querySelectorAll('input[type=text],input[type=number],[class$="-control"]')].filter((x) => x.getBoundingClientRect().width > 0 && !x.closest('[data-galeria-fotos]') && !(x.tagName === 'INPUT' && x.closest('[class$="-control"]'))); const btn = [...document.querySelectorAll('[class*="-ExpandButton"]:not([class*="Container"]), [data-galeria-tarjeta] button')].filter((x) => x.getBoundingClientRect().width > 0); return JSON.stringify({ campos: Math.min(...e.map((x) => Math.round(x.getBoundingClientRect().height))), botones: Math.min(...btn.map((x) => Math.round(Math.min(x.getBoundingClientRect().height, x.getBoundingClientRect().width)))) }); })()`));
+      ok(`${w} px: campos ≥ 44 px de alto y botones táctiles ≥ 30 px (flecha de sección) / 36 px (galería)`, t.campos >= 44 && t.botones >= 30, JSON.stringify(t));
+    }
+    await p.ev("location.hash = '#/collections/propiedades'");
+    await dormir(1000);
+    const h2 = JSON.parse(await p.ev(`(() => { const vw = innerWidth; const hdr = document.querySelector('header[class*="-AppHeader"]'); const fuera = [...hdr.querySelectorAll('nav a, nav button, [class*="-StyledDropdownButton"]')].filter((b) => { const r = b.getBoundingClientRect(); return r.right > vw + 1 || r.left < -1 || r.bottom > hdr.getBoundingClientRect().bottom + 1; }).length; const nuevo = document.querySelector('[class*="-CollectionTopNewButton"]').getBoundingClientRect(); return JSON.stringify({ fuera, nuevoDentro: nuevo.right <= vw && nuevo.left >= 0, sw: document.documentElement.scrollWidth - vw }); })()`));
+    ok(`${w} px: encabezado y listado sin recortes ni desbordes (pestañas y menús dentro de la barra, «+ Propiedad» visible)`, h2.fuera === 0 && h2.nuevoDentro && h2.sw <= 1, JSON.stringify(h2));
+  }
+  await vista(1440);
+  // --- Reducir movimiento / transparencia: reglas presentes para los componentes nuevos
+  const cssTxt = fs.readFileSync(path.join(RAIZ, "admin", "tema-makom.css"), "utf8");
+  const bloque = (nombre) => { const i = cssTxt.indexOf("@media (" + nombre + ": reduce)"); let d = 0, k = cssTxt.indexOf("{", i); const ini = k; for (; k < cssTxt.length; k++) { if (cssTxt[k] === "{") d++; if (cssTxt[k] === "}" && --d === 0) break; } return cssTxt.slice(ini, k); };
+  ok("prefers-reduced-motion: sin transiciones ni desplazamientos en ningún componente del tema", /transition: none !important/.test(bloque("prefers-reduced-motion")) && /-AppHeaderButton/.test(bloque("prefers-reduced-motion")) && /-ListCard/.test(bloque("prefers-reduced-motion")));
+  ok("prefers-reduced-transparency: encabezado, barra de acciones, menús y ventana de medios pasan a superficies opacas", ["-AppHeader", "-ToolbarContainer", "-DropdownList", "-menu", "-StyledModal"].every((k) => bloque("prefers-reduced-transparency").includes(k)));
+  await p.cdp.send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
+  await p.cargar();
+  await p.ev("location.hash = '#/collections/propiedades'");
+  await dormir(1200);
+  ok("con «reducir movimiento» activo, los botones no animan (transition-duration 0 s)", await p.ev(`(() => ['[class*="-CollectionTopNewButton"]', '[class*="-ListCard"]:not([class*="-ListCardLink"]):not([class*="-ListCardTitle"])', 'header nav a'].every((s) => { const c = getComputedStyle(document.querySelector(s)); return c.transitionDuration.split(',').every((d) => parseFloat(d) === 0); }))()`));
+  await p.cdp.send("Emulation.setEmulatedMedia", { features: [] });
+
   return;
 }
 
