@@ -151,3 +151,36 @@ Sigue siendo solo CSS en `admin/tema-makom.css` (sin JavaScript, sin cambios de 
 | **D. Sustituir componentes internos / fork de Decap** | Control total | Alto riesgo y mantenimiento permanente; no recomendado |
 
 No se implementó B, C ni D: requieren aprobación.
+
+---
+
+# Listado de Propiedades enriquecido (prototipo B aprobado → implementación)
+
+Solo Propiedades (Proyectos, Perspectivas y Asesores quedan con el listado nativo + acento).
+
+## Arquitectura
+
+1. **Datos: `/admin/listado-propiedades.json`**, generado por el build del sitio (`content/admin-listado-propiedades.njk` + filtro `listadoAdminPropiedades` de `.eleventy.js`, mismo patrón que el feed `propiedades-destacadas.json`). Trae, campo por campo, `slug` (nombre de archivo = ruta de edición de Decap), referencia, título, operación, tipo, estado y la portada (la marcada o la primera) con una **miniatura webp de 480 px** (~20 KB) generada con el mismo helper que el Home. Son todas las propiedades, también borrador/archivada/vendida. No incluye dirección interna, precios, descripciones, contacto ni coordenadas (lo comprueba `verificar-ficha.js`). Mismo origen y mismo despliegue que el panel: **no depende de `raw.githubusercontent.com`** ni de ningún servicio externo, no hay CORS y la caché es la de GitHub Pages (el panel valida con `cache: 'no-cache'`: si no cambió, 304).
+2. **Enriquecimiento: `admin/listado-propiedades.js`**. Solo pone atributos `data-mk-*` y la variable `--mk-portada` en el `<li>` de cada tarjeta de Decap; no crea, mueve ni borra nodos y no toca textos ni funciones nativas. Todo el diseño es CSS (`tema-makom.css`).
+3. **Diseño**: lista = tarjeta horizontal (portada 148 px con esquinas de 12 px y recorte `cover`, sobretítulo «REFERENCIA · OPERACIÓN · TIPO», título de hasta 2 líneas, insignia de estado sobre la portada y «Editar ›»); cuadrícula = tarjeta vertical (portada arriba, 268 px de alto); móvil = portada de 84 px y chevrón «›». Sin portada (o con archivo roto): marcador con el logo oficial `assets/logos/makom-capital-group-logo-positivo.svg`. Estados: Disponible (verde bosque), Reservada (terracota oscuro), Alquilada y Vendida (petróleo), Archivada (gris), Borrador (arena oscuro); todos ≥ 4,5:1 sobre su fondo blanco.
+4. **Procedencia de las fotografías**: las portadas reales de cada propiedad (`fotografias.galeria` → la marcada como portada o, si no, la primera), no ilustrativas ni de otras propiedades.
+
+## Cómo se mantiene tras los cambios de pantalla (sin esperas arbitrarias)
+
+- Un `MutationObserver` (solo `childList`) detecta que Decap creó o recreó tarjetas —cambio de lista/cuadrícula, de colección, orden, filtros, búsqueda, «cargar más», volver desde la edición— y en el siguiente cuadro reaplica los atributos desde los datos **que ya están en memoria** (≈ 0,1 ms para 36 tarjetas; sin red). Los atributos que se ponen no son observados (sin bucles) y fuera del listado no se hace nada.
+- Carga perezosa con `IntersectionObserver` (400 px de margen) y única por URL: al abrir el listado solo se piden las miniaturas visibles; cambiar de vista no vuelve a pedirlas.
+- Copia local (`localStorage`) de la última lectura correcta (stale-while-revalidate): el listado se ve enriquecido al instante y también si el archivo no responde. Tras un fallo no se reintenta en cada pantalla (intervalo de 2 min).
+- Al guardar desde el panel (eventos oficiales `postSave` / `postPublish`) se actualiza esa fila con los datos guardados: la insignia cambia al instante; si la portada cambió, se muestra el marcador de MAKOM hasta el siguiente despliegue (nunca una foto equivocada).
+
+## Errores y degradación
+
+Sin archivo de datos, con formato desconocido, con datos hostiles, con miniaturas lentas o rotas, o sin el script: las tarjetas quedan como las dibuja Decap y los filtros, el orden, la búsqueda y la edición siguen funcionando (cubierto en el grupo 17 de `verificar-galeria-widget.js`). Los valores del archivo se tratan como no confiables: la miniatura solo se acepta con la forma `/assets/propiedades/_optimizadas/<nombre>.webp` y el estado solo entre los 6 definidos.
+
+## Riesgos y limitaciones
+
+- **Dependencia de Decap** (versión fijada en 3.17.3): la ruta `#/collections/propiedades/entries/<slug>` y que la tarjeta sea un `<li>` con ese enlace. Si una actualización cambia alguna, el enriquecimiento deja de aplicarse (queda el listado nativo). Se vigila con el grupo 17.
+- **Frescura**: los datos son los del último despliegue del sitio. Una propiedad nueva, o un cambio hecho desde otro equipo, se refleja en la insignia/portada cuando termina el despliegue (≈ 3 min); los cambios hechos en el mismo panel se reflejan al instante (el texto de la tarjeta —referencia, operación, tipo y título— lo entrega Decap en vivo).
+- **Estado en el texto**: el estado ya no está en el texto de la tarjeta (lo muestra la insignia). Si el archivo no ha cargado nunca, la tarjeta no muestra el estado (siguen disponibles los filtros por estado y el formulario).
+- **Peso**: 31 miniaturas nuevas en `_site/assets/propiedades/_optimizadas/` (≈ 660 KB; también de propiedades no públicas, igual que las imágenes sociales que ya generaba el build) y un JSON de ≈ 13 KB.
+- La portada es **decorativa** (el título está al lado): no lleva texto alternativo.
+- Solo Chrome verificado; no Safari/iPhone/Firefox reales.
