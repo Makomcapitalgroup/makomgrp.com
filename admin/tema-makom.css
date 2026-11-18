@@ -182,7 +182,6 @@ html body [class*="-StyledMenuItem"] svg, html body [class*="-MenuItemIconContai
 html body [class*="-StyledMenuItem"]:hover, html body [class*="-StyledMenuItem"]:focus-visible { background: var(--mk-hover); color: var(--mk-negro); }
 
 /* ---------- Editor: campos ---------- */
-html body [class*="-ControlContainer"] { margin-bottom: 22px; }
 html body [class*="-FieldLabel"] {
   background: transparent; padding: 0 0 8px; border-radius: 0; font-size: 12px; font-weight: 400; letter-spacing: .1em; text-transform: uppercase; color: var(--mk-ink-soft);
 }
@@ -228,6 +227,88 @@ html body [class*="-FileWidgetButton"] { border-radius: var(--mk-r-chip); backgr
 /* Secciones plegables (Fotografías, Mapa, Video…) */
 html body [class*="-TopBarContainer"], html body [class*="-ObjectWidgetTopBar"] { border-radius: var(--mk-r-inner); }
 
+/* =====================================================================================================================
+   Formulario compacto (solo distribución y espaciado; NO cambia campos, datos, validaciones ni orden de tabulación)
+   Cómo funciona:
+     · El formulario de Decap es una pila de «contenedores de campo» (ControlContainer), hermanos dentro de un mismo bloque (el panel
+       del formulario o el cuerpo de cada sección abierta). Aquí ese bloque se convierte en una cuadrícula CSS de 12 columnas y cada
+       campo ocupa las que necesita; por defecto, las 12 (ancho completo), que es exactamente lo que hace Decap.
+     · Cada campo se identifica por el atributo id que Decap le pone al control (id="nombre-del-campo-field-N", con el `name` de
+       admin/config.yml). El DOM NO se toca ni se reordena: el orden visual es el del código, así que el orden de tabulación y
+       los lectores de pantalla no cambian.
+     · Si un campo no coincide con ninguna regla (campo nuevo, nombre cambiado, versión de Decap distinta), se ve a ancho completo.
+     · Anchuras: escritorio ≥ 1100 px (hasta 4 campos por fila), tableta 640–1099 px (hasta 2) y móvil < 640 px (1 columna).
+   Variables por campo: --mk-d (columnas en escritorio) y --mk-t (columnas en tableta).
+   ===================================================================================================================== */
+
+/* Panel del formulario más ancho (Decap lo limita a 800 px) */
+html body [class*="-ControlPaneContainer"]:not([class*="-PreviewPane"]) { max-width: 1080px; }
+
+/* Cuadrícula: el panel del formulario y el cuerpo ABIERTO de cada sección (Decap oculta el cerrado con una clase; el abierto no tiene ninguna) */
+html body [class*="-ControlPaneContainer"]:not([class*="-PreviewPane"]),
+html body div:not([class*="css-"]):has(> [class*="-ControlContainer"]) {
+  display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 20px; row-gap: 18px; align-items: start;
+}
+html body [class*="-ControlPaneContainer"]:not([class*="-PreviewPane"]) { padding-top: 14px; }
+html body div:not([class*="css-"]):has(> [class*="-ControlContainer"]) { padding-top: 16px; }
+/* el doble atributo sube la especificidad para ganarle a «:first-of-type { margin-top: 36px }» de Decap */
+html body [class*="-ControlContainer"][class*="-ControlContainer"] { margin: 0; min-width: 0; --mk-d: 12; --mk-t: 12; --mk-sd: auto; grid-column: span 12; }
+@media (min-width: 1100px) { html body [class*="-ControlContainer"][class*="-ControlContainer"] { grid-column: var(--mk-sd) / span var(--mk-d); } }
+@media (min-width: 640px) and (max-width: 1099px) { html body [class*="-ControlContainer"][class*="-ControlContainer"] { grid-column: auto / span var(--mk-t); } }
+@media (max-width: 639px) { html body div:not([class*="css-"]):has(> [class*="-ControlContainer"]), html body [class*="-ControlPaneContainer"]:not([class*="-PreviewPane"]) { row-gap: 20px; } }
+
+/* --- Panel principal de PROPIEDADES (se reconoce por el campo «Operación») --- */
+/* Operación · Fecha de entrega · Tipo · Categoría · Estado */
+html body [class*="-ControlPaneContainer"]:has([id^="operacion-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):is(:has([id^="operacion-field-"]), :has([id^="fechaEntrega-field-"]), :has([id^="tipo-field-"]), :has([id^="categoriaGeneral-field-"]), :has([id^="estado-field-"])) { --mk-d: 3; --mk-t: 6; }
+/* Descripciones (ES | EN): lado a lado en escritorio; la primera empieza siempre en una fila nueva (--mk-sd = columna de inicio) */
+html body [class*="-ControlPaneContainer"]:has([id^="operacion-field-"]) > [class*="-ControlContainer"]:has(> .cms-editor-visual) { --mk-d: 6; --mk-t: 12; --mk-sd: 1; }
+html body [class*="-ControlPaneContainer"]:has([id^="operacion-field-"]) > [class*="-ControlContainer"]:has(> .cms-editor-visual) ~ [class*="-ControlContainer"]:has(> .cms-editor-visual) { --mk-sd: 7; }
+/* Ubicación pública (ES | EN) · Zona */
+html body [class*="-ControlPaneContainer"]:has([id^="operacion-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):is(:has([id^="ubicacionPublica-field-"]), :has([id^="ubicacionPublicaEn-field-"]), :has([id^="zona-field-"]), :has([id^="asesor-field-"]), :has([id^="slugPublico-field-"]), :has([id^="referenciaMakom-field-"])) { --mk-d: 6; --mk-t: 6; }
+html body [class*="-ControlPaneContainer"]:has([id^="operacion-field-"]) > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):is(:has([id^="mostrarEnHome-field-"]), :has([id^="ordenHome-field-"])) { --mk-d: 3; --mk-t: 6; }
+
+/* --- Secciones (se reconocen por el id del objeto que Decap pone en su cuerpo) --- */
+/* Precio: monto · moneda · periodicidad · fecha de referencia */
+html body [id^="precio-field-"] > div > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):is(:has([id^="monto-field-"]), :has([id^="moneda-field-"])) { --mk-d: 3; --mk-t: 6; }
+html body [id^="precio-field-"] > div > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):is(:has([id^="periodicidad-field-"]), :has([id^="fechaReferencia-field-"])) { --mk-d: 6; --mk-t: 6; }
+/* Ubicación administrativa: provincia · distrito · corregimiento | sector · edificio | dirección */
+html body [id^="ubicacionInterna-field-"] > div > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):is(:has([id^="provincia-field-"]), :has([id^="distrito-field-"]), :has([id^="corregimiento-field-"])) { --mk-d: 4; --mk-t: 6; }
+html body [id^="ubicacionInterna-field-"] > div > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):is(:has([id^="sector-field-"]), :has([id^="edificioPH-field-"])) { --mk-d: 6; --mk-t: 6; }
+/* Detalles cuantitativos: habitaciones · baños · estacionamientos | metrajes · año · piso | rangos y «Desde» */
+html body [id^="detallesCuantitativos-field-"] > div > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):is(:has([id^="habitaciones-field-"]), :has([id^="banos-field-"]), :has([id^="estacionamientos-field-"])) { --mk-d: 4; --mk-t: 6; }
+html body [id^="detallesCuantitativos-field-"] > div > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):is(:has([id^="metrajeInterno-field-"]), :has([id^="metrajeTotal-field-"]), :has([id^="anoConstruccion-field-"]), :has([id^="piso-field-"])) { --mk-d: 3; --mk-t: 6; }
+html body [id^="detallesCuantitativos-field-"] > div > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):is(:has([id^="habitacionesMaximo-field-"]), :has([id^="habitacionesDesde-field-"]), :has([id^="banosMaximo-field-"]), :has([id^="banosDesde-field-"])) { --mk-d: 6; --mk-t: 6; }
+/* Mapa */
+html body [id^="mapa-field-"] > div > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):is(:has([id^="activo-field-"]), :has([id^="precision-field-"]), :has([id^="latitud-field-"]), :has([id^="longitud-field-"]), :has([id^="nivelZoom-field-"])) { --mk-d: 3; --mk-t: 6; }
+/* Video: el archivo y la portada (dos selectores de archivo) lado a lado */
+html body [id^="videoRecorrido-field-"] > div > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([class*="-FileWidget"]) { --mk-d: 6; --mk-t: 6; }
+/* SEO: descripciones (ES | EN) y, debajo, imagen social | noindex */
+html body [id^="seo-field-"] > div > [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):is(:has([id^="descripcion-field-"]), :has([id^="descripcionEn-field-"]), :has([id^="noIndex-field-"]), :has([class*="-FileWidget"])) { --mk-d: 6; --mk-t: 6; }
+/* Precios específicos y planos (elementos de lista abiertos) */
+html body [id^="preciosEspecificos-field-"] [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])) { --mk-d: 4; --mk-t: 6; }
+html body [id^="planos-field-"] [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])) { --mk-d: 6; --mk-t: 6; }
+html body [id^="planos-field-"] [class*="-ControlContainer"]:not(:has([class*="-ControlContainer"])):has([class*="-FileWidget"]) { --mk-d: 12; --mk-t: 12; }
+
+/* Franjas de sección y de elemento de lista: tono arena de la marca en lugar del gris-lila de Decap (en todos los anchos) */
+html body [class*="-TopBarContainer"] { background: rgba(201, 185, 154, .22); }
+html body [class*="-NestedObjectLabel"] { background: rgba(201, 185, 154, .14); color: var(--mk-negro); border-radius: 0 0 var(--mk-r-inner) var(--mk-r-inner); }
+html body [class*="-StyledListItemTopBar"] { background: rgba(201, 185, 154, .30); border-radius: var(--mk-r-inner); }
+
+/* --- Altura de los controles y espaciado (≥ 640 px; en móvil se conservan los controles cómodos de 48 px) --- */
+@media (min-width: 640px) {
+  html body [class*="-FieldLabel"] { padding-bottom: 6px; font-size: 11.5px; letter-spacing: .07em; }
+  /* Envolturas «de aspecto de campo» que Decap usa sin etiqueta (interruptor, selector de fecha, selector de archivo): mismo borde y radio que los campos */
+  html body [class*="-ControlContainer"] > div[class^="css-"]:not([class*="Topbar"]):not([class$="-container"]):not([id]):not(.cms-editor-visual):not([data-galeria-fotos]):not(:has(> [class*="-ControlContainer"])) {
+    border: 1px solid rgba(10, 10, 10, .14); border-radius: var(--mk-r-ctl); padding: 8px 12px; background: #fff;
+  }
+  html body [class*="-ControlContainer"] > div:has(> [role="switch"]) { display: flex; align-items: center; min-height: 44px; }
+  html body [class*="-ControlContainer"] input:is([type="text"], [type="number"], [type="email"], [type="url"], [type="tel"], [type="date"], [type="datetime-local"]):not([role="combobox"]):not([aria-autocomplete]) { padding: 10px 14px; }
+  html body [class*="-ControlContainer"] [class$="-control"] { min-height: 44px; padding-top: 0; padding-bottom: 0; }
+  html body [class*="-ControlHint"] { margin-top: 6px; font-size: 12px; line-height: 1.45; }
+  /* Franja superior de cada sección (solo flecha y, en listas, «Añadir»): menos alta y en tono arena de la marca */
+  html body [class*="-TopBarContainer"] { padding-top: 4px; padding-bottom: 4px; }
+}
+
 /* ---------- Galería de carga múltiple (mismo funcionamiento; solo apariencia, por sus atributos data-*) ----------
    El widget (admin/galeria-fotos.js) aplica sus colores con estilos en línea; por eso aquí hace falta !important (solo en este bloque). */
 html body [data-galeria-fotos] { color: var(--mk-negro) !important; }
@@ -263,7 +344,8 @@ html body .Toastify__toast--info { background: var(--mk-petroleo); color: #fff; 
 }
 @media (prefers-reduced-transparency: reduce) {
   :root { --mk-cristal-denso: rgba(245, 242, 238, .98); --mk-cristal-boton: rgba(255, 255, 255, .9); --mk-cristal-boton-hover: rgba(255, 255, 255, .96); --mk-cristal-seleccion: rgba(255, 255, 255, .97); }
-  html body header[class*="-AppHeader"], html body [class*="-ToolbarContainer"], html body [class*="-DropdownList"], html body [class$="-menu"], 
+  html body header[class*="-AppHeader"], html body [class*="-ToolbarContainer"], html body [class*="-DropdownList"], html body [class$="-menu"],
+  html body [class*="-ControlContainer"] [class$="-menu"] { -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 /* Sin animaciones si la persona lo prefiere */
 @media (prefers-reduced-motion: reduce) {
