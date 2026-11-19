@@ -1,0 +1,93 @@
+{
+  "amenidades": [
+    "seguridad-24-7",
+    "elevadores",
+    "administracion-sitio",
+    "pet-friendly",
+    "estacionamientos-techados"
+  ],
+  "tituloEn": "Offices and retail spaces for rent in Condado del Rey, Panama City",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "asesor": "loyra-flores",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "preciosEspecificos": [
+      {
+        "monto": 1800,
+        "etiqueta": "Locales "
+      }
+    ],
+    "monto": 485,
+    "periodicidad": "mensual",
+    "fechaReferencia": "2026-11"
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "archivo": "/assets/propiedades/uploads/oficinas-y-locales-comercial-20261119-3d194a12.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/oficinas-y-locales-comercial-20261119-1feb79c1.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/oficinas-y-locales-comercial-20261119-473c73cb.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/oficinas-y-locales-comercial-20261119-bb08fefd.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/oficinas-y-locales-comercial-20261119-071bd483.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/oficinas-y-locales-comercial-20261119-f73e2369.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/oficinas-y-locales-comercial-20261119-9a4ec876.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/oficinas-y-locales-comercial-20261119-74586f87.jpg",
+        "portada": true
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitacionesDesde": false,
+    "banosDesde": false,
+    "habitaciones": 1,
+    "banos": 1,
+    "estacionamientos": 2,
+    "metrajeInterno": 19.08
+  },
+  "mostrarEnHome": false,
+  "zona": "condado-del-rey",
+  "descripcion": "Oficinas y locales comerciales en alquiler sobre la avenida principal de Condado del Rey, en una ubicación céntrica y de fácil acceso.\n\n**Oficinas y locales:** oficinas desde 19 m² hasta 52 m² en cuatro niveles, y dos locales de 94 y 98 m², en planta baja y planta alta, con frente de vidrio y espacio diáfano. Las oficinas cuentan con aire acondicionado central.\n\n**Servicios del edificio:** **estacionamiento gratuito sin restricción de horario**, videovigilancia las 24 horas, salón de conferencias, áreas internas de cafetería y edificio pet friendly.\n\nConsulta con MAKOM la disponibilidad y los precios actualizados de cada unidad y agenda tu visita.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "sector": "Condado del Rey",
+    "edificioPH": "Plaza Mi Condado"
+  },
+  "tipo": "oficina",
+  "categoriaGeneral": "comercial",
+  "descripcionEn": "Offices and retail spaces for rent on the main avenue of Condado del Rey, in a central, easy-to-reach location.\n\n**Offices and retail spaces:** offices from 19 m² up to 52 m² across four levels, and two retail spaces of 94 and 98 m², on the ground floor and the upper floor, with a glass storefront and open layout. The offices have central air conditioning.\n\n**Building services:** **free parking with no time restrictions**, 24-hour video surveillance, conference room, internal café areas and a pet-friendly building.\n\nAsk MAKOM for availability and current prices for each unit and schedule your visit.",
+  "operacion": "alquiler",
+  "ubicacionPublica": "Avenida Principal, Condado del Rey",
+  "titulo": "Oficinas y locales comerciales en alquiler en Condado del Rey, Panamá",
+  "fechaEntrega": "inmediata",
+  "seo": {
+    "noIndex": false
+  }
+}
