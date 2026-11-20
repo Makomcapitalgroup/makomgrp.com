@@ -121,14 +121,21 @@ html body [class*="-AppHeaderNavLink"][aria-current="page"] svg, html body [clas
 @media (max-width: 760px) {
   html body [class*="-AppHeaderNavLink"], html body [class*="-AppHeaderButton"] { flex-direction: row; justify-content: center; height: 40px; min-width: 0; }
 }
-/* «Añadir rápido» (menú para crear Propiedad, Proyecto, Perspectiva o Asesor desde cualquier pantalla): útil, así que se conserva, pero discreto — contorno fino,
-   sin sombra ni cristal — para no competir con «+ Propiedad» */
-html body header[class*="-AppHeader"] [class*="-StyledDropdownButton"]:not([class*="-AvatarDropdownButton"]) {
-  height: 36px; border: 1px solid rgba(10, 10, 10, .16); border-radius: var(--mk-r-chip); background: transparent; color: rgba(10, 10, 10, .82); font-size: 13px; font-weight: 500; letter-spacing: .02em; box-shadow: none;
-  transition: background-color var(--mk-fast) var(--mk-ease), border-color var(--mk-fast) var(--mk-ease);
+/* «Añadir rápido» (menú de la barra con las cuatro colecciones: Propiedad, Proyecto, Perspectiva y Asesor) se oculta: repetía el menú lateral y cada colección ya tiene su
+   propio botón «+ Propiedad» / «+ Proyecto»… Decap no ofrece una opción oficial para quitarlo (se muestra siempre que alguna colección permite crear, y poner `create: false`
+   quitaría también los botones de cada colección), así que se oculta solo ese control: el contenedor que lo envuelve (con `:has`) y, como respaldo para navegadores sin `:has`,
+   el propio botón. No se toca nada más de la barra. El menú de la persona (avatar, «Cerrar sesión») queda a la derecha. */
+html body [class*="-AppHeaderActions"] > [class*="-StyledWrapper"]:has([class*="-AppHeaderQuickNewButton"]) { display: none; }
+html body [class*="-AppHeaderQuickNewButton"] { display: none; }
+html body [class*="-AppHeaderActions"] { justify-content: flex-end; }
+/* Con una sola acción a la derecha, la fila superior de la barra móvil (menú de la persona) quedaría casi vacía: por debajo de 800 px (donde Decap apila las dos filas)
+   la barra pasa a UNA sola fila — pestañas a la izquierda y menú de la persona a la derecha. */
+@media (max-width: 799px) {
+  html body [class*="-AppHeaderContent"] { flex-direction: row; align-items: center; min-height: 56px; }
+  html body header[class*="-AppHeader"] nav { flex: 1 1 auto; min-width: 0; }
+  html body [class*="-AppHeaderActions"] { flex: none; margin-left: 8px; }
 }
-html body header[class*="-AppHeader"] [class*="-StyledDropdownButton"]:not([class*="-AvatarDropdownButton"]):hover { background: var(--mk-hover); border-color: rgba(10, 10, 10, .30); color: var(--mk-negro); }
-html body header[class*="-AppHeader"] [class*="-StyledDropdownButton"]:not([class*="-AvatarDropdownButton"]):active { background: rgba(10, 10, 10, .11); }
+@media (min-width: 761px) and (max-width: 799px) { html body header[class*="-AppHeader"] nav ul { justify-content: flex-start; } }
 
 
 /* ---------- Navegación de colecciones ---------- */

@@ -399,6 +399,12 @@ async function escenarios(p, dirFix, n, temporales) {
     await grupoListado(p);
     return;
   }
+  if (process.env.SOLO_BARRA) {
+    // Solo el grupo 18 (barra superior sin «Añadir rápido»).
+    await p.cargar();
+    await grupoBarra(p);
+    return;
+  }
   const f = (nombre) => path.join(dirFix, nombre);
   const fotos = (k) => Array.from({ length: k }, (_, i) => f(n(i + 1)));
   const rutaPublica = (a) => a.archivo;
@@ -844,15 +850,8 @@ async function escenarios(p, dirFix, n, temporales) {
   ok("la ventana de medios usa el radio de 20 px y «Subir nuevo» en terracota", modal.radio === "20px" && modal.subir === "rgb(181, 71, 42)", JSON.stringify(modal));
   await p.cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
   await dormir(500);
-  // --- Añadir rápido
-  const aniadir = JSON.parse(await p.ev(`(() => { const b = [...document.querySelectorAll('header [class*="-StyledDropdownButton"]')].find((x) => /Añadir rápido/.test(x.textContent)); const cs = getComputedStyle(b); return JSON.stringify({ bg: cs.backgroundColor, sombra: cs.boxShadow, borde: cs.borderTopWidth, h: Math.round(b.getBoundingClientRect().height) }); })()`));
-  ok("«Añadir rápido» es discreto: sin relleno ni sombra, contorno de 1 px, 36 px de alto (no compite con «+ Propiedad»)", aniadir.sombra === "none" && /rgba\(0, 0, 0, 0\)|transparent/.test(aniadir.bg) && aniadir.borde === "1px" && aniadir.h === 36, JSON.stringify(aniadir));
-  await p.real("Añadir rápido");
-  await dormir(400);
-  const opciones = await p.ev("[...document.querySelectorAll('[class*=\"-DropdownList\"] [class*=\"-StyledMenuItem\"]')].map((e) => e.textContent.trim()).join('|')");
-  ok("«Añadir rápido» conserva sus 4 opciones (Propiedad, Proyecto, Perspectiva, Asesor)", opciones === "Propiedad|Proyecto|Perspectiva|Asesor", opciones);
-  await p.cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
-  await dormir(300);
+  // --- «Añadir rápido» ya no existe en la barra (ver el grupo 18): aquí solo se comprueba que no queda un botón huérfano con el estilo anterior
+  ok("la barra superior no muestra «Añadir rápido» (el control está oculto; el grupo 18 lo prueba a fondo)", await p.ev(`![...document.querySelectorAll('header button, header [role="button"], header span')].some((x) => /Añadir rápido/.test(x.textContent) && x.getBoundingClientRect().width > 0)`));
   // --- Botones centrados
   const cNuevo = JSON.parse(await p.ev(centrado('[class*="-CollectionTopNewButton"]')));
   ok("«+ Propiedad»: texto centrado en el botón (desvío ≤ 1 px en horizontal y vertical) y 44 px de alto", Math.abs(cNuevo.dx) <= 1 && Math.abs(cNuevo.dy) <= 1 && cNuevo.h === 44, JSON.stringify(cNuevo));
@@ -913,10 +912,10 @@ async function escenarios(p, dirFix, n, temporales) {
   await p.cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
   await p.cdp.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
   const foco2 = [];
-  for (const n of ["Contenido", "Medios", "Añadir rápido"]) {
-    foco2.push(await p.ev(`(() => { const a = [...document.querySelectorAll('header nav a, header nav button, header [class*="-StyledDropdownButton"]')].find((x) => x.textContent.trim().startsWith(${JSON.stringify(n)})); a.focus(); const c = getComputedStyle(a); return ${JSON.stringify(n)} + '|' + (document.activeElement === a) + '|' + c.outlineStyle + '|' + c.outlineWidth + '|' + c.outlineColor; })()`));
+  for (const n of ["Contenido", "Medios"]) {
+    foco2.push(await p.ev(`(() => { const a = [...document.querySelectorAll('header nav a, header nav button')].find((x) => x.textContent.trim().startsWith(${JSON.stringify(n)})); a.focus(); const c = getComputedStyle(a); return ${JSON.stringify(n)} + '|' + (document.activeElement === a) + '|' + c.outlineStyle + '|' + c.outlineWidth + '|' + c.outlineColor; })()`));
   }
-  ok("teclado: Contenido, Medios y «Añadir rápido» reciben el foco con contorno visible de 2 px terracota", ["Contenido", "Medios", "Añadir rápido"].every((n) => foco2.some((f) => f.startsWith(n) && /\|true\|solid\|2px\|rgb\(181, 71, 42\)/.test(f))), JSON.stringify(foco2));
+  ok("teclado: Contenido y Medios reciben el foco con contorno visible de 2 px terracota", ["Contenido", "Medios"].every((n) => foco2.some((f) => f.startsWith(n) && /\|true\|solid\|2px\|rgb\(181, 71, 42\)/.test(f))), JSON.stringify(foco2));
 
   /* ---------- Compatibilidad a varios anchos: 1440, 1280, 1024, 768, 390 y 375 ---------- */
   for (const w of [1440, 1280, 1024, 768, 390, 375]) {
@@ -933,8 +932,8 @@ async function escenarios(p, dirFix, n, temporales) {
     }
     await p.ev("location.hash = '#/collections/propiedades'");
     await dormir(1000);
-    const h2 = JSON.parse(await p.ev(`(() => { const vw = innerWidth; const hdr = document.querySelector('header[class*="-AppHeader"]'); const fuera = [...hdr.querySelectorAll('nav a, nav button, [class*="-StyledDropdownButton"]')].filter((b) => { const r = b.getBoundingClientRect(); return r.right > vw + 1 || r.left < -1 || r.bottom > hdr.getBoundingClientRect().bottom + 1; }).length; const nuevo = document.querySelector('[class*="-CollectionTopNewButton"]').getBoundingClientRect(); return JSON.stringify({ fuera, nuevoDentro: nuevo.right <= vw && nuevo.left >= 0, sw: document.documentElement.scrollWidth - vw }); })()`));
-    ok(`${w} px: encabezado y listado sin recortes ni desbordes (pestañas y menús dentro de la barra, «+ Propiedad» visible)`, h2.fuera === 0 && h2.nuevoDentro && h2.sw <= 1, JSON.stringify(h2));
+    const h2 = JSON.parse(await p.ev(`(() => { const vw = innerWidth; const hdr = document.querySelector('header[class*="-AppHeader"]'); const fuera = [...hdr.querySelectorAll('nav a, nav button, [class*="-AvatarDropdownButton"]')].filter((b) => { const r = b.getBoundingClientRect(); return r.right > vw + 1 || r.left < -1 || r.bottom > hdr.getBoundingClientRect().bottom + 1; }).length; const nuevo = document.querySelector('[class*="-CollectionTopNewButton"]').getBoundingClientRect(); return JSON.stringify({ fuera, nuevoDentro: nuevo.right <= vw && nuevo.left >= 0, sw: document.documentElement.scrollWidth - vw }); })()`));
+    ok(`${w} px: encabezado y listado sin recortes ni desbordes (pestañas y menú de la persona dentro de la barra, «+ Propiedad» visible)`, h2.fuera === 0 && h2.nuevoDentro && h2.sw <= 1, JSON.stringify(h2));
   }
   await vista(1440);
   // --- Reducir movimiento / transparencia: reglas presentes para los componentes nuevos
@@ -1112,6 +1111,7 @@ async function escenarios(p, dirFix, n, temporales) {
   ok("vista de cuadrícula: tarjetas de 176 px (en vez de 240 px casi vacíos) con la franja de acento de la colección", !!gr && gr.alto === 176 && gr.franja === acentos.perspectivas, JSON.stringify(gr));
   await p.ev(`(() => { const b = document.querySelector('[aria-label="List view option"]'); if (b) b.click(); })()`);
   await grupoListado(p);
+  await grupoBarra(p);
   const ed = JSON.parse(await p.ev(`(() => { return null; })()`));
   await enColeccion("perspectivas", "turismo-record", "!!document.querySelector('.cms-editor-visual')", "titulo");
   const alturas = JSON.parse(await p.ev(`(() => JSON.stringify([...document.querySelectorAll('.cms-editor-visual [class*="editorStyles"]')].map((e) => Math.round(parseFloat(getComputedStyle(e).minHeight)))))()`));
@@ -1548,6 +1548,104 @@ async function grupoListado(p) {
   await p.cdp.send("Emulation.setEmulatedMedia", { features: [] });
 
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* Grupo 18: barra superior sin «Añadir rápido» (se puede ejecutar solo con SOLO_BARRA=1) */
+/* ------------------------------------------------------------------ */
+async function grupoBarra(p) {
+  grupo = "18 · barra superior sin «Añadir rápido»";
+  const vista = async (ancho, alto) => { await p.cdp.send("Emulation.setDeviceMetricsOverride", { width: ancho, height: alto || 900, deviceScaleFactor: 1, mobile: ancho < 500 }); await dormir(600); };
+  const entrar = async (hash) => {
+    const l = p.cdp.una("Page.loadEventFired");
+    await p.cdp.send("Page.navigate", { url: p.base + "/admin/" });
+    await Promise.race([l, dormir(15000)]);
+    await p.esperar("!!document.querySelector('button')", 15000);
+    await p.ev("(() => { const b = [...document.querySelectorAll('button')].find((b) => /Iniciar sesi/i.test(b.textContent)); if (b) b.click(); })()");
+    await p.esperar("!!document.querySelector('a[href*=\"collections\"], [class*=SidebarContainer]')", 15000);
+    if (hash) { await p.ev(`location.hash = ${JSON.stringify(hash)}`); await dormir(900); }
+  };
+  const clic = async (selector) => { const c = await p.ev(`(() => { const e = document.querySelector(${JSON.stringify(selector)}); e.scrollIntoView({ block: 'center' }); const q = e.getBoundingClientRect(); return { x: q.left + q.width / 2, y: q.top + q.height / 2 }; })()`); for (const t of ["mouseMoved", "mousePressed", "mouseReleased"]) await p.cdp.send("Input.dispatchMouseEvent", { type: t, x: c.x, y: c.y, button: "left", clickCount: t === "mouseMoved" ? 0 : 1 }); await dormir(500); };
+  const cssTxt = fs.readFileSync(path.join(RAIZ, "admin", "tema-makom.css"), "utf8");
+  const cfg = require("js-yaml").load(fs.readFileSync(path.join(RAIZ, "admin", "config.yml"), "utf8"));
+
+  /* ---- A. El control está fuera de la interfaz, solo con CSS acotado ---- */
+  ok("el ocultamiento es CSS acotado a ese control (contenedor con :has + respaldo sobre el propio botón), sin tocar JavaScript ni la configuración de las colecciones", /\[class\*="-AppHeaderActions"\] > \[class\*="-StyledWrapper"\]:has\(\[class\*="-AppHeaderQuickNewButton"\]\) \{ display: none; \}/.test(cssTxt) && /\[class\*="-AppHeaderQuickNewButton"\] \{ display: none; \}/.test(cssTxt) && cfg.collections.length === 4 && cfg.collections.every((c) => c.create === true), cfg.collections.map((c) => c.name + ":" + c.create).join(","));
+  await vista(1440);
+  await entrar("#/collections/propiedades");
+  const a1 = JSON.parse(await p.ev(`(() => { const h = document.querySelector('header'); const q = h.querySelector('[class*="-AppHeaderQuickNewButton"]'); const w = q && q.closest('[class*="-AppHeaderActions"] > *'); const visibles = [...h.querySelectorAll('button, a, [role="button"]')].filter((e) => e.getBoundingClientRect().width > 0).map((e) => (e.textContent.trim() || e.getAttribute('aria-label') || 'avatar').slice(0, 24)); return JSON.stringify({ existeEnDom: !!q, botonDisplay: q && getComputedStyle(q).display, envolturaDisplay: w && getComputedStyle(w).display, ancho: q && Math.round(q.getBoundingClientRect().width), visibles, textoVisible: h.innerText.includes('Añadir rápido') }); })()`));
+  ok("«Añadir rápido» y su menú no se muestran: el botón y su contenedor están en display:none, no ocupan espacio y su texto no es visible", a1.botonDisplay === "none" && a1.envolturaDisplay === "none" && a1.ancho === 0 && !a1.textoVisible, JSON.stringify(a1));
+  ok("en la barra solo quedan Contenido, Medios y el menú de la persona (y el enlace «Test Backend» propio del backend de prueba)", a1.visibles.every((t) => /^(Contenido|Medios|avatar|Test Backend|)/.test(t)) && !a1.visibles.some((t) => /Añadir/.test(t)), JSON.stringify(a1.visibles));
+  // Teclado: Tab recorre la barra sin pasar por el control oculto
+  await p.ev("document.activeElement && document.activeElement.blur(); window.scrollTo(0, 0);");
+  const recorrido = [];
+  for (let i = 0; i < 8; i++) {
+    await p.cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+    await p.cdp.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+    recorrido.push(await p.ev("(document.activeElement ? (document.activeElement.textContent || document.activeElement.getAttribute('aria-label') || document.activeElement.tagName) : '').trim().slice(0, 24)"));
+  }
+  ok("con el teclado (Tab) nunca se enfoca «Añadir rápido»", !recorrido.some((t) => /Añadir rápido/.test(t)), JSON.stringify(recorrido));
+
+  /* ---- B. Cada colección conserva su propio botón de crear y su formulario ---- */
+  for (const [col, singular] of [["propiedades", "Propiedad"], ["proyectos", "Proyecto"], ["perspectivas", "Perspectiva"], ["asesores", "Asesor"]]) {
+    await entrar("#/collections/" + col);
+    const b = JSON.parse(await p.ev(`(() => { const e = document.querySelector('[class*="-CollectionTopNewButton"]'); if (!e) return JSON.stringify(null); const q = e.getBoundingClientRect(); return JSON.stringify({ texto: e.textContent.trim(), visible: q.width > 0 && q.height > 0 && q.right <= innerWidth, href: e.getAttribute('href') }); })()`));
+    ok(`${col}: la colección conserva su botón «+ ${singular}» visible y enlazado a su formulario nuevo`, !!b && b.visible && new RegExp(singular, "i").test(b.texto) && new RegExp("/collections/" + col + "/new$").test(b.href || ""), JSON.stringify(b));
+    await clic('[class*="-CollectionTopNewButton"]');
+    const f = await p.esperar("!!document.querySelector('[id*=\"-field-\"]') && location.hash.includes('/collections/" + col + "/new')", 15000);
+    const campos = await p.ev("document.querySelectorAll('[id*=\"-field-\"]').length");
+    ok(`${col}: «+ ${singular}» abre el formulario de nueva entrada (${campos} campos) en #/collections/${col}/new`, f && campos >= 3, String(campos));
+  }
+  // Crear y publicar un Asesor desde el botón de la colección (en el «repositorio» de prueba, en memoria)
+  await entrar("#/collections/asesores");
+  await clic('[class*="-CollectionTopNewButton"]');
+  await p.esperar("!!document.querySelector('[id^=\"nombre-field-\"]')", 15000);
+  await clic('[id^="nombre-field-"]');
+  await p.cdp.send("Input.insertText", { text: "Asesor de prueba barra" });
+  await clic('[id^="cargo-field-"]');
+  await p.cdp.send("Input.insertText", { text: "Asesor inmobiliario · MAKOM Properties" });
+  await dormir(400);
+  const est = await p.publicar();
+  const creado = await p.ev(`Object.keys(window.__crudo.content.asesores).some((k) => /asesor-de-prueba-barra/.test(k))`);
+  ok("crear: un Asesor nuevo creado con el botón de su colección se publica y queda guardado (sin «Añadir rápido»)", /GUARDADOS/.test(est) && !/NO GUARDADOS/.test(est) && creado === true, est + " creado=" + creado);
+  // Editar y publicar una existente
+  await entrar("#/collections/asesores");
+  await p.esperar("document.querySelectorAll('[class*=\"-ListCardLink\"]').length > 0", 15000);
+  await clic('[class*="-ListCardLink"]');
+  await p.esperar("(() => { const i = document.querySelector('[id^=\"cargo-field-\"]'); return !!i && !!i.value; })()", 15000);
+  await clic('[id^="cargo-field-"]');
+  await p.cdp.send("Input.insertText", { text: " (editado)" });
+  const est2 = await p.publicar();
+  ok("editar: abrir un registro desde el listado, cambiarlo y publicarlo funciona", /GUARDADOS/.test(est2) && !/NO GUARDADOS/.test(est2), est2);
+
+  /* ---- C. Sesión: menú de la persona, cierre de sesión y nuevo ingreso ---- */
+  await entrar("#/collections/propiedades");
+  await clic('header [class*="-AvatarDropdownButton"]');
+  const menu = await p.ev(`[...document.querySelectorAll('[class*="-DropdownList"] [class*="-StyledMenuItem"], [class*="-DropdownList"] li, [class*="-DropdownList"] button')].map((e) => e.textContent.trim()).filter(Boolean).join('|')`);
+  ok("el menú de la persona (avatar) sigue abriéndose y ofrece «Cerrar sesión»", /Cerrar sesi|Log out|Logout/i.test(menu), menu);
+  await p.ev(`(() => { const e = [...document.querySelectorAll('[class*="-DropdownList"] *')].find((x) => /Cerrar sesi|Log out|Logout/i.test(x.textContent) && x.children.length === 0); if (e) e.click(); })()`);
+  const salio = await p.esperar("[...document.querySelectorAll('button')].some((b) => /Iniciar sesi/i.test(b.textContent)) && !document.querySelector('[class*=SidebarContainer]')", 15000);
+  ok("«Cerrar sesión» devuelve a la pantalla de ingreso", salio === true);
+  await p.ev("(() => { const b = [...document.querySelectorAll('button')].find((b) => /Iniciar sesi/i.test(b.textContent)); if (b) b.click(); })()");
+  const volvio = await p.esperar("!!document.querySelector('[class*=SidebarContainer]')", 15000);
+  ok("volver a iniciar sesión carga el panel con sus cuatro colecciones", volvio === true && (await p.ev("document.querySelectorAll('[class*=\"-SidebarNavLink\"]').length")) >= 4);
+
+  /* ---- D. Distribución de la barra en cada ancho (sin el enlace «Test Backend», que solo existe con el backend de prueba) ---- */
+  for (const w of [1440, 1280, 1024, 800, 768, 390, 375]) {
+    await vista(w, w < 500 ? 844 : 900);
+    await entrar("#/collections/propiedades");
+    await p.ev(`[...document.querySelectorAll('header [class*="-SettingsWrapper"] a')].forEach((x) => { if (/Test Backend/.test(x.textContent)) x.style.display = 'none'; })`);
+    await dormir(300);
+    const g = JSON.parse(await p.ev(`(() => { const vw = innerWidth; const h = document.querySelector('header'); const hr = h.getBoundingClientRect(); const nav = h.querySelector('nav').getBoundingClientRect(); const ps = [...h.querySelectorAll('nav li')].map((l) => l.getBoundingClientRect()).filter((r) => r.width > 0); const av = h.querySelector('[class*="-AvatarDropdownButton"]').getBoundingClientRect(); return JSON.stringify({ alto: Math.round(hr.height), navDerecha: Math.round(nav.right), avatarIzq: Math.round(av.left), avatarDer: Math.round(vw - av.right), tabsFuera: ps.filter((r) => r.right > vw || r.left < 0).length, solapa: nav.right > av.left + 1, centrado: Math.abs((av.top + av.bottom) / 2 - hr.height / 2) <= 2, sw: document.documentElement.scrollWidth - vw }); })()`));
+    ok(`${w} px: barra de UNA sola fila (${g.alto} px), pestañas a la izquierda y menú de la persona a la derecha (${g.avatarDer} px del borde), centrado vertical, sin solapes ni desbordes`, g.alto <= 60 && !g.solapa && g.tabsFuera === 0 && g.centrado && g.avatarDer >= 4 && g.avatarDer <= 24 && g.sw <= 1, JSON.stringify(g));
+  }
+  await vista(1440);
+
+  /* ---- E. Lo aprobado no cambia ---- */
+  await entrar("#/collections/propiedades");
+  await p.esperar("document.querySelectorAll('li[data-mk-card]').length > 0", 15000);
+  const lis = await p.ev("document.querySelectorAll('li[data-mk-card]').length");
+  ok("el listado enriquecido de Propiedades sigue igual (tarjetas con portada, estado y filtros)", lis > 0 && (await p.ev(`!!document.querySelector('[class*="-CollectionControlsContainer"]') && [...document.querySelectorAll('[class*="-CollectionControlsContainer"] button, [class*="-CollectionControlsContainer"] [role="button"]')].some((b) => /Filter|Filtr/.test(b.textContent))`)));
 }
 
 // De punta a punta: lo que guarda el widget (propiedad + imágenes) se construye con Eleventy y se revisa la ficha pública ES/EN.

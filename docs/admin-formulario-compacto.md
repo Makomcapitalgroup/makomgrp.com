@@ -56,8 +56,7 @@ Sigue siendo solo CSS en `admin/tema-makom.css` (sin JavaScript, sin cambios de 
 - **«Medios»**: no estaba deshabilitado; es un botón de Decap que abre la biblioteca de medios («Archivos multimedia»). Se veía gris porque Decap le da un color neutro y el tema solo
   estilaba el enlace «Contenido». Ahora ambos comparten forma de pestaña: texto negro al 78 % (contraste ≥ 4,5:1), cursor de acción, hover, pulsado y foco 2 px terracota.
   La pestaña activa sigue siendo la cápsula de cristal con texto terracota.
-- **«Añadir rápido»**: ofrece Propiedad, Proyecto, Perspectiva y Asesor (cada una abre el formulario de nueva entrada) y funciona desde cualquier pantalla, así que **se conserva**. Pasó a
-  contorno fino de 1 px, sin relleno ni sombra, para no competir con «+ Propiedad» (terracota). No se oculta ni se elimina nada.
+- **«Añadir rápido»** (histórico): en una ronda anterior se conservó con contorno fino. **Ya no existe en la interfaz** (ver «Barra superior sin “Añadir rápido”» al final de este documento).
 - **«+ Propiedad»**: el texto estaba 4 px por encima del centro (interlineado de 36 px dentro de un botón de 44 px). Ahora es `inline-flex` centrado; se mide en las pruebas
   (desvío ≤ 1 px). Igual criterio para «Publicar» y «Seleccionar fotografías».
 - **Estados de guardado**: «Cambios no guardados» deja de ser rojo puro (#FF003B) y pasa a un aviso en terracota oscuro (#8F3720) sobre un tinte tenue, con punto indicador;
@@ -139,7 +138,7 @@ Sigue siendo solo CSS en `admin/tema-makom.css` (sin JavaScript, sin cambios de 
 1. `summary` de dos líneas: `{{titulo | truncate(110)}}` / `{{referenciaMakom | default('sin referencia')}} · {{operacion}} · {{tipo}} · {{estado}}` (valores tal como están guardados; los datos no cambian).
 2. CSS: respeta el salto de línea (`white-space: pre-line`); en ≥ 1100 px jerarquía por `::first-line` (título 16 px / 500, datos 13 px gris); en pantallas menores texto uniforme (si el título se parte, `::first-line` solo estilaría la primera línea visual).
 3. `view_filters` nativos por cada estado definido (Disponibles, Reservadas, Alquiladas, Vendidas, Archivadas, Borradores) y por operación (En venta, En alquiler). El menú de Decap no se cierra al elegir y cada opción alterna.
-4. Botones del listado («Ordenar por», «Filter by») con la forma de «Añadir rápido».
+4. Botones del listado («Ordenar por», «Filter by») con un contorno fino de 1 px, sin relleno ni sombra.
 
 ## Qué NO es posible sin cambios de mayor riesgo (portada real, chips de color, «Editar»)
 
@@ -186,3 +185,17 @@ Solo Propiedades (Proyectos, Perspectivas y Asesores quedan con el listado nativ
 - **Peso**: 31 miniaturas nuevas en `_site/assets/propiedades/_optimizadas/` (≈ 660 KB, solo de propiedades públicas) y un JSON de ≈ 7 KB.
 - La portada es **decorativa** (el título está al lado): no lleva texto alternativo.
 - Solo Chrome verificado; no Safari/iPhone/Firefox reales.
+
+---
+
+# Barra superior sin «Añadir rápido»
+
+**Qué era.** El botón «Añadir rápido» de la barra superior (componente `AppHeaderQuickNewButton` de Decap 3.17.3) lista las colecciones que permiten crear (`create: true`): Propiedad, Proyecto, Perspectiva y Asesor, y cada opción solo navega al formulario nuevo de esa colección (`#/collections/<colección>/new`). **No tenía ninguna función exclusiva**: el mismo formulario se abre con el botón «+ Propiedad» / «+ Proyecto» / «+ Perspectiva» / «+ Asesor» de cada colección. Repetía el menú lateral.
+
+**Cómo se quitó.** Decap no ofrece una opción oficial para ocultarlo: aparece siempre que alguna colección permita crear, y poner `create: false` quitaría también los botones de cada colección. Se oculta con CSS limitado a ese control (`admin/tema-makom.css`): el contenedor que lo envuelve (selector con `:has`) y, como respaldo para navegadores sin `:has`, el propio botón. No se tocó JavaScript, componentes de Decap ni la configuración de las colecciones.
+
+**Distribución.** El menú de la persona (avatar → «Cerrar sesión») queda a la derecha (`justify-content: flex-end`). Con una sola acción a la derecha, la fila superior de la barra móvil habría quedado casi vacía, así que por debajo de 800 px (donde Decap apila dos filas) la barra pasa a **una sola fila** de 56 px: pestañas a la izquierda y menú de la persona a la derecha. En ≥ 800 px la barra no cambia, salvo que ya no está el botón.
+
+**Reversión.** Quitar el bloque «Añadir rápido» de `tema-makom.css` (sección «Barra superior») devuelve el botón y la barra de dos filas en móvil.
+
+**Pruebas.** Grupo 18 de `scripts/verificar-galeria-widget.js` (`SOLO_BARRA=1` lo ejecuta solo): el control no se ve ni se enfoca con Tab; las cuatro colecciones conservan «+ …» y abren su formulario nuevo; crear un Asesor y publicarlo, editar y publicar, abrir el menú de la persona, cerrar sesión y volver a entrar; distribución a 1440, 1280, 1024, 800, 768, 390 y 375 px; el listado de Propiedades no cambia. Nota: con el backend de prueba Decap muestra además un enlace «Test Backend ↗» que no existe en producción (las pruebas de distribución lo ocultan para emular la barra real).
