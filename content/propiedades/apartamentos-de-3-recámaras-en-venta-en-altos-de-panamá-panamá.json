@@ -1,0 +1,110 @@
+{
+  "amenidades": [
+    "gimnasio",
+    "seguridad-24-7",
+    "lobby",
+    "elevadores",
+    "area-social",
+    "parque-infantil",
+    "estacionamientos-techados",
+    "piscina"
+  ],
+  "tituloEn": "3-bedroom apartments for sale in Altos de Panamá, Panama City",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "asesor": "loyra-flores",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 246800,
+    "preciosEspecificos": [
+      {
+        "etiqueta": "3 recámaras",
+        "monto": 246800
+      }
+    ]
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261123-f241d116.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261123-ee53cff5.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261123-f92234a7.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261123-1be1144b.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261123-41142e04.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261123-bb0db83a.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261123-92cc80b1.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261123-4d3c4d2f.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261123-5924fd7c.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261123-259f3346.jpg",
+        "portada": true
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitacionesDesde": true,
+    "banosDesde": false,
+    "habitaciones": 3,
+    "banos": 3,
+    "estacionamientos": 1,
+    "metrajeInterno": 128,
+    "metrajeTotal": 128,
+    "habitacionesMaximo": 3
+  },
+  "mostrarEnHome": false,
+  "zona": "condado-del-rey",
+  "descripcion": "Apartamentos desde $246,800 en Altos de Panamá, con entrega inmediata y tres modelos desde 128 m². Todas las unidades y las áreas sociales tienen vista panorámica de la ciudad, con ventanales de piso a techo, cocina con encimera de granito, lavandería y recámara principal con walk-in closet y baño con doble lavamanos. El edificio cuenta con piscina múltiple con jacuzzi y terraza, gimnasio con vista, áreas infantiles y un lobby de diseño moderno. \n\nUna ubicación que conecta con Condado del Rey y Ricardo J Alfaro. \n\nConsulta con un asesor de MAKOM Properties la disponibilidad y agenda tu visita.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "sector": "Condado del Rey "
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "Apartments from $246,800 in Altos de Panamá, ready for immediate delivery, in three models starting at 128 m². Every unit and social area has panoramic city views, with floor-to-ceiling windows, a kitchen with granite countertops, a laundry area, and a primary bedroom with a walk-in closet and a bathroom with double vanity. The building offers a multi-level pool with a jacuzzi and terrace, a gym with a view, children's play areas and a modern lobby. The location connects with Condado del Rey and Dorado Lakes. Ask a MAKOM Properties advisor about availability and schedule your visit.",
+  "operacion": "venta",
+  "ubicacionPublica": "Condado del Rey",
+  "titulo": "Apartamentos de 3 recámaras en venta en Altos de Panamá, Panamá",
+  "fechaEntrega": "inmediata",
+  "detalles": [
+    "cuarto-empleada",
+    "lavanderia",
+    "cocina-cerrada",
+    "walk-in-closet",
+    "vista-ciudad"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
