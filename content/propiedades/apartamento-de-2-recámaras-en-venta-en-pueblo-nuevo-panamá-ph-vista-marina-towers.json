@@ -1,0 +1,104 @@
+{
+  "amenidades": [
+    "seguridad-24-7",
+    "piscina",
+    "gimnasio",
+    "elevadores",
+    "area-social",
+    "garita-seguridad",
+    "estacionamientos-techados",
+    "salon-eventos"
+  ],
+  "tituloEn": "2-Bedroom Apartment for Sale in Pueblo Nuevo, Panama | PH Vista Marina Towers",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "asesor": "loyra-flores",
+  "mapa": {
+    "activo": true,
+    "precision": "aproximada",
+    "nivelZoom": 15,
+    "latitud": "9.012",
+    "longitud": "-79.512"
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 137350
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261123-43f2e8b3.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261123-02f8808a.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261123-a1503cd4.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261123-0e01cf94.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261123-fc7d5b8c.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261123-3776e708.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261123-0ed476e9.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261123-3f064839.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261123-6eaad83e.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261123-52475f4d.jpg",
+        "portada": true
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "habitacionesDesde": false,
+    "banosDesde": false,
+    "habitaciones": 2,
+    "banos": 2,
+    "estacionamientos": 1,
+    "metrajeTotal": 70.95,
+    "piso": "16"
+  },
+  "mostrarEnHome": false,
+  "zona": "ciudad-de-panama-general",
+  "descripcion": "Apartamento en piso alto de PH Vista Marina Towers, con un ventanal de piso a techo que enmarca la ciudad y las montañas. La cocina abierta con barra y encimera de granito se integra a una sala luminosa, y los closets empotrados ya están instalados. El edificio ofrece piscina, gimnasio, área de juegos infantiles y seguridad las 24 horas, además de un pabellón techado junto a la piscina. Se ve desocupado, listo para decorarlo a tu estilo. \n\n\nConsulta con un asesor de MAKOM Properties el precio actualizado y agenda tu visita.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "sector": "Pueblo Nuevo",
+    "edificioPH": "PH Vista Marina Towers"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "High-floor apartment at PH Vista Marina Towers, with a floor-to-ceiling window framing the city and the mountains. The open kitchen with a breakfast bar and granite countertop flows into a bright living area, and the built-in closets are already installed. The building offers a pool, gym, children's play area and 24-hour security, plus a covered pavilion beside the pool. It appears vacant, ready to be decorated to your taste. Ask a MAKOM Properties advisor for the updated price and schedule your visit.",
+  "operacion": "venta",
+  "ubicacionPublica": "Pueblo Nuevo",
+  "titulo": "Apartamento de 2 recámaras en venta en Pueblo Nuevo, Panamá | PH Vista Marina Towers",
+  "fechaEntrega": "inmediata",
+  "detalles": [
+    "lavanderia",
+    "cocina-cerrada",
+    "vista-ciudad"
+  ],
+  "seo": {
+    "noIndex": false
+  }
+}
