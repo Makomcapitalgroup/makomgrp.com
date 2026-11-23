@@ -7,7 +7,7 @@
     "precision": "aproximada",
     "nivelZoom": 15
   },
-  "estado": "disponible",
+  "estado": "archivada",
   "precio": {
     "moneda": "USD",
     "monto": 85000
@@ -43,6 +43,7 @@
     "metrajeTotal": 201.5
   },
   "mostrarEnHome": true,
+  "zona": "arraijan",
   "ordenHome": 4,
   "descripcion": "**Casa de 3 recámaras y 2 baños** en Ciudad Vacamonte, Arraiján, con **201.50 m² de construcción** sobre un terreno del mismo tamaño. Cuenta con sala-comedor, cocina espaciosa, lavandería, pasillos completamente techados y **terrazas delantera y trasera, ambas techadas.**\n\nLa propiedad está **completamente cercada** y ofrece **amplio espacio para estacionar hasta 3 autos.** Ideal para familias que buscan comodidad, amplitud y privacidad.\n\nUbicada a pocos minutos de colegios, supermercados, farmacias, bancos, centros comerciales y de **Playa Dorada.**\n\nAgenda tu visita y conoce esta casa.",
   "ubicacionInterna": {
@@ -57,12 +58,12 @@
   "operacion": "venta",
   "ubicacionPublica": "Ciudad Vacamonte, Arraiján, Panamá Oeste",
   "titulo": "CASA 3 RECÁMARAS / VACAMONTE, ARRAIJAN ",
+  "fechaEntrega": "inmediata",
   "detalles": [
     "terraza",
     "cocina-cerrada"
   ],
   "seo": {
     "noIndex": false
-  },
-  "zona": "arraijan"
+  }
 }
