@@ -95,7 +95,7 @@
   "operacion": "venta",
   "ubicacionPublica": "Costa del Este",
   "titulo": "Apartamentos amoblados en venta en Costa del Este, Panamá. GT",
-  "fechaEntrega": "inmediata",
+  "fechaEntrega": "futura",
   "seo": {
     "noIndex": false
   }
