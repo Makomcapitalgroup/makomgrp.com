@@ -17,9 +17,11 @@
   "referenciaMakom": "MKW-RE-040",
   "asesor": "loyra-flores",
   "mapa": {
-    "activo": false,
+    "activo": true,
     "precision": "aproximada",
-    "nivelZoom": 15
+    "nivelZoom": 15,
+    "latitud": "8.976",
+    "longitud": "-79.531"
   },
   "estado": "disponible",
   "precio": {
