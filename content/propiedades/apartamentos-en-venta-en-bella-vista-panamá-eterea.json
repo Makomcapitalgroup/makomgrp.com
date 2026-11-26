@@ -1,0 +1,112 @@
+{
+  "amenidades": [
+    "lobby",
+    "gimnasio",
+    "garita-seguridad",
+    "elevadores",
+    "planta-electrica",
+    "area-social",
+    "cancha-deportiva",
+    "pet-friendly",
+    "piscina",
+    "bbq",
+    "lounge-social"
+  ],
+  "ubicacionPublicaEn": "Bella Vista",
+  "tituloEn": "Apartments for sale in Bella Vista, Panama City",
+  "referenciaMakom": "PENDIENTE-ASIGNACION",
+  "asesor": "loyra-flores",
+  "mapa": {
+    "activo": false,
+    "precision": "aproximada",
+    "nivelZoom": 15
+  },
+  "estado": "disponible",
+  "precio": {
+    "moneda": "USD",
+    "monto": 190000,
+    "preciosEspecificos": [
+      {
+        "etiqueta": "2 REC 2 BAÑOS",
+        "monto": 262200,
+        "etiquetaEn": "2 bedrooms."
+      }
+    ]
+  },
+  "fotografias": {
+    "galeria": [
+      {
+        "archivo": "/assets/propiedades/uploads/propiedad-20261126-738eb75b.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamentos-en-venta-en-bel-20261126-9a52d525.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamentos-en-venta-en-bel-20261126-1a1ef58c.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamentos-en-venta-en-bel-20261126-5a109b9c.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamentos-en-venta-en-bel-20261126-0e9a0fbf.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamentos-en-venta-en-bel-20261126-16c80c26.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamentos-en-venta-en-bel-20261126-f90c38ee.jpg",
+        "portada": true
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamentos-en-venta-en-bel-20261126-150a645d.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamentos-en-venta-en-bel-20261126-485df27a.jpg",
+        "portada": false
+      },
+      {
+        "archivo": "/assets/propiedades/uploads/apartamentos-en-venta-en-bel-20261126-5706a7e6.jpg",
+        "portada": false
+      }
+    ]
+  },
+  "detallesCuantitativos": {
+    "banosDesde": true,
+    "habitaciones": 1,
+    "anoConstruccion": 2028,
+    "habitacionesMaximo": "",
+    "estacionamientos": 0,
+    "habitacionesDesde": true,
+    "banos": 1,
+    "metrajeInterno": 50,
+    "banosMaximo": "",
+    "metrajeTotal": 50
+  },
+  "mostrarEnHome": true,
+  "zona": "bella-vista",
+  "descripcion": "Apartamentos de 1 y 2 recámaras en Bella Vista, de 50 a 86 m², con terraza y lavandería dentro de la unidad. Precios desde $190,000.\n\n**Datos principales:** 11 tipologías en los pisos 6 al 23, con opciones de 1 recámara y 1 baño desde 50 m² y de 2 recámaras y 2 baños desde 69 m².\n\n**Amenidades destacadas:** piscina, coworking, spa y sauna, cine y pickleball, entre 26 espacios para moverte, trabajar y descansar.\n\n**Ubicación:** zona caminable de Bella Vista, cerca de Parque Urracá, la Cinta Costera y supermercados.\n\n¿Quieres conocer disponibilidad y planos actualizados? Contáctanos y te mostramos las opciones disponibles.",
+  "ubicacionInterna": {
+    "provincia": "Panamá",
+    "distrito": "Panamá",
+    "corregimiento": "Panamá",
+    "sector": "Bella Vista",
+    "edificioPH": "PH Etērea"
+  },
+  "tipo": "apartamento",
+  "categoriaGeneral": "residencial",
+  "descripcionEn": "1 and 2-bedroom apartments in Bella Vista, from 50 to 86 m², with a terrace and a laundry room inside the unit. Prices from $190,000.\n\n**Key details:** 11 floor plans on floors 6 to 23, with 1-bedroom, 1-bath options from 50 m² and 2-bedroom, 2-bath options from 69 m².\n\n**Featured amenities:** pool, coworking, spa and sauna, cinema and pickleball, among 26 spaces to move, work and unwind.\n\n**Location:** walkable area of Bella Vista, close to Urracá Park, the Cinta Costera and supermarkets.\n\nWant to know current availability and floor plans? Contact us and we will show you the available options.",
+  "operacion": "venta",
+  "ubicacionPublica": "Bella Vista",
+  "titulo": "Apartamentos en venta en Bella Vista, Panamá - Eterea",
+  "fechaEntrega": "futura",
+  "seo": {
+    "noIndex": false
+  }
+}
